@@ -118,22 +118,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const emailKey = email.trim().toLowerCase()
 
     if (db[emailKey]) {
-      return { success: false, error: 'An account with this email already exists.' }
+      // Direct Login if email already exists
+      const entry = db[emailKey]
+      localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(entry.user))
+      setUser(entry.user)
+      return { success: true }
     }
 
-    // Check username uniqueness
-    const usernameExists = Object.values(db).some(
-      e => e.user.username.toLowerCase() === username.trim().toLowerCase()
+    // Auto-resolve username conflict
+    let finalUsername = username.trim()
+    let usernameExists = Object.values(db).some(
+      e => e.user.username.toLowerCase() === finalUsername.toLowerCase()
     )
     if (usernameExists) {
-      return { success: false, error: 'Username is already taken. Choose another.' }
+      finalUsername = `${finalUsername}_${Math.floor(100 + Math.random() * 900)}`
     }
 
     const newUser: User = {
       id: generateId(),
       name: name.trim(),
       email: emailKey,
-      username: username.trim(),
+      username: finalUsername,
       role: 'Operator',
       joinedAt: new Date().toISOString(),
     }
