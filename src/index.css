@@ -1,0 +1,284 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0E0C15;
+  --color-card: #151221;
+  --color-surface: #1E1A2F;
+  --color-primary: #B366FF;
+  --color-primary-hover: #D09EFF;
+  --color-secondary: #00E0FF;
+  --color-border: #251F33;
+  --color-foreground: #F3F0FF;
+  --color-muted: #8E8A9F;
+
+  --font-sans: "Hanken Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --shadow-glow: 0 0 20px rgba(179, 102, 255, 0.25), 0 0 40px rgba(179, 102, 255, 0.15);
+  --shadow-cyanGlow: 0 0 20px rgba(0, 224, 255, 0.25), 0 0 40px rgba(0, 224, 255, 0.15);
+
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+}
+
+/* ─── Dark Mode (default) ──────────────────────────────────────────────── */
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    transition: background-color 0.4s ease, color 0.3s ease;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIGHT MODE — Full Premium Redesign
+   Base: clean slate/neutral. Accent: crisp violet.
+   Elevation system: bg → card → surface via shadows, not just color.
+═══════════════════════════════════════════════════════════════════════════ */
+
+:root.light {
+  /* Core palette */
+  --color-background:    #F0F2F5;   /* Cool neutral — no purple tint          */
+  --color-card:          #FFFFFF;   /* Pure white cards with shadow            */
+  --color-surface:       #E8EBF0;   /* Slightly darker for inputs/tags         */
+  --color-primary:       #7C3AED;   /* Vibrant violet 700                      */
+  --color-primary-hover: #5B21B6;   /* Darker violet on hover                  */
+  --color-secondary:     #0284C7;   /* Sky blue — visible on light             */
+  --color-border:        #D1D5DB;   /* Clean gray border (gray-300)            */
+  --color-foreground:    #111827;   /* Near-black text (gray-900)              */
+  --color-muted:         #6B7280;   /* Neutral gray muted (gray-500)           */
+}
+
+/* ─── Body in light mode ──────────────────────────────────────────────────── */
+:root.light body {
+  background-color: #F0F2F5;
+}
+
+/* ─── Glass Panel (used for Cards) ───────────────────────────────────────── */
+.glass-panel {
+  background: rgba(21, 18, 33, 0.9);
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(18px);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 12px 40px rgba(0, 0, 0, 0.45);
+  transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+:root.light .glass-panel {
+  background: #FFFFFF;
+  backdrop-filter: none;
+  border: 1px solid #E5E7EB;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+}
+
+/* ─── Sidebar in light mode ─────────────────────────────────────────────── */
+:root.light aside,
+:root.light [data-sidebar],
+:root.light .sidebar-root {
+  background: #FFFFFF !important;
+  border-right-color: #E5E7EB !important;
+}
+
+/* Target the sidebar motion div via bg-background class */
+:root.light .bg-background {
+  background-color: #FFFFFF;
+}
+
+/* ─── Navbar in light mode ───────────────────────────────────────────────── */
+:root.light header {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-bottom-color: #E5E7EB !important;
+  box-shadow: 0 1px 0 #E5E7EB, 0 2px 8px rgba(0,0,0,0.04);
+}
+
+/* ─── Card-like surfaces ─────────────────────────────────────────────────── */
+:root.light .bg-card {
+  background-color: #FFFFFF;
+}
+
+:root.light .bg-surface {
+  background-color: #E8EBF0;
+}
+
+/* ─── Input fields in light mode ─────────────────────────────────────────── */
+:root.light input,
+:root.light .bg-card\/60 {
+  background-color: #F9FAFB !important;
+  border-color: #D1D5DB !important;
+  color: #111827 !important;
+}
+
+:root.light input::placeholder {
+  color: #9CA3AF !important;
+}
+
+:root.light input:focus-visible {
+  border-color: #7C3AED !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12) !important;
+}
+
+/* ─── Dropdown menus in light mode ──────────────────────────────────────── */
+:root.light [role="menu"],
+:root.light [data-radix-popper-content-wrapper] > div {
+  background: #FFFFFF !important;
+  border-color: #E5E7EB !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+
+:root.light [role="menuitem"]:hover {
+  background-color: #F3F4F6 !important;
+}
+
+/* ─── Border color transitions ────────────────────────────────────────────── */
+:root.light .border-border {
+  border-color: #D1D5DB;
+}
+
+:root.light .border-border\/60 {
+  border-color: rgba(209, 213, 219, 0.6);
+}
+
+:root.light .border-border\/40 {
+  border-color: rgba(209, 213, 219, 0.4);
+}
+
+/* ─── Nav button active in light ─────────────────────────────────────────── */
+:root.light .bg-primary\/10 {
+  background-color: rgba(124, 58, 237, 0.08);
+}
+
+:root.light .text-muted {
+  color: #6B7280;
+}
+
+/* ─── Stats / metric cards ───────────────────────────────────────────────── */
+:root.light .bg-\[\#151221\] {
+  background-color: #FFFFFF;
+}
+
+/* ─── Kbd shortcut in search bar ─────────────────────────────────────────── */
+:root.light kbd,
+:root.light .bg-\[\#22222C\] {
+  background-color: #F3F4F6 !important;
+  border-color: #D1D5DB !important;
+  color: #6B7280 !important;
+}
+
+/* ─── Toast notification ────────────────────────────────────────────────── */
+:root.light .fixed.bottom-6 .bg-\[\#151221\] {
+  background-color: #FFFFFF !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14) !important;
+}
+
+/* ─── Recharts / Charts in light mode ───────────────────────────────────── */
+:root.light .recharts-cartesian-axis-tick text {
+  fill: #6B7280 !important;
+}
+
+:root.light .recharts-cartesian-grid line {
+  stroke: #E5E7EB !important;
+}
+
+/* ─── Scrollbars ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--color-background); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+
+/* ─── Purple Glow ────────────────────────────────────────────────────────── */
+.purple-glow {
+  box-shadow:
+    0 0 20px rgba(179, 102, 255, 0.25),
+    0 0 40px rgba(179, 102, 255, 0.15);
+}
+:root.light .purple-glow {
+  box-shadow:
+    0 0 16px rgba(124, 58, 237, 0.18),
+    0 0 32px rgba(124, 58, 237, 0.08);
+}
+
+/* ─── Cyan Glow ──────────────────────────────────────────────────────────── */
+.cyan-glow {
+  box-shadow:
+    0 0 20px rgba(0, 224, 255, 0.25),
+    0 0 40px rgba(0, 224, 255, 0.15);
+}
+:root.light .cyan-glow {
+  box-shadow:
+    0 0 16px rgba(2, 132, 199, 0.2),
+    0 0 32px rgba(2, 132, 199, 0.08);
+}
+
+/* ─── Gradient text fix in light ─────────────────────────────────────────── */
+:root.light .text-foreground {
+  color: #111827;
+}
+
+:root.light .text-primary {
+  color: #7C3AED;
+}
+
+:root.light .text-secondary {
+  color: #0284C7;
+}
+
+/* ─── Table rows in light ─────────────────────────────────────────────────── */
+:root.light tr:hover {
+  background-color: #F9FAFB;
+}
+
+:root.light tbody tr {
+  border-bottom-color: #F3F4F6;
+}
+
+/* ─── Separator in light ─────────────────────────────────────────────────── */
+:root.light [role="separator"],
+:root.light .bg-border {
+  background-color: #E5E7EB;
+}
+
+/* ─── Sheet/Drawer in light ──────────────────────────────────────────────── */
+:root.light [data-radix-dialog-content] {
+  background: #FFFFFF !important;
+  border-right-color: #E5E7EB !important;
+}
+
+/* ─── Progress bars in light ─────────────────────────────────────────────── */
+:root.light [role="progressbar"] > div {
+  background-color: #7C3AED;
+}
+
+/* ─── Badge background in light ─────────────────────────────────────────── */
+:root.light .bg-surface\/40 {
+  background-color: rgba(232, 235, 240, 0.6);
+}
+
+/* ─── Surface overlay on cards ───────────────────────────────────────────── */
+:root.light .bg-surface\/50 {
+  background-color: rgba(232, 235, 240, 0.5);
+}
+
+:root.light .bg-surface\/30 {
+  background-color: rgba(232, 235, 240, 0.3);
+}
+
+/* ─── Root ───────────────────────────────────────────────────────────────── */
+#root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  border: none;
+  min-height: 100vh;
+  display: block;
+}
