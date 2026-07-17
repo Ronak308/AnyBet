@@ -24,21 +24,12 @@ export const Logo: React.FC<LogoProps> = ({ collapsed = false, className, size =
           xmlns="http://www.w3.org/2000/svg"
           className="w-full h-full drop-shadow-[0_0_8px_rgba(128,38,255,0.4)]"
         >
-          <defs>
-            <linearGradient id="logo-grad-primary" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#8026FF" />
-              <stop offset="100%" stopColor="#A855F7" />
-            </linearGradient>
-            <linearGradient id="logo-grad-secondary" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#00E0FF" />
-              <stop offset="100%" stopColor="#06B6D4" />
-            </linearGradient>
-          </defs>
+
           
           {/* Outer Cyber Hexagon */}
           <path
             d="M16 2L29 9.5V24.5L16 32L3 24.5V9.5L16 2Z"
-            stroke="url(#logo-grad-primary)"
+            stroke="#8026FF"
             strokeWidth="2"
             strokeLinejoin="round"
             className="opacity-90"
@@ -47,7 +38,7 @@ export const Logo: React.FC<LogoProps> = ({ collapsed = false, className, size =
           {/* Glowing node connector representing prediction & decentralized consensus */}
           <path
             d="M9 19L14 13L19 18L24 11"
-            stroke="url(#logo-grad-secondary)"
+            stroke="#00E0FF"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"

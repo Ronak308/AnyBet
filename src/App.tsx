@@ -11,6 +11,7 @@ import { LoginPage } from './components/LoginPage'
 import { SignupPage } from './components/SignupPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { LayoutDashboard, Sword, Users, Coins, Cpu } from 'lucide-react'
 
 // Interface for floating particle
 interface Particle {
@@ -133,6 +134,15 @@ function Dashboard() {
   // Unified navigation handler — passed to all views
   const navigate = (tab: string) => setActiveTab(tab)
 
+  // Mobile Bottom Navigation tabs list
+  const mobileTabs = [
+    { id: 'operations', label: 'Ops', icon: LayoutDashboard },
+    { id: 'challenges', label: 'Bets', icon: Sword },
+    { id: 'reputation', label: 'Rep', icon: Users },
+    { id: 'financials', label: 'Finance', icon: Coins },
+    { id: 'ai-oracle', label: 'Oracle', icon: Cpu },
+  ]
+
   // Render the current view
   const renderActiveView = () => {
     switch (activeTab) {
@@ -152,7 +162,7 @@ function Dashboard() {
   }
 
   return (
-    <div className="h-screen bg-background text-foreground flex relative overflow-hidden font-sans select-none">
+    <div className="h-screen bg-background text-foreground flex relative overflow-hidden font-sans select-none pb-16 md:pb-0">
       
       {/* Floating particles background layer */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-30">
@@ -215,6 +225,37 @@ function Dashboard() {
             </motion.div>
           </AnimatePresence>
         </div>
+      </div>
+
+      {/* MOBILE BOTTOM NAVIGATION BAR (Floating Pill / Island style) */}
+      <div className="md:hidden fixed bottom-4 left-4 right-4 h-16 bg-surface/90 backdrop-blur-lg border border-border/60 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.5)] flex items-center justify-around px-2.5 z-40 select-none">
+        {mobileTabs.map((tab) => {
+          const Icon = tab.icon
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-full cursor-pointer relative h-11 min-w-[56px] transition-all"
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="activeTabBackground"
+                  className="absolute inset-0 bg-primary/10 border border-primary/20 rounded-full"
+                  transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                />
+              )}
+              <Icon className={`h-4.5 w-4.5 transition-colors duration-200 z-10 ${
+                isActive ? 'text-primary' : 'text-muted hover:text-foreground'
+              }`} />
+              <span className={`text-[9px] font-mono tracking-wider font-bold z-10 transition-colors duration-200 ${
+                isActive ? 'text-foreground' : 'text-muted'
+              }`}>
+                {tab.label}
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       {/* Custom Animated In-App Toast Notification */}

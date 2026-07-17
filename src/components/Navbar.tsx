@@ -3,7 +3,6 @@ import {
   Search, 
   Bell, 
   Settings, 
-  Menu,
   ChevronDown,
   User,
   Shield,
@@ -21,11 +20,10 @@ import {
   DropdownMenuItem, 
   DropdownMenuSeparator 
 } from './ui/dropdown-menu'
-import { Sheet, SheetTrigger, SheetContent } from './ui/sheet'
-import { Sidebar } from './Sidebar'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { ThemeToggleButton2 } from './ui/skiper4'
+import { Logo } from './ui/Logo'
 
 interface NavbarProps {
   activeTab: string
@@ -62,7 +60,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const { user, logout } = useAuth()
   const { isDark, toggleTheme } = useTheme()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [logoutConfirm, setLogoutConfirm] = useState(false)
 
   const notifications = [
@@ -91,25 +88,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-45 w-full bg-background/80 backdrop-blur-md border-b border-border h-16 flex items-center justify-between px-6 select-none">
       {/* Left side: Hamburger for mobile + Page Title */}
       <div className="flex items-center gap-4">
-        {/* Mobile menu trigger */}
-        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden text-muted hover:text-foreground">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-[260px] bg-background">
-            <Sidebar 
-              activeTab={activeTab} 
-              setActiveTab={(tab) => {
-                setActiveTab(tab)
-                setMobileMenuOpen(false)
-              }} 
-              isCollapsed={false} 
-              setIsCollapsed={() => {}} 
-            />
-          </SheetContent>
-        </Sheet>
+        {/* Brand logo in header on mobile */}
+        <div className="md:hidden">
+          <Logo size="sm" collapsed={false} />
+        </div>
         
         {/* Sidebar Toggle for Desktop */}
         <Button
@@ -121,8 +103,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           <SlidersHorizontal className="h-4 w-4" />
         </Button>
 
-        {/* Dynamic Title */}
-        <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-3">
+        {/* Dynamic Title (Desktop Only) */}
+        <div className="hidden md:flex flex-col md:flex-row md:items-baseline gap-1 md:gap-3">
           <h2 className="text-md font-bold font-sans text-foreground uppercase tracking-wider">
             {activeTab.replace('-', ' ')}
           </h2>
@@ -154,7 +136,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-80 right-0 mt-2 p-2" sideOffset={8}>
+          <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-80 mt-2 p-2" sideOffset={8}>
             <div className="px-3 py-2 flex items-center justify-between border-b border-border/40 mb-1">
               <span className="text-[10px] font-mono text-muted uppercase tracking-wider">Live System Alerts</span>
               <span className="text-[9px] font-mono text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded font-bold uppercase">
