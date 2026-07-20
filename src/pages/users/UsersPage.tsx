@@ -28,41 +28,39 @@ import {
   SlidersHorizontal,
   Trash2,
   Edit3,
-  Database,
   ShieldAlert,
-  Download,
-  User as UserIcon,
   MoreHorizontal
 } from 'lucide-react'
 
 const normalizeRole = (role: string): string => {
-  if (!role) return 'user'
+  if (!role) return ''
   const r = role.trim().toLowerCase()
   if (r === 'admin') return 'admin'
-  return 'user'
+  if (r === 'user') return 'user'
+  return role.trim()
 }
 
-const formatUserDate = (u: User) => {
-  const dateVal = u.joinedAt || u.createdAt
-  if (!dateVal) return 'N/A'
+const formatLastLoginTable = (u: User) => {
+  const val = (u as any).lastLoginAt
+  if (!val) return '—'
 
   let date: Date
-  if (typeof dateVal.toDate === 'function') {
-    date = dateVal.toDate()
-  } else if (dateVal.seconds !== undefined) {
-    date = new Date(dateVal.seconds * 1000)
-  } else if (typeof dateVal === 'string' || typeof dateVal === 'number' || dateVal instanceof Date) {
-    date = new Date(dateVal)
+  if (typeof val.toDate === 'function') {
+    date = val.toDate()
+  } else if (val.seconds !== undefined) {
+    date = new Date(val.seconds * 1000)
+  } else if (typeof val === 'string' || typeof val === 'number' || val instanceof Date) {
+    date = new Date(val)
   } else {
-    return 'N/A'
+    return '—'
   }
 
-  if (isNaN(date.getTime())) return 'N/A'
+  if (isNaN(date.getTime())) return '—'
 
   return date.toLocaleDateString('en-US', {
-    year: 'numeric',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
+    year: 'numeric'
   })
 }
 
@@ -101,7 +99,7 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
           ...data,
           id: userId,
           uid: userId,
-          role: normalizeRole(data.role || 'user'),
+          role: normalizeRole(data.role || ''),
           status: cleanStatus === 'active' ? 'active' : 'inactive'
         } as User)
       })
@@ -151,11 +149,52 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
     loadUsers()
   }, [loadUsers])
 
+  // Deselect user if they are filtered out of the directory
+  useEffect(() => {
+    if (selectedUser) {
+      const isStillVisible = users.some(u => {
+        if (u.id !== selectedUser.id) return false
+        const status = (u as any).status || 'active'
+        if (roleFilter !== 'all' && u.role?.toLowerCase() !== roleFilter.toLowerCase()) return false
+        if (statusFilter !== 'all' && status !== statusFilter) return false
+        if (searchQuery.trim() !== '') {
+          const query = searchQuery.toLowerCase()
+          const matchesSearch =
+            (u.username || '').toLowerCase().includes(query) ||
+            (u.name || '').toLowerCase().includes(query) ||
+            (u.email || '').toLowerCase().includes(query)
+          if (!matchesSearch) return false
+        }
+        return true
+      })
+      if (!isStillVisible) {
+        setSelectedUser(null)
+      }
+    }
+  }, [users, roleFilter, statusFilter, searchQuery, selectedUser])
+
   // Save/Create user details in Firestore
   const handleSaveUser = async (userData: Omit<User, 'joinedAt'> & { status?: string; password?: string }) => {
     try {
       const existingUser = users.find(u => u.id === userData.id)
       let finalUserId = userData.id
+
+      // Check if email or username is already taken by a different user
+      const emailConflict = users.find(u =>
+        u.id !== userData.id &&
+        u.email.trim().toLowerCase() === userData.email.trim().toLowerCase()
+      )
+      if (emailConflict) {
+        throw new Error('A user with this email address already exists.')
+      }
+
+      const usernameConflict = users.find(u =>
+        u.id !== userData.id &&
+        u.username.trim().toLowerCase() === userData.username.trim().toLowerCase()
+      )
+      if (usernameConflict) {
+        throw new Error('A user with this username already exists.')
+      }
 
       // If creating a new user, register them in Firebase Auth first
       if (!existingUser && userData.password) {
@@ -287,38 +326,6 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
     }
   }
 
-  // Export users to CSV
-  const handleExportUsers = () => {
-    window.alert("Preparing user directory CSV export...")
-    const headers = "ID,Name,Username,Email,Role,Status,JoinedAt\n"
-    const rows = users.map(u =>
-      `"${u.id}","${u.name}","${u.username}","${u.email}","${u.role}","${(u as any).status || 'active'}","${formatUserDate(u)}"`
-    ).join("\n")
-
-    const csvContent = "data:text/csv;charset=utf-8," + headers + rows
-    const encodedUri = encodeURI(csvContent)
-
-    const link = document.createElement("a")
-    link.setAttribute("href", encodedUri)
-    link.setAttribute("download", `anybet_user_directory_${Date.now()}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-
-    window.dispatchEvent(new CustomEvent('show-toast', {
-      detail: { message: "User directory CSV downloaded successfully!", type: 'success' }
-    }))
-  }
-
-  // Open direct mail/telemetry dialog
-  const handleSendMessage = (user: User) => {
-    const msg = window.prompt(`Send telemetry notification message to @${user.username}:`)
-    if (msg && msg.trim()) {
-      window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { message: `Telemetry message dispatched to @${user.username}`, type: 'success' }
-      }))
-    }
-  }
 
   // Filtering users array
   const filteredUsers = users.filter(u => {
@@ -367,7 +374,6 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
             Managing administrator permissions and console access keys
           </p>
         </div>
-
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
@@ -379,15 +385,7 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
             <SlidersHorizontal className="h-3 w-3" />
             Filters
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 font-mono text-[9px] uppercase tracking-wider"
-            onClick={handleExportUsers}
-          >
-            <Download className="h-3.5 w-3.5" />
-            Export CSV
-          </Button>
+
           <Button
             variant="primary"
             size="sm"
@@ -404,8 +402,8 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
       </div>
 
       {error && (
-        <div className="flex items-start gap-2.5 p-3 bg-red-950/30 border border-red-500/30 rounded-lg text-red-300 text-xs font-mono">
-          <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5 text-red-400" />
+        <div className="flex items-start gap-2.5 p-3 bg-error-bg border border-error-border rounded-lg text-error-text text-xs font-mono">
+          <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5 text-error-text" />
           <div>
             <span className="font-bold">Firestore Sync Error:</span> {error}
           </div>
@@ -469,18 +467,19 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent border-b border-border/40">
-                    <TableHead className="font-mono text-[9px] uppercase tracking-wider">Name</TableHead>
-                    <TableHead className="font-mono text-[9px] uppercase tracking-wider">User Name</TableHead>
-                    <TableHead className="font-mono text-[9px] uppercase tracking-wider">Email</TableHead>
-                    <TableHead className="font-mono text-[9px] uppercase tracking-wider">Role</TableHead>
-                    <TableHead className="font-mono text-[9px] uppercase tracking-wider">Status</TableHead>
-                    <TableHead className="font-mono text-[9px] uppercase tracking-wider text-right">Actions</TableHead>
+                    <TableHead className="font-mono text-[10px] uppercase tracking-wider">Name</TableHead>
+                    <TableHead className="font-mono text-[10px] uppercase tracking-wider">Username</TableHead>
+                    <TableHead className="font-mono text-[10px] uppercase tracking-wider">Email</TableHead>
+                    <TableHead className="font-mono text-[10px] uppercase tracking-wider">Role</TableHead>
+                    <TableHead className="font-mono text-[10px] uppercase tracking-wider">Status</TableHead>
+                    <TableHead className="font-mono text-[10px] uppercase tracking-wider">Last Login</TableHead>
+                    <TableHead className="font-mono text-[10px] uppercase tracking-wider text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-48 text-center text-xs font-mono text-muted">
+                      <TableCell colSpan={7} className="h-48 text-center text-xs font-mono text-muted">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <motion.div
                             className="h-5 w-5 rounded-full border-2 border-border border-t-primary"
@@ -508,17 +507,21 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
                         <TableRow
                           key={u.id}
                           onClick={() => setSelectedUser(u)}
-                          className={`hover:bg-surface/30 cursor-pointer transition-colors duration-150 border-b border-border/20 ${isActive ? 'bg-surface/50' : ''
+                          className={`hover:bg-primary/5 cursor-pointer transition-colors duration-150 border-b border-border/50 ${isActive ? 'bg-primary/10' : ''
                             }`}
                         >
                           {/* Name */}
                           <TableCell className="py-2.5">
                             <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full border border-border/40 bg-surface/20 flex items-center justify-center shrink-0 overflow-hidden">
+                              <div className="h-8 w-8 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden text-primary font-bold text-[10px]">
                                 {u.avatar ? (
                                   <img src={u.avatar} alt={u.name} className="h-full w-full object-cover" />
                                 ) : (
-                                  <UserIcon className="h-4 w-4 text-muted" />
+                                  <span>
+                                    {u.name
+                                      ? u.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                                      : 'U'}
+                                  </span>
                                 )}
                               </div>
                               <span className="font-semibold text-foreground text-xs truncate max-w-[120px] block">{u.name}</span>
@@ -527,7 +530,9 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
 
                           {/* User Name */}
                           <TableCell className="py-2.5">
-                            <span className="text-xs font-mono text-muted truncate max-w-[100px] block">@{u.username}</span>
+                            <span className="text-xs font-mono text-muted truncate max-w-[100px] block">
+                              {u.username ? `@${u.username}` : '—'}
+                            </span>
                           </TableCell>
 
                           {/* Email */}
@@ -537,9 +542,13 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
 
                           {/* Role */}
                           <TableCell className="py-2.5">
-                            <Badge variant="outline" className="text-[8px] uppercase font-mono tracking-wider">
-                              {u.role}
-                            </Badge>
+                            {u.role ? (
+                              <Badge variant="outline" className="text-[8px] uppercase font-mono tracking-wider">
+                                {u.role}
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted font-mono">—</span>
+                            )}
                           </TableCell>
 
                           {/* Status */}
@@ -550,6 +559,13 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
                                 {status}
                               </span>
                             </div>
+                          </TableCell>
+
+                          {/* Last Login */}
+                          <TableCell className="py-2.5">
+                            <span className="text-xs font-mono text-muted/80 whitespace-nowrap">
+                              {formatLastLoginTable(u)}
+                            </span>
                           </TableCell>
 
                           {/* Actions */}
@@ -595,11 +611,7 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
             </div>
 
             {/* Database indicator in footer */}
-            <div className="p-3 border-t border-border/40 bg-surface/10 flex items-center justify-between text-[8px] font-mono text-muted uppercase tracking-widest">
-              <span className="flex items-center gap-1.5">
-                <Database className="h-3 w-3 text-secondary" />
-                Firebase Firestore Sync Active
-              </span>
+            <div className="p-3 border-t border-border/40 bg-surface/10 flex items-center justify-end text-[8px] font-mono text-muted uppercase tracking-widest">
               <span>Total Registry: {users.length} Users</span>
             </div>
           </Card>
@@ -611,7 +623,6 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
             <UserDetails
               user={selectedUser}
               onToggleStatus={handleToggleStatus}
-              onSendMessage={handleSendMessage}
               onEdit={(user) => {
                 setUserToEdit(user)
                 setIsAddEditOpen(true)
@@ -619,7 +630,7 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
             />
           ) : (
             <Card className="h-full flex items-center justify-center p-6 text-center text-xs font-mono text-muted border-dashed border-2">
-              Select a user profile to inspect telemetry.
+              Please select a profile.
             </Card>
           )}
         </motion.div>

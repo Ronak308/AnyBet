@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, Eye, EyeOff, User, AtSign, UserPlus, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth } from '@/context/AuthContext'
 import { SmoothInput } from '../../components/ui/skiper106'
 import { Button } from '../../components/ui/button'
 import { Logo } from '../../components/ui/Logo'
@@ -259,9 +259,9 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="flex items-start gap-2.5 p-3 bg-red-950/30 border border-red-500/30 rounded-lg text-red-300 text-xs font-mono overflow-hidden"
+                    className="flex items-start gap-2.5 p-3 bg-error-bg border border-error-border rounded-lg text-error-text text-xs font-mono overflow-hidden"
                   >
-                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-400" />
+                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-error-text" />
                     <span>{error}</span>
                   </motion.div>
                 )}

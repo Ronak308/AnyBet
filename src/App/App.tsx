@@ -17,6 +17,7 @@ import { LoginPage } from '@/pages/auth/LoginPage'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { DashboardLayout } from '@/App/DashbaordLayout'
+import { ToastContainer } from '@/components/ui/Toast'
 
 // ─── Route Wrappers to Keep Prop Contracts Untouched ─────────────────────────
 
@@ -140,6 +141,7 @@ function App() {
           <ChallengesProvider>
             <BrowserRouter>
               <AuthGate />
+              <ToastContainer />
             </BrowserRouter>
           </ChallengesProvider>
         </WalletProvider>

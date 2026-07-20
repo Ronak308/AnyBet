@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, Eye, EyeOff, LogIn, AlertCircle, Zap } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth } from '@/context/AuthContext'
 import { SmoothInput } from '../../components/ui/skiper106'
 import { Button } from '../../components/ui/button'
 import { Logo } from '../../components/ui/Logo'
@@ -27,7 +27,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup: _onSwitc
     const finalPassword = password
 
     if (!finalEmail) {
-      setError('Email address is required.')
+      setError('Email or username is required.')
       return
     }
     if (!finalPassword) {
@@ -87,20 +87,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup: _onSwitc
             {/* Form */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
-              {/* Email */}
+              {/* Email or Username */}
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-mono text-muted uppercase tracking-wider">
-                  Email Address
+                  Email or Username
                 </label>
                 <div className="relative flex items-center">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted pointer-events-none z-10" />
                   <SmoothInput
                     id="login-email"
-                    type="email"
-                    placeholder="operator@anybet.io"
+                    type="text"
+                    placeholder="operator@anybet.io or username"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    autoComplete="email"
+                    autoComplete="username"
                     disabled={isLoading}
                     wrapperClassName="flex-1 border border-border focus-within:border-primary transition-colors rounded-lg"
                     className="pl-8 pr-4 py-2 h-9"
@@ -146,9 +146,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup: _onSwitc
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="flex items-start gap-2.5 p-3 bg-red-950/30 border border-red-500/30 rounded-lg text-red-300 text-xs font-mono overflow-hidden"
+                    className="flex items-start gap-2.5 p-3 bg-error-bg border border-error-border rounded-lg text-error-text text-xs font-mono overflow-hidden"
                   >
-                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-400" />
+                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-error-text" />
                     <span>{error}</span>
                   </motion.div>
                 )}

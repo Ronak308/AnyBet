@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '@/context/AuthContext'
 
 import { Logo } from './ui/Logo'
 

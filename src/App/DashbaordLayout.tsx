@@ -20,9 +20,6 @@ export function DashboardLayout() {
   const navigate = useNavigate()
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false)
 
-  // Toast Notification State
-  const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'warning' } | null>(null)
-
   useEffect(() => {
     // Intercept standard window.alert calls and route to our custom Toast system
     window.alert = (message: any) => {
@@ -37,27 +34,7 @@ export function DashboardLayout() {
 
       window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: msgStr, type } }))
     }
-
-    const handleToast = (e: Event) => {
-      const customEvent = e as CustomEvent
-      setToast({
-        message: customEvent.detail.message,
-        type: customEvent.detail.type || 'info'
-      })
-    }
-
-    window.addEventListener('show-toast', handleToast)
-    return () => window.removeEventListener('show-toast', handleToast)
   }, [])
-
-  // Auto clear active toast
-  useEffect(() => {
-    if (!toast) return
-    const timer = setTimeout(() => {
-      setToast(null)
-    }, 3200)
-    return () => clearTimeout(timer)
-  }, [toast])
 
   // Floating background particles
   const particles: Particle[] = [
@@ -178,21 +155,7 @@ export function DashboardLayout() {
         })}
       </div>
 
-      {/* Custom Animated In-App Toast Notification */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 25, scale: 0.95 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-            className="fixed bottom-6 right-6 z-55 p-4 rounded-xl border border-border shadow-glow bg-[#151221] flex items-center gap-3 select-none pointer-events-none"
-          >
-            <span className={`h-2.5 w-2.5 rounded-full ${toast.type === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : toast.type === 'warning' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-primary shadow-[0_0_8px_rgba(179,102,255,0.5)]'}`} />
-            <span className="text-xs font-mono text-foreground font-semibold uppercase tracking-wider">{toast.message}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
     </div>
   )
 }

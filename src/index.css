@@ -24,6 +24,10 @@
   --radius-xl: 0px;
   --radius-2xl: 0px;
   --radius-3xl: 0px;
+
+  --color-error-bg: rgba(239, 68, 68, 0.08);
+  --color-error-border: rgba(239, 68, 68, 0.2);
+  --color-error-text: #FCA5A5;
 }
 
 /* ─── Dark Mode (default) ──────────────────────────────────────────────── */
@@ -53,6 +57,10 @@
   --color-border:        #D1D5DB;   /* Clean gray border (gray-300)            */
   --color-foreground:    #111827;   /* Near-black text (gray-900)              */
   --color-muted:         #6B7280;   /* Neutral gray muted (gray-500)           */
+
+  --color-error-bg: rgba(220, 38, 38, 0.08);
+  --color-error-border: rgba(220, 38, 38, 0.25);
+  --color-error-text: #b91c1c;
 }
 
 /* ─── Body in light mode ──────────────────────────────────────────────────── */

@@ -20,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator
 } from './ui/dropdown-menu'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '@/context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { ThemeToggleButton2 } from './ui/skiper4'
 import { Logo } from './ui/Logo'
