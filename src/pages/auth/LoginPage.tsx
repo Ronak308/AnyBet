@@ -1,16 +1,16 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, Eye, EyeOff, LogIn, AlertCircle, Zap } from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
-import { SmoothInput } from '../components/ui/skiper106'
-import { Button } from '../components/ui/button'
-import { Logo } from '../components/ui/Logo'
+import { useAuth } from '../../context/AuthContext'
+import { SmoothInput } from '../../components/ui/skiper106'
+import { Button } from '../../components/ui/button'
+import { Logo } from '../../components/ui/Logo'
 
 interface LoginPageProps {
   onSwitchToSignup: () => void
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
+export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup: _onSwitchToSignup }) => {
   const { login } = useAuth()
 
   const [email, setEmail] = useState('')
@@ -23,9 +23,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
     e.preventDefault()
     setError(null)
 
-    // Direct login bypass for empty fields
-    const finalEmail = email.trim() || 'admin@anybet.io'
-    const finalPassword = password || 'password123'
+    const finalEmail = email.trim()
+    const finalPassword = password
+
+    if (!finalEmail) {
+      setError('Email address is required.')
+      return
+    }
+    if (!finalPassword) {
+      setError('Password is required.')
+      return
+    }
 
     setIsLoading(true)
     const result = await login(finalEmail, finalPassword)
@@ -41,7 +49,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
 
       {/* LEFT COLUMN: Authorization Form Panel */}
       <div className="w-full lg:w-[42%] min-h-screen flex items-center justify-center p-6 sm:p-12 relative z-10 bg-background">
-        
+
         {/* Ambient subtle background grid for form column */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
           <div
@@ -173,32 +181,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
               </Button>
             </form>
 
-            {/* Divider */}
-            <div className="flex items-center gap-3 my-5">
-              <div className="flex-1 h-px bg-border/60" />
-              <span className="text-[10px] font-mono text-muted uppercase tracking-widest">or</span>
-              <div className="flex-1 h-px bg-border/60" />
-            </div>
 
-            {/* Switch to signup */}
-            <p className="text-center text-xs text-muted font-mono">
-              No account yet?{' '}
-              <button
-                id="goto-signup"
-                type="button"
-                onClick={onSwitchToSignup}
-                className="text-primary hover:text-primary-hover font-semibold transition-colors underline underline-offset-2"
-              >
-                Create one
-              </button>
-            </p>
 
             {/* Demo hint */}
             <div className="mt-4 p-3 bg-primary/5 border border-primary/15 rounded-lg flex items-start gap-2.5">
               <Zap className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
               <p className="text-[10px] font-mono text-muted leading-relaxed">
                 <span className="text-primary font-semibold">New here?</span>{' '}
-                Create an account to access the AnyBet Ops dashboard. All data is stored locally.
+                Create an account to access the AnyBet Ops dashboard. All credentials and user data are securely managed via Firebase.
               </p>
             </div>
           </div>
@@ -208,11 +198,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
       {/* RIGHT COLUMN: Cover Hero Image Banner */}
       <div className="hidden lg:block lg:w-[58%] h-screen sticky top-0 relative overflow-hidden border-l border-border">
         {/* Background Image Layer */}
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: 'url("/auth-hero.png")' }}
         />
-        
+
         {/* Futuristic Grid Overlay */}
         <div className="absolute inset-0 bg-gradient-to-tr from-[#0D0B14] via-[#0D0B14]/85 to-transparent z-10" />
 
@@ -226,7 +216,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup }) => {
           <div className="flex flex-col gap-4 max-w-xl">
             <span className="text-xs font-mono text-primary uppercase tracking-widest font-semibold">// NEXT-GEN PREDICTION MARKET PROTOCOL</span>
             <h2 className="text-4xl font-extrabold text-foreground tracking-tight leading-tight uppercase font-sans">
-              Predict on anything, <br/>settled by AI.
+              Predict on anything, <br />settled by AI.
             </h2>
             <p className="text-sm text-muted leading-relaxed font-sans mt-2">
               Join AnyBet's decentralized console to place stakes on physical events, sports matches, and crypto prediction markets. All outcomes are audited by autonomous oracle networks for transparent payouts.

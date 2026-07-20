@@ -10,7 +10,7 @@ export interface ButtonProps extends Omit<HTMLMotionProps<"button">, "ref"> {
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", size = "default", glow = false, ...props }, ref) => {
+  ({ className, variant = "primary", size = "default", glow: _glow = false, type = "button", ...props }, ref) => {
     
     const baseStyles = "inline-flex items-center justify-center rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
     
@@ -21,7 +21,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ghost: "bg-transparent text-foreground hover:bg-surface/60",
       danger: "bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500/30 hover:border-red-500/50",
       nav: "bg-transparent text-muted hover:text-foreground hover:bg-surface/30 justify-start w-full gap-3",
-      "nav-active": "bg-primary/10 text-foreground border-l-2 border-primary justify-start w-full gap-3 purple-glow"
+      "nav-active": "bg-primary/10 text-foreground border-l-2 border-primary justify-start w-full gap-3"
     }
     
     const sizes = {
@@ -34,12 +34,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <motion.button
         ref={ref}
-        whileHover={{ 
-          scale: 1.02,
-          boxShadow: glow || variant === "primary" || variant === "nav-active"
-            ? "0 0 20px rgba(128,38,255,0.35), 0 0 40px rgba(128,38,255,0.2)"
-            : undefined
-        }}
+        type={type}
         whileTap={{ scale: 0.98 }}
         className={cn(baseStyles, variants[variant], sizes[size], className)}
         {...props}

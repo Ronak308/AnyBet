@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import { 
-  Search, 
-  Bell, 
-  Settings, 
+import {
+  Search,
+  Bell,
+  Settings,
   ChevronDown,
   User,
   Shield,
@@ -13,12 +13,12 @@ import {
 import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { Avatar, AvatarFallback } from './ui/avatar'
-import { 
-  DropdownMenu, 
-  DropdownMenuTrigger, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator 
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator
 } from './ui/dropdown-menu'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -92,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="md:hidden">
           <Logo size="sm" collapsed={false} />
         </div>
-        
+
         {/* Sidebar Toggle for Desktop */}
         <Button
           variant="ghost"
@@ -116,9 +116,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Search */}
         <div className="relative w-48 lg:w-64 hidden sm:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted" />
-          <Input 
-            placeholder="Global query..." 
-            className="pl-9 pr-8 h-9 text-xs" 
+          <Input
+            placeholder="Global query..."
+            className="pl-9 pr-8 h-9 text-xs"
           />
           <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono text-muted bg-[#22222C] px-1.5 py-0.5 rounded border border-border">
             /
@@ -143,7 +143,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {notifications.length} ACTIVE
               </span>
             </div>
-            
+
             {notifications.map((n) => (
               <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-1 p-2.5 rounded hover:bg-surface/50 border border-transparent hover:border-border/30 mb-1">
                 <div className="flex items-center justify-between w-full">
@@ -153,7 +153,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <p className="text-[10px] text-muted font-mono leading-tight">{n.text}</p>
               </DropdownMenuItem>
             ))}
-            
+
             <DropdownMenuSeparator />
             <DropdownMenuItem className="w-full text-center text-primary justify-center text-[10px] font-mono py-2 hover:bg-primary/5 cursor-pointer">
               VIEW OVERSIGHT LOGS
@@ -162,9 +162,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         </DropdownMenu>
 
         {/* Quick Settings Shortcut */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           className="text-muted hover:text-foreground"
           onClick={() => setActiveTab('ai-oracle')}
         >

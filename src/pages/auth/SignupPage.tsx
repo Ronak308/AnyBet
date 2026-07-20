@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, Eye, EyeOff, User, AtSign, UserPlus, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
-import { SmoothInput } from '../components/ui/skiper106'
-import { Button } from '../components/ui/button'
-import { Logo } from '../components/ui/Logo'
+import { useAuth } from '../../context/AuthContext'
+import { SmoothInput } from '../../components/ui/skiper106'
+import { Button } from '../../components/ui/button'
+import { Logo } from '../../components/ui/Logo'
 
 interface SignupPageProps {
   onSwitchToLogin: () => void
@@ -42,26 +42,47 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
     e.preventDefault()
     setError(null)
 
-    // Auto-fill defaults if fields are empty
-    const finalName = name.trim() || 'Yash'
-    const finalEmail = email.trim() || 'test1234@gmail.com'
-    const finalUsername = username.trim() || 'yash123'
-    const finalPassword = password.length >= 6 ? password : (password || 'Test_123')
-    // Auto-sanitize username to keep it valid (alphanumeric + underscores)
-    let cleanUsername = finalUsername;
-    if (cleanUsername.includes('@')) {
-      cleanUsername = cleanUsername.split('@')[0];
+    const finalName = name.trim()
+    const finalEmail = email.trim()
+    const finalUsername = username.trim()
+    const finalPassword = password
+
+    if (!finalName) {
+      setError('Full name is required.')
+      return
     }
-    cleanUsername = cleanUsername.replace(/[^a-zA-Z0-9_]/g, '');
-    
+    if (!finalEmail) {
+      setError('Email address is required.')
+      return
+    }
+    if (!finalUsername) {
+      setError('Username is required.')
+      return
+    }
+    if (!finalPassword) {
+      setError('Password is required.')
+      return
+    }
+    if (finalPassword.length < 6) {
+      setError('Password must be at least 6 characters.')
+      return
+    }
+
+    // Auto-sanitize username to keep it valid (alphanumeric + underscores)
+    let cleanUsername = finalUsername
+    if (cleanUsername.includes('@')) {
+      cleanUsername = cleanUsername.split('@')[0]
+    }
+    cleanUsername = cleanUsername.replace(/[^a-zA-Z0-9_]/g, '')
+
     // Ensure length constraints
     if (cleanUsername.length < 3) {
-      cleanUsername = `usr_${cleanUsername}`.substring(0, 20);
+      cleanUsername = `usr_${cleanUsername}`.substring(0, 20)
     }
     if (cleanUsername.length < 3) {
-      cleanUsername = `user_${Math.floor(1000 + Math.random() * 9000)}`;
+      cleanUsername = `user_${Math.floor(1000 + Math.random() * 9000)}`
     }
-    cleanUsername = cleanUsername.substring(0, 20);
+    cleanUsername = cleanUsername.substring(0, 20)
 
     setIsLoading(true)
     const result = await signup(finalName, finalEmail, cleanUsername, finalPassword)
@@ -79,7 +100,7 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
 
       {/* LEFT COLUMN: Authorization Form Panel */}
       <div className="w-full lg:w-[42%] min-h-screen flex items-center justify-center p-6 sm:p-12 relative z-10 bg-background overflow-y-auto">
-        
+
         {/* Ambient subtle background grid for form column */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
           <div
@@ -299,11 +320,11 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
       {/* RIGHT COLUMN: Cover Hero Image Banner */}
       <div className="hidden lg:block lg:w-[58%] h-screen sticky top-0 relative overflow-hidden border-l border-border">
         {/* Background Image Layer */}
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: 'url("/auth-hero.png")' }}
         />
-        
+
         {/* Futuristic Grid Overlay */}
         <div className="absolute inset-0 bg-gradient-to-tr from-[#0D0B14] via-[#0D0B14]/85 to-transparent z-10" />
 
@@ -317,7 +338,7 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSwitchToLogin }) => {
           <div className="flex flex-col gap-4 max-w-xl">
             <span className="text-xs font-mono text-primary uppercase tracking-widest font-semibold">// NEXT-GEN PREDICTION MARKET PROTOCOL</span>
             <h2 className="text-4xl font-extrabold text-foreground tracking-tight leading-tight uppercase font-sans">
-              Predict on anything, <br/>settled by AI.
+              Predict on anything, <br />settled by AI.
             </h2>
             <p className="text-sm text-muted leading-relaxed font-sans mt-2">
               Join AnyBet's decentralized console to place stakes on physical events, sports matches, and crypto prediction markets. All outcomes are audited by autonomous oracle networks for transparent payouts.

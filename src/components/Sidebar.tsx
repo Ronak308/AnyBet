@@ -8,8 +8,6 @@ import {
   Cpu, 
   HelpCircle, 
   LogOut, 
-  ChevronLeft, 
-  ChevronRight,
   ChevronDown,
   ChevronUp,
   Wallet,
@@ -20,7 +18,8 @@ import {
   Layers,
   Zap,
   AlertTriangle,
-  BarChart3
+  BarChart3,
+  Trophy
 } from 'lucide-react'
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
@@ -59,8 +58,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const menuItems = [
     { id: 'operations', label: 'Operations', icon: LayoutDashboard },
+    { id: 'users', label: 'Users', icon: Users },
     { id: 'challenges', label: 'Challenges', icon: Sword, isDropdown: true },
-    { id: 'reputation', label: 'Reputation', icon: Users },
+    { id: 'reputation', label: 'Reputation', icon: Trophy },
     { id: 'financials', label: 'Financials', icon: Coins, isDropdown: true },
     { id: 'ai-oracle', label: 'AI Oracle', icon: Cpu },
   ]
@@ -109,10 +109,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className="flex flex-col gap-1"
               >
                 <Logo collapsed={false} size="md" />
-                <span className="text-[9px] text-muted font-mono uppercase tracking-widest pl-0.5">Admin v2.4.0</span>
               </motion.div>
             ) : (
-              <motion.div 
+              <motion.div
                 key="collapsed-logo"
                 initial={{ scale: 0.8 }}
                 animate={{ scale: 1 }}
@@ -124,17 +123,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </motion.div>
             )}
           </AnimatePresence>
-
-          {!isCollapsed && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted hover:text-foreground hidden md:flex"
-              onClick={() => setIsCollapsed(true)}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          )}
         </div>
 
         {/* Menu Navigation */}
@@ -303,7 +291,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 key={item.id}
                 variant={isActive ? "nav-active" : "nav"}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-4'} h-12 w-full transition-all duration-200`}
+                className={`flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-4'} h-10 w-full transition-all duration-200`}
                 glow={isActive}
               >
                 <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-primary' : 'text-muted'}`} />
@@ -323,18 +311,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="flex flex-col gap-6 mt-auto">
-
-        {/* Collapsed Toggle Button */}
-        {isCollapsed && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 text-muted hover:text-foreground mx-auto"
-            onClick={() => setIsCollapsed(false)}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
-        )}
 
         {/* User info strip (collapsed: hidden, expanded: show) */}
         {!isCollapsed && user && (
@@ -362,11 +338,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Button
             id="sidebar-logout"
             variant="ghost"
-            className={`w-full justify-start ${isCollapsed ? 'justify-center p-0' : 'px-4 gap-3'} transition-colors ${
-              logoutConfirm
-                ? 'text-red-300 bg-red-950/30 hover:bg-red-950/40'
-                : 'text-red-400/80 hover:text-red-400 hover:bg-red-950/20'
-            }`}
+            className={`w-full justify-start ${isCollapsed ? 'justify-center p-0' : 'px-4 gap-3'} transition-colors ${logoutConfirm
+              ? 'text-red-300 bg-red-950/30 hover:bg-red-950/40'
+              : 'text-red-400/80 hover:text-red-400 hover:bg-red-950/20'
+              }`}
             onClick={handleLogout}
           >
             <LogOut className="h-5 w-5 shrink-0" />
