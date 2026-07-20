@@ -330,9 +330,9 @@ export const AllChallengesModule: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       {isAdminSource ? (
-                        <Badge variant="pro" className="text-[9px] gap-1">👑 Admin</Badge>
+                        <Badge variant="pro" className="text-[9px]">Admin</Badge>
                       ) : (
-                        <Badge variant="outline" className="text-[9px] text-cyan-400 border-cyan-500/30 gap-1">📱 App</Badge>
+                        <Badge variant="outline" className="text-[9px] text-cyan-400 border-cyan-500/30">App</Badge>
                       )}
                     </TableCell>
                     <TableCell>
@@ -466,8 +466,8 @@ export const AllChallengesModule: React.FC = () => {
                     onChange={e => setNewSource(e.target.value as any)}
                     className="w-full bg-surface/40 border border-border rounded-md p-2 text-xs font-mono text-foreground outline-none cursor-pointer"
                   >
-                    <option value="Admin Portal">👑 Admin Portal</option>
-                    <option value="Mobile App">📱 Mobile App</option>
+                    <option value="Admin Portal">Admin Portal</option>
+                    <option value="Mobile App">Mobile App</option>
                   </select>
                 </div>
 
