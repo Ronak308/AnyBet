@@ -6,11 +6,11 @@ import {
   GitCompare,
   Binary
 } from 'lucide-react'
-import { Card } from './ui/card'
-import { Badge } from './ui/badge'
-import { Button } from './ui/button'
-import { Sheet, SheetContent } from './ui/sheet'
-import { Input } from './ui/input'
+import { Card } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
+import { Sheet, SheetContent } from '../components/ui/sheet'
+import { Input } from '../components/ui/input'
 
 export const OracleConfigView: React.FC<{ navigate: (tab: string) => void }> = ({ navigate: _navigate }) => {
   const [sportsConfidence, setSportsConfidence] = useState(94.5)

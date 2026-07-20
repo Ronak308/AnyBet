@@ -12,14 +12,14 @@ import {
   SlidersHorizontal,
   Download
 } from 'lucide-react'
-import { Card } from './ui/card'
-import { Badge } from './ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { Progress } from './ui/progress'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
-import { Sheet, SheetContent } from './ui/sheet'
+import { Card } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar'
+import { Progress } from '../components/ui/progress'
+import { Button } from '../components/ui/button'
+import { Input } from '../components/ui/input'
+import { Sheet, SheetContent } from '../components/ui/sheet'
 
 export const ReputationView: React.FC<{ navigate: (tab: string) => void }> = ({ navigate: _navigate }) => {
   const [users, setUsers] = useState([

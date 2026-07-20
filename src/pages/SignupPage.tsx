@@ -2,9 +2,9 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, Eye, EyeOff, User, AtSign, UserPlus, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { SmoothInput } from './ui/skiper106'
-import { Button } from './ui/button'
-import { Logo } from './ui/Logo'
+import { SmoothInput } from '../components/ui/skiper106'
+import { Button } from '../components/ui/button'
+import { Logo } from '../components/ui/Logo'
 
 interface SignupPageProps {
   onSwitchToLogin: () => void

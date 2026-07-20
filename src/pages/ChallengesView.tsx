@@ -6,13 +6,13 @@ import {
   Lock,
   Sliders
 } from 'lucide-react'
-import { Card, CardContent } from './ui/card'
-import { Badge } from './ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
-import { Button } from './ui/button'
+import { Card, CardContent } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
+import { Button } from '../components/ui/button'
 import { AICore } from './AICore'
-import { Sheet, SheetContent } from './ui/sheet'
-import { Input } from './ui/input'
+import { Sheet, SheetContent } from '../components/ui/sheet'
+import { Input } from '../components/ui/input'
 
 export const ChallengesView: React.FC<{ navigate: (tab: string) => void }> = ({ navigate }) => {
   const [filter, setFilter] = useState<'all' | 'Pending' | 'AI Settling' | 'Disputed' | 'Settled'>('all')

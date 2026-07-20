@@ -9,10 +9,10 @@ import {
   ExternalLink,
   Compass
 } from 'lucide-react'
-import { Card, CardContent } from './ui/card'
-import { Badge } from './ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
-import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
+import { Card, CardContent } from '../components/ui/card'
+import { Badge } from '../components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
+import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { 
   AreaChart, 
   Area, 
