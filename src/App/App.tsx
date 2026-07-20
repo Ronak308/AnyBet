@@ -4,7 +4,8 @@ import {
   Routes,
   Route,
   Navigate,
-  useNavigate
+  useNavigate,
+  useLocation
 } from 'react-router-dom'
 import { OperationsView } from '@/pages/OperationsView'
 import { ChallengesView } from '@/pages/ChallengesView'
@@ -13,7 +14,6 @@ import { FinancialsView } from '@/pages/FinancialsView'
 import { OracleConfigView } from '@/pages/OracleConfigView'
 import { UsersPage } from '@/pages/users/UsersPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
-// import { SignupPage } from '@/pages/auth/SignupPage'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { DashboardLayout } from '@/App/DashbaordLayout'
@@ -24,7 +24,7 @@ function OperationsRoute() {
   const navigate = useNavigate()
   return (
     <OperationsView
-      onNavigateToChallenges={() => navigate('/challenges')}
+      onNavigateToChallenges={() => navigate('/challenges-all')}
       navigate={(tab) => navigate('/' + tab)}
     />
   )
@@ -32,7 +32,9 @@ function OperationsRoute() {
 
 function ChallengesRoute() {
   const navigate = useNavigate()
-  return <ChallengesView navigate={(tab) => navigate('/' + tab)} />
+  const location = useLocation()
+  const currentTab = location.pathname.startsWith('/') ? location.pathname.slice(1) : location.pathname
+  return <ChallengesView activeTab={currentTab} navigate={(tab) => navigate('/' + tab)} />
 }
 
 function ReputationRoute() {
@@ -42,7 +44,9 @@ function ReputationRoute() {
 
 function FinancialsRoute() {
   const navigate = useNavigate()
-  return <FinancialsView navigate={(tab) => navigate('/' + tab)} />
+  const location = useLocation()
+  const currentTab = location.pathname.startsWith('/') ? location.pathname.slice(1) : location.pathname
+  return <FinancialsView activeTab={currentTab} navigate={(tab) => navigate('/' + tab)} />
 }
 
 function OracleRoute() {
@@ -70,23 +74,6 @@ function LoginPageView() {
   )
 }
 
-/*
-function SignupPageView() {
-  const navigate = useNavigate()
-  return (
-    <motion.div
-      key="signup"
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
-    >
-      <SignupPage onSwitchToLogin={() => navigate('/login')} />
-    </motion.div>
-  )
-}
-*/
-
 // ─── Auth Gate ─────────────────────────────────────────────────────────────
 
 function AuthGate() {
@@ -109,7 +96,6 @@ function AuthGate() {
       {!isAuthenticated ? (
         <>
           <Route path="/login" element={<LoginPageView />} />
-          {/* <Route path="/signup" element={<SignupPageView />} /> */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </>
       ) : (
@@ -118,8 +104,17 @@ function AuthGate() {
             <Route index element={<Navigate to="/operations" replace />} />
             <Route path="operations" element={<OperationsRoute />} />
             <Route path="challenges" element={<ChallengesRoute />} />
+            <Route path="challenges-all" element={<ChallengesRoute />} />
+            <Route path="challenges-categories" element={<ChallengesRoute />} />
+            <Route path="challenges-live" element={<ChallengesRoute />} />
+            <Route path="challenges-disputes" element={<ChallengesRoute />} />
+            <Route path="challenges-analytics" element={<ChallengesRoute />} />
             <Route path="reputation" element={<ReputationRoute />} />
             <Route path="financials" element={<FinancialsRoute />} />
+            <Route path="financials-revenue" element={<FinancialsRoute />} />
+            <Route path="financials-escrow" element={<FinancialsRoute />} />
+            <Route path="financials-fees" element={<FinancialsRoute />} />
+            <Route path="financials-disputes" element={<FinancialsRoute />} />
             <Route path="ai-oracle" element={<OracleRoute />} />
             <Route path="users" element={<UsersRoute />} />
             <Route path="*" element={<Navigate to="/operations" replace />} />

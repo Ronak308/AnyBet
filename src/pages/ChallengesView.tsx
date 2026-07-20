@@ -9,12 +9,12 @@ import {
   ArrowLeft 
 } from 'lucide-react'
 import { useChallenges } from '../context/ChallengesContext'
-import { AllChallengesModule } from '../components/challenges/AllChallengesModule'
-import { CategoriesModule } from '../components/challenges/CategoriesModule'
-import { LiveSettlementModule } from '../components/challenges/LiveSettlementModule'
-import { DisputesModule } from '../components/challenges/DisputesModule'
-import { AnalyticsModule } from '../components/challenges/AnalyticsModule'
-import { ChallengeDetailsSheet } from '../components/challenges/ChallengeDetailsSheet'
+import { AllChallengesModule } from './challenges/AllChallengesModule'
+import { CategoriesModule } from './challenges/CategoriesModule'
+import { LiveSettlementModule } from './challenges/LiveSettlementModule'
+import { DisputesModule } from './challenges/DisputesModule'
+import { AnalyticsModule } from './challenges/AnalyticsModule'
+import { ChallengeDetailsSheet } from './challenges/ChallengeDetailsSheet'
 
 interface ChallengesViewProps {
   activeTab?: string

@@ -11,11 +11,12 @@ import {
   ChevronLeft, 
   ChevronRight
 } from 'lucide-react'
-import { Badge } from '../ui/badge'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
-import { Sheet, SheetContent } from '../ui/sheet'
+import { Badge } from '../../components/ui/badge'
+import { Button } from '../../components/ui/button'
+import { Input } from '../../components/ui/input'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
+import { Sheet, SheetContent } from '../../components/ui/sheet'
+import { DateTimePicker } from '../../components/ui/date-time-picker'
 import { useChallenges } from '../../context/ChallengesContext'
 import type { ChallengeStatus, ChallengeCategoryType } from '../../context/ChallengesContext'
 
@@ -47,12 +48,20 @@ export const AllChallengesModule: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 8
 
+  // Helper for datetime-local format (YYYY-MM-DDTHH:mm)
+  const formatDateTimeLocal = (date: Date) => {
+    const pad = (n: number) => n.toString().padStart(2, '0')
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  }
+
   // New Challenge Sheet state
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newCategory, setNewCategory] = useState<ChallengeCategoryType>('Prediction')
   const [newType, setNewType] = useState('Binary Option')
   const [newFrequency, setNewFrequency] = useState<'Single Event' | 'Day-wise' | 'Weekly' | 'Monthly'>('Single Event')
+  const [newStartDate, setNewStartDate] = useState(() => formatDateTimeLocal(new Date()))
+  const [newEndDate, setNewEndDate] = useState(() => formatDateTimeLocal(new Date(Date.now() + 7 * 86400000)))
   const [newDescription, setNewDescription] = useState('')
   const [newStake, setNewStake] = useState('100')
   const [newMaxParticipants, setNewMaxParticipants] = useState('100')
@@ -94,6 +103,21 @@ export const AllChallengesModule: React.FC = () => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id])
   }
 
+  const handleFrequencyChange = (freq: 'Single Event' | 'Day-wise' | 'Weekly' | 'Monthly') => {
+    setNewFrequency(freq)
+    const now = new Date()
+    setNewStartDate(formatDateTimeLocal(now))
+
+    let daysToAdd = 7
+    if (freq === 'Day-wise') daysToAdd = 1
+    if (freq === 'Weekly') daysToAdd = 7
+    if (freq === 'Monthly') daysToAdd = 30
+    if (freq === 'Single Event') daysToAdd = 1
+
+    const end = new Date(now.getTime() + daysToAdd * 86400000)
+    setNewEndDate(formatDateTimeLocal(end))
+  }
+
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newTitle.trim()) {
@@ -106,6 +130,8 @@ export const AllChallengesModule: React.FC = () => {
       category: newCategory,
       type: newType.trim(),
       frequency: newFrequency,
+      startDate: newStartDate,
+      endDate: newEndDate,
       description: newDescription.trim() || 'No detailed description provided.',
       stakeAmount: Number(newStake) || 100,
       maxParticipants: Number(newMaxParticipants) || 100,
@@ -239,6 +265,7 @@ export const AllChallengesModule: React.FC = () => {
               </TableHead>
               <TableHead className="text-xs font-mono">ID</TableHead>
               <TableHead className="text-xs font-mono">Title & Category</TableHead>
+              <TableHead className="text-xs font-mono">Time Period</TableHead>
               <TableHead className="text-xs font-mono">Type</TableHead>
               <TableHead className="text-xs font-mono">Creator</TableHead>
               <TableHead className="text-xs font-mono">Participants</TableHead>
@@ -274,10 +301,18 @@ export const AllChallengesModule: React.FC = () => {
                         <span className="font-medium text-xs text-foreground line-clamp-1">{c.title}</span>
                         <div className="flex items-center gap-1.5">
                           <span className="text-[10px] font-mono text-muted">{c.category}</span>
-                          {c.frequency === 'Day-wise' && <Badge variant="warning" className="text-[8px] py-0 px-1">⚡ DAY-WISE</Badge>}
-                          {c.frequency === 'Weekly' && <Badge variant="pro" className="text-[8px] py-0 px-1">📅 WEEKLY</Badge>}
-                          {c.frequency === 'Monthly' && <Badge variant="elite" className="text-[8px] py-0 px-1">🏆 MONTHLY</Badge>}
+                          {c.frequency === 'Day-wise' && <Badge variant="warning" className="text-[8px] py-0 px-1">⚡ DAY-WISE (24H)</Badge>}
+                          {c.frequency === 'Weekly' && <Badge variant="pro" className="text-[8px] py-0 px-1">📅 WEEKLY (7D)</Badge>}
+                          {c.frequency === 'Monthly' && <Badge variant="elite" className="text-[8px] py-0 px-1">🏆 MONTHLY (30D)</Badge>}
                         </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-0.5 font-mono text-[11px]">
+                        <span className="text-foreground/90">{c.startDate} → {c.endDate}</span>
+                        <span className="text-[10px] text-muted font-mono">
+                          {c.status === 'Live' ? '⏳ Active Countdown' : '🗓️ Duration Fixed'}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted">{c.type}</TableCell>
@@ -429,14 +464,32 @@ export const AllChallengesModule: React.FC = () => {
                 <label className="text-[10px] font-mono uppercase text-muted block mb-1">Challenge Duration / Frequency</label>
                 <select
                   value={newFrequency}
-                  onChange={e => setNewFrequency(e.target.value as any)}
+                  onChange={e => handleFrequencyChange(e.target.value as any)}
                   className="w-full bg-surface/40 border border-border rounded-md p-2 text-xs font-mono text-foreground outline-none"
                 >
-                  <option value="Single Event">Single Event (Standard Wager)</option>
+                  <option value="Single Event">Single Event (Standard 24h Wager)</option>
                   <option value="Day-wise">Day-wise (Daily 24h Streak)</option>
                   <option value="Weekly">Weekly (7-Day Tournament / Pool)</option>
                   <option value="Monthly">Monthly (30-Day Championship)</option>
                 </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Start Date & Time</label>
+                  <DateTimePicker
+                    value={newStartDate}
+                    onChange={val => setNewStartDate(val)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">End Date & Time</label>
+                  <DateTimePicker
+                    value={newEndDate}
+                    onChange={val => setNewEndDate(val)}
+                  />
+                </div>
               </div>
 
               <div>

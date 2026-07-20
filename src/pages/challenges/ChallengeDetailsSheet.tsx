@@ -11,10 +11,10 @@ import {
   Award, 
   Check
 } from 'lucide-react'
-import { Badge } from '../ui/badge'
-import { Button } from '../ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
-import { Sheet, SheetContent } from '../ui/sheet'
+import { Badge } from '../../components/ui/badge'
+import { Button } from '../../components/ui/button'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
+import { Sheet, SheetContent } from '../../components/ui/sheet'
 import { useChallenges } from '../../context/ChallengesContext'
 import type { ChallengeItem, ChallengeStatus } from '../../context/ChallengesContext'
 

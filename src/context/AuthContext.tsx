@@ -84,22 +84,14 @@ function generateId(): string {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(() => getStoredUser())
+  const [isLoading, setIsLoading] = useState(false)
 
   // Rehydrate session / subscribe to auth state changes
   useEffect(() => {
     if (USE_FIREBASE) {
       const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
-          // 1. Immediately restore from cache so there's zero blank screen
-          const cached = getStoredUser()
-          if (cached && cached.id === firebaseUser.uid) {
-            setUser(cached)
-            setIsLoading(false)
-          }
-
-          // 2. Fetch fresh Firestore data in the background
           try {
             const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
             if (userDoc.exists()) {
@@ -127,31 +119,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           } catch (error) {
             console.error('Error fetching user document from Firestore:', error)
-            // Keep cached/fallback user on network error — don't clear session
-            if (!cached) {
-              const email = firebaseUser.email || ''
-              const isAdmin = email.trim().toLowerCase() === 'admin@anybet.com'
-              setUser({
-                id: firebaseUser.uid,
-                name: isAdmin ? 'Admin User' : (firebaseUser.displayName || email.split('@')[0] || 'User'),
-                email,
-                username: email.split('@')[0] || 'user',
-                role: isAdmin ? 'admin' : 'user',
-                joinedAt: new Date().toISOString()
-              })
-            }
           } finally {
             setIsLoading(false)
           }
         } else {
-          localStorage.removeItem(STORAGE_USER_KEY)
-          setUser(null)
+          // If no firebase user but cached user exists, keep cached user
+          const cached = getStoredUser()
+          if (!cached) {
+            setUser(null)
+          }
           setIsLoading(false)
         }
       })
       return () => unsubscribe()
     } else {
-      // Local Storage fallback flow
       const stored = getStoredUser()
       setUser(stored)
       setIsLoading(false)

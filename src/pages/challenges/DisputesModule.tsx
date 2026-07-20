@@ -18,10 +18,10 @@ import {
   X,
   ArrowLeft
 } from 'lucide-react'
-import { Card } from '../ui/card'
-import { Badge } from '../ui/badge'
-import { Button } from '../ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
+import { Card } from '../../components/ui/card'
+import { Badge } from '../../components/ui/badge'
+import { Button } from '../../components/ui/button'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
 import { useChallenges } from '../../context/ChallengesContext'
 import type { DisputeItem } from '../../context/ChallengesContext'
 

@@ -1,5 +1,18 @@
-import React, { createContext, useContext, useState, useMemo } from 'react'
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react'
 import { useWallet } from './WalletContext'
+import {
+  subscribeToChallenges,
+  subscribeToCategories,
+  subscribeToDisputes,
+  createChallengeInFirestore,
+  updateChallengeInFirestore,
+  deleteChallengeFromFirestore,
+  createCategoryInFirestore,
+  updateCategoryInFirestore,
+  deleteCategoryFromFirestore,
+  updateDisputeInFirestore,
+  seedInitialFirestoreData
+} from '../services/challengesService'
 
 // ─── Interfaces & Types ───────────────────────────────────────────────────────
 
@@ -668,6 +681,31 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }
 
+  // Real-time Firestore Subscriptions & Initial Seeding
+  useEffect(() => {
+    // Seed initial mock data into Firestore if empty
+    seedInitialFirestoreData(INITIAL_CHALLENGES, INITIAL_CATEGORIES, INITIAL_DISPUTES)
+
+    // Subscribe to live Firestore snapshots
+    const unsubChallenges = subscribeToChallenges((items) => {
+      if (items.length > 0) setChallenges(items)
+    })
+
+    const unsubCategories = subscribeToCategories((items) => {
+      if (items.length > 0) setCategories(items)
+    })
+
+    const unsubDisputes = subscribeToDisputes((items) => {
+      if (items.length > 0) setDisputes(items)
+    })
+
+    return () => {
+      unsubChallenges?.()
+      unsubCategories?.()
+      unsubDisputes?.()
+    }
+  }, [])
+
   // ─── Challenge Actions ──────────────────────────────────────────────────────
 
   const createChallenge = (newChallenge: Partial<ChallengeItem>) => {
@@ -682,6 +720,7 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       description: newChallenge.description || 'No description provided.',
       category: newChallenge.category || 'Custom',
       type: newChallenge.type || 'Custom Wager',
+      frequency: newChallenge.frequency || 'Single Event',
       creatorId: newChallenge.creatorId || 'USR_01',
       creatorName: newChallenge.creatorName || 'Operator Admin',
       participantsCount: count,
@@ -711,6 +750,7 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     setChallenges(prev => [item, ...prev])
+    createChallengeInFirestore(item)
     showToastNotice(`Challenge ${id} created successfully!`, 'success')
   }
 
@@ -719,10 +759,12 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (selectedChallenge?.id === id) {
       setSelectedChallenge(prev => prev ? { ...prev, ...updates } : null)
     }
+    updateChallengeInFirestore(id, updates)
     showToastNotice(`Challenge ${id} updated`, 'info')
   }
 
   const updateChallengeStatus = (id: string, status: ChallengeStatus) => {
+    let updatedItem: ChallengeItem | undefined
     setChallenges(prev => prev.map(c => {
       if (c.id === id) {
         const updatedTimeline = [...c.timeline]
@@ -733,10 +775,14 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           timestamp: new Date().toLocaleString(),
           completed: true
         })
-        return { ...c, status, timeline: updatedTimeline }
+        updatedItem = { ...c, status, timeline: updatedTimeline }
+        return updatedItem
       }
       return c
     }))
+    if (updatedItem) {
+      updateChallengeInFirestore(id, { status: updatedItem.status, timeline: updatedItem.timeline })
+    }
     showToastNotice(`Challenge ${id} status set to ${status}`, 'success')
   }
 
@@ -759,33 +805,31 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       ]
     }
     setChallenges(prev => [duplicated, ...prev])
+    createChallengeInFirestore(duplicated)
     showToastNotice(`Duplicated challenge to ${duplicated.id}`, 'success')
   }
 
   const deleteChallenge = (id: string) => {
     setChallenges(prev => prev.filter(c => c.id !== id))
     if (selectedChallenge?.id === id) setSelectedChallenge(null)
+    deleteChallengeFromFirestore(id)
     showToastNotice(`Deleted challenge ${id}`, 'warning')
   }
 
   const bulkApprove = (ids: string[]) => {
-    setChallenges(prev => prev.map(c => ids.includes(c.id) ? { ...c, status: 'Approved' } : c))
-    showToastNotice(`Approved ${ids.length} selected challenges`, 'success')
+    ids.forEach(id => updateChallengeStatus(id, 'Approved'))
   }
 
   const bulkReject = (ids: string[]) => {
-    setChallenges(prev => prev.map(c => ids.includes(c.id) ? { ...c, status: 'Cancelled' } : c))
-    showToastNotice(`Rejected ${ids.length} selected challenges`, 'warning')
+    ids.forEach(id => updateChallengeStatus(id, 'Cancelled'))
   }
 
   const bulkSuspend = (ids: string[]) => {
-    setChallenges(prev => prev.map(c => ids.includes(c.id) ? { ...c, status: 'Draft' } : c))
-    showToastNotice(`Suspended ${ids.length} selected challenges`, 'info')
+    ids.forEach(id => updateChallengeStatus(id, 'Draft'))
   }
 
   const bulkDelete = (ids: string[]) => {
-    setChallenges(prev => prev.filter(c => !ids.includes(c.id)))
-    showToastNotice(`Deleted ${ids.length} selected challenges`, 'warning')
+    ids.forEach(id => deleteChallenge(id))
   }
 
   // ─── Category Actions ────────────────────────────────────────────────────────
@@ -798,21 +842,31 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       challengeCount: 0
     }
     setCategories(prev => [...prev, newCategory])
+    createCategoryInFirestore(newCategory)
     showToastNotice(`Category "${cat.name}" created`, 'success')
   }
 
   const updateCategory = (id: string, updates: Partial<ChallengeCategory>) => {
     setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c))
+    updateCategoryInFirestore(id, updates)
     showToastNotice(`Category updated`, 'info')
   }
 
   const toggleCategoryStatus = (id: string) => {
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, isEnabled: !c.isEnabled } : c))
+    setCategories(prev => prev.map(c => {
+      if (c.id === id) {
+        const next = !c.isEnabled
+        updateCategoryInFirestore(id, { isEnabled: next })
+        return { ...c, isEnabled: next }
+      }
+      return c
+    }))
     showToastNotice(`Category visibility toggled`, 'info')
   }
 
   const deleteCategory = (id: string) => {
     setCategories(prev => prev.filter(c => c.id !== id))
+    deleteCategoryFromFirestore(id)
     showToastNotice(`Category deleted`, 'warning')
   }
 
@@ -825,7 +879,9 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const updated = [...prev]
       const [moved] = updated.splice(idx, 1)
       updated.splice(newIndex, 0, moved)
-      return updated.map((item, index) => ({ ...item, displayOrder: index + 1 }))
+      const finalItems = updated.map((item, index) => ({ ...item, displayOrder: index + 1 }))
+      finalItems.forEach(item => updateCategoryInFirestore(item.id, { displayOrder: item.displayOrder }))
+      return finalItems
     })
   }
 
@@ -840,9 +896,11 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // Unlock locked coins and credit winner payout in Wallet Context
     creditCoins('USR_01', payoutAmount, 'Bet Win', `Winner payout for Challenge ${challengeId}`)
 
+    let updatedChallenge: ChallengeItem | undefined
+
     setChallenges(prev => prev.map(c => {
       if (c.id === challengeId) {
-        return {
+        updatedChallenge = {
           ...c,
           status: 'Completed',
           financials: {
@@ -864,9 +922,14 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             { id: `t-${Date.now()+2}`, stage: 'Archived', description: 'Challenge closed & archived', timestamp: new Date().toLocaleString(), completed: true }
           ]
         }
+        return updatedChallenge
       }
       return c
     }))
+
+    if (updatedChallenge) {
+      updateChallengeInFirestore(challengeId, updatedChallenge)
+    }
 
     showToastNotice(`Challenge ${challengeId} settled! ${payoutAmount} BET Coins paid to ${winnerName}`, 'success')
   }
@@ -883,6 +946,7 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         settleChallenge(targetChallenge.id, winnerName, winnerName, `Dispute claim approved: ${notes || 'Operator ruling'}`)
       }
       setDisputes(prev => prev.map(d => d.id === disputeId ? { ...d, status: 'Resolved', resolvedAt: new Date().toLocaleString(), resolutionNotes: notes || 'Claim Approved' } : d))
+      updateDisputeInFirestore(disputeId, { status: 'Resolved', resolutionNotes: notes || 'Claim Approved' })
       showToastNotice(`Dispute ${disputeId} resolved: Claim approved for ${winnerName}`, 'success')
 
     } else if (action === 'refund') {
@@ -897,14 +961,17 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         } : c))
       }
       setDisputes(prev => prev.map(d => d.id === disputeId ? { ...d, status: 'Closed', resolvedAt: new Date().toLocaleString(), resolutionNotes: notes || 'Full Refund Processed' } : d))
+      updateDisputeInFirestore(disputeId, { status: 'Closed', resolutionNotes: notes || 'Full Refund Processed' })
       showToastNotice(`Dispute ${disputeId} closed: Full refund credited to all participants`, 'warning')
 
     } else if (action === 'reject_claim') {
       setDisputes(prev => prev.map(d => d.id === disputeId ? { ...d, status: 'Closed', resolvedAt: new Date().toLocaleString(), resolutionNotes: notes || 'Claim Rejected' } : d))
+      updateDisputeInFirestore(disputeId, { status: 'Closed', resolutionNotes: notes || 'Claim Rejected' })
       showToastNotice(`Dispute ${disputeId} claim rejected`, 'info')
 
     } else if (action === 'reopen') {
       setDisputes(prev => prev.map(d => d.id === disputeId ? { ...d, status: 'Pending' } : d))
+      updateDisputeInFirestore(disputeId, { status: 'Pending' })
       showToastNotice(`Dispute ${disputeId} reopened for investigation`, 'info')
     }
   }
@@ -939,9 +1006,63 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const exportPDF = () => {
     showToastNotice('Generating PDF executive report...', 'info')
-    setTimeout(() => {
-      window.print()
-    }, 500)
+    
+    const liveCount = challenges.filter(c => c.status === 'Live').length
+    const completedCount = challenges.filter(c => c.status === 'Completed').length
+    const disputedCount = challenges.filter(c => c.status === 'Disputed').length
+    const totalVolume = challenges.reduce((sum, c) => sum + c.prizePool, 0)
+    const totalFees = challenges.reduce((sum, c) => sum + c.financials.platformFee, 0)
+
+    const reportContent = `================================================================================
+                       ANYBET OPERATOR PLATFORM
+                     EXECUTIVE ANALYTICS & AUDIT REPORT
+================================================================================
+Generated At : ${new Date().toLocaleString()}
+Report Scope : Master Challenges & Financial Audit Summary
+
+--------------------------------------------------------------------------------
+1. EXECUTIVE PLATFORM METRICS
+--------------------------------------------------------------------------------
+Total Wagers Created    : ${challenges.length}
+Active Live Events      : ${liveCount}
+Completed Events        : ${completedCount}
+Disputed Events         : ${disputedCount}
+Total Prize Volume      : ${totalVolume.toLocaleString()} BET Coins
+Platform Revenue (5%)   : ${totalFees.toLocaleString()} BET Coins
+
+--------------------------------------------------------------------------------
+2. MASTER CHALLENGES INVENTORY
+--------------------------------------------------------------------------------
+${challenges.map(c => `[${c.id}] ${c.title}
+  • Category   : ${c.category} (${c.type})
+  • Creator    : ${c.creatorName} | Stake: ${c.stakeAmount} BET | Prize Pool: ${c.prizePool.toLocaleString()} BET
+  • Status     : ${c.status} | Participants: ${c.participantsCount} Users
+`).join('\n')}
+
+--------------------------------------------------------------------------------
+3. DISPUTE ARBITRATION AUDIT
+--------------------------------------------------------------------------------
+${disputes.map(d => `[${d.id}] ${d.challengeTitle}
+  • Involved   : ${d.usersInvolved.join(' vs ')}
+  • Status     : ${d.status} | AI Rating: ${d.aiReviewResult.confidenceScore}% Confidence
+  • Reason     : ${d.disputeReason}
+`).join('\n')}
+
+================================================================================
+               END OF ANYBET EXECUTIVE SECURITY REPORT
+================================================================================`
+
+    const blob = new Blob([reportContent], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `AnyBet_Executive_Report_${Date.now()}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    showToastNotice('PDF Report downloaded successfully!', 'success')
   }
 
   const value = useMemo(() => ({
