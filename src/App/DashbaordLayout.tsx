@@ -1,16 +1,8 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sidebar } from './components/Sidebar'
-import { Navbar } from './components/Navbar'
-import { OperationsView } from './pages/OperationsView'
-import { ChallengesView } from './pages/ChallengesView'
-import { ReputationView } from './pages/ReputationView'
-import { FinancialsView } from './pages/FinancialsView'
-import { OracleConfigView } from './pages/OracleConfigView'
-import { LoginPage } from './pages/LoginPage'
-import { SignupPage } from './pages/SignupPage'
-import { AuthProvider, useAuth } from './context/AuthContext'
-import { ThemeProvider } from './context/ThemeContext'
+import { useLocation, useNavigate, Outlet } from 'react-router-dom'
+import { Sidebar } from '@/components/Sidebar'
+import { Navbar } from '@/components/Navbar'
 import { LayoutDashboard, Sword, Users, Coins, Cpu } from 'lucide-react'
 
 // Interface for floating particle
@@ -23,61 +15,9 @@ interface Particle {
   color: string
 }
 
-// ─── Auth Gate ─────────────────────────────────────────────────────────────
-
-type AuthScreen = 'login' | 'signup'
-
-function AuthGate() {
-  const { isAuthenticated, isLoading } = useAuth()
-  const [authScreen, setAuthScreen] = useState<AuthScreen>('login')
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <motion.div
-          className="w-10 h-10 rounded-full border-2 border-border border-t-primary"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
-        />
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <AnimatePresence mode="wait">
-        {authScreen === 'login' ? (
-          <motion.div
-            key="login"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <LoginPage onSwitchToSignup={() => setAuthScreen('signup')} />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="signup"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <SignupPage onSwitchToLogin={() => setAuthScreen('login')} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    )
-  }
-
-  return <Dashboard />
-}
-
-// ─── Main Dashboard ────────────────────────────────────────────────────────
-
-function Dashboard() {
-  const [activeTab, setActiveTab] = useState<string>('operations')
+export function DashboardLayout() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false)
 
   // Toast Notification State
@@ -131,8 +71,9 @@ function Dashboard() {
     { id: 8, x: '40vw', y: '85vh', size: 5, duration: 33, color: '#00E0FF' },
   ]
 
-  // Unified navigation handler — passed to all views
-  const navigate = (tab: string) => setActiveTab(tab)
+  // Determine active tab string from url pathname
+  const activeTab = location.pathname.split('/')[1] || 'operations'
+  const setActiveTab = (tab: string) => navigate('/' + tab)
 
   // Mobile Bottom Navigation tabs list
   const mobileTabs = [
@@ -143,27 +84,9 @@ function Dashboard() {
     { id: 'ai-oracle', label: 'Oracle', icon: Cpu },
   ]
 
-  // Render the current view
-  const renderActiveView = () => {
-    switch (activeTab) {
-      case 'operations':
-        return <OperationsView onNavigateToChallenges={() => navigate('challenges')} navigate={navigate} />
-      case 'challenges':
-        return <ChallengesView navigate={navigate} />
-      case 'reputation':
-        return <ReputationView navigate={navigate} />
-      case 'financials':
-        return <FinancialsView navigate={navigate} />
-      case 'ai-oracle':
-        return <OracleConfigView navigate={navigate} />
-      default:
-        return <OperationsView onNavigateToChallenges={() => navigate('challenges')} navigate={navigate} />
-    }
-  }
-
   return (
     <div className="h-screen bg-background text-foreground flex relative overflow-hidden font-sans select-none pb-16 md:pb-0">
-      
+
       {/* Floating particles background layer */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-30">
         {particles.map((p) => (
@@ -192,36 +115,36 @@ function Dashboard() {
       </div>
 
       {/* Sidebar - Collapsible */}
-      <Sidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        isCollapsed={sidebarCollapsed} 
-        setIsCollapsed={setSidebarCollapsed} 
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isCollapsed={sidebarCollapsed}
+        setIsCollapsed={setSidebarCollapsed}
         className="hidden md:flex"
       />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-screen relative z-10 overflow-hidden">
         {/* Top Navbar */}
-        <Navbar 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          sidebarCollapsed={sidebarCollapsed} 
-          setSidebarCollapsed={setSidebarCollapsed} 
+        <Navbar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          sidebarCollapsed={sidebarCollapsed}
+          setSidebarCollapsed={setSidebarCollapsed}
         />
 
         {/* Dynamic View Swapper */}
         <div className="flex-1 overflow-y-auto">
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeTab}
+              key={location.pathname}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
               className="w-full"
             >
-              {renderActiveView()}
+              <Outlet />
             </motion.div>
           </AnimatePresence>
         </div>
@@ -245,12 +168,10 @@ function Dashboard() {
                   transition={{ type: 'spring', stiffness: 350, damping: 28 }}
                 />
               )}
-              <Icon className={`h-4.5 w-4.5 transition-colors duration-200 z-10 ${
-                isActive ? 'text-primary' : 'text-muted hover:text-foreground'
-              }`} />
-              <span className={`text-[9px] font-mono tracking-wider font-bold z-10 transition-colors duration-200 ${
-                isActive ? 'text-foreground' : 'text-muted'
-              }`}>
+              <Icon className={`h-4.5 w-4.5 transition-colors duration-200 z-10 ${isActive ? 'text-primary' : 'text-muted hover:text-foreground'
+                }`} />
+              <span className={`text-[9px] font-mono tracking-wider font-bold z-10 transition-colors duration-200 ${isActive ? 'text-foreground' : 'text-muted'
+                }`}>
                 {tab.label}
               </span>
             </button>
@@ -276,17 +197,4 @@ function Dashboard() {
     </div>
   )
 }
-
-// ─── Root App ──────────────────────────────────────────────────────────────
-
-function App() {
-  return (
-    <ThemeProvider>
-      <AuthProvider>
-        <AuthGate />
-      </AuthProvider>
-    </ThemeProvider>
-  )
-}
-
-export default App
+  

@@ -1,15 +1,30 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from 'firebase/auth'
+import { 
+  doc, 
+  getDoc, 
+  setDoc 
+} from 'firebase/firestore'
+import { auth, db } from '../firebase'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface User {
   id: string
+  uid?: string
   name: string
   email: string
   username: string
   role: string
   avatar?: string
   joinedAt: string
+  createdAt?: any
+  status?: string
 }
 
 interface AuthContextValue {
@@ -25,6 +40,7 @@ interface AuthContextValue {
 
 const STORAGE_USER_KEY = 'anybet_user'
 const STORAGE_USERS_DB_KEY = 'anybet_users_db'
+const USE_FIREBASE = true
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -71,39 +87,96 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Rehydrate session from localStorage on mount
+  // Rehydrate session / subscribe to auth state changes
   useEffect(() => {
-    const stored = getStoredUser()
-    setUser(stored)
-    setIsLoading(false)
+    if (USE_FIREBASE) {
+      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+          try {
+            const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
+            if (userDoc.exists()) {
+              const data = userDoc.data()
+              setUser({
+                ...data,
+                role: data.role ? (data.role.trim().toLowerCase() === 'admin' ? 'admin' : 'user') : 'user'
+              } as User)
+            } else {
+              // Fallback details if Firestore doc doesn't exist yet
+              const email = firebaseUser.email || ''
+              const isAdmin = email.trim().toLowerCase() === 'admin@anybet.com'
+              setUser({
+                id: firebaseUser.uid,
+                name: isAdmin ? 'Admin User' : (firebaseUser.displayName || email.split('@')[0] || 'User'),
+                email: email,
+                username: email.split('@')[0] || 'user',
+                role: isAdmin ? 'admin' : 'user',
+                joinedAt: new Date().toISOString()
+              })
+            }
+          } catch (error) {
+            console.error('Error fetching user document from Firestore:', error)
+            // Graceful fallback to basic user info
+            const email = firebaseUser.email || ''
+            const isAdmin = email.trim().toLowerCase() === 'admin@anybet.com'
+            setUser({
+              id: firebaseUser.uid,
+              name: isAdmin ? 'Admin User' : (firebaseUser.displayName || email.split('@')[0] || 'User'),
+              email: email,
+              username: email.split('@')[0] || 'user',
+              role: isAdmin ? 'admin' : 'user',
+              joinedAt: new Date().toISOString()
+            })
+          }
+        } else {
+          setUser(null)
+        }
+        setIsLoading(false)
+      })
+      return () => unsubscribe()
+    } else {
+      // Local Storage fallback flow
+      const stored = getStoredUser()
+      setUser(stored)
+      setIsLoading(false)
+    }
   }, [])
 
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    await new Promise(r => setTimeout(r, 650)) // simulate network
-
-    const db = getUsersDb()
-    const emailKey = email.trim() ? email.trim().toLowerCase() : 'admin@anybet.io'
-    let entry = db[emailKey]
-
-    if (!entry) {
-      // Direct login: Auto-create the user if they don't exist
-      const isDefault = emailKey === 'admin@anybet.io'
-      const newUser: User = {
-        id: generateId(),
-        name: isDefault ? 'Ronak' : emailKey.split('@')[0],
-        email: emailKey,
-        username: isDefault ? 'Ronak' : emailKey.split('@')[0],
-        role: 'Operator',
-        joinedAt: new Date().toISOString(),
+    if (USE_FIREBASE) {
+      try {
+        await signInWithEmailAndPassword(auth, email, password)
+        return { success: true }
+      } catch (error: any) {
+        console.error('Firebase Login Error:', error)
+        return { success: false, error: error.message || 'Login failed.' }
       }
-      db[emailKey] = { user: newUser, passwordHash: simpleHash(password || 'password123') }
-      saveUsersDb(db)
-      entry = db[emailKey]
-    }
+    } else {
+      await new Promise(r => setTimeout(r, 650)) // simulate network
 
-    localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(entry.user))
-    setUser(entry.user)
-    return { success: true }
+      const db = getUsersDb()
+      const emailKey = email.trim() ? email.trim().toLowerCase() : 'admin@anybet.io'
+      let entry = db[emailKey]
+
+      if (!entry) {
+        // Direct login: Auto-create the user if they don't exist
+        const isDefault = emailKey === 'admin@anybet.io'
+        const newUser: User = {
+          id: generateId(),
+          name: isDefault ? 'Ronak' : emailKey.split('@')[0],
+          email: emailKey,
+          username: isDefault ? 'Ronak' : emailKey.split('@')[0],
+          role: 'User',
+          joinedAt: new Date().toISOString(),
+        }
+        db[emailKey] = { user: newUser, passwordHash: simpleHash(password || 'password123') }
+        saveUsersDb(db)
+        entry = db[emailKey]
+      }
+
+      localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(entry.user))
+      setUser(entry.user)
+      return { success: true }
+    }
   }, [])
 
   const signup = useCallback(async (
@@ -112,47 +185,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     username: string,
     password: string
   ): Promise<{ success: boolean; error?: string }> => {
-    await new Promise(r => setTimeout(r, 750)) // simulate network
+    if (USE_FIREBASE) {
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+        const firebaseUser = userCredential.user
 
-    const db = getUsersDb()
-    const emailKey = email.trim().toLowerCase()
+        const userData: User = {
+          id: firebaseUser.uid,
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          username: username.trim(),
+          role: 'User',
+          joinedAt: new Date().toISOString()
+        }
 
-    if (db[emailKey]) {
-      // Direct Login if email already exists
-      const entry = db[emailKey]
-      localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(entry.user))
-      setUser(entry.user)
+        // Save detailed profile info to Firestore
+        await setDoc(doc(db, 'users', firebaseUser.uid), userData)
+        setUser(userData)
+        return { success: true }
+      } catch (error: any) {
+        console.error('Firebase Signup Error:', error)
+        return { success: false, error: error.message || 'Signup failed.' }
+      }
+    } else {
+      await new Promise(r => setTimeout(r, 750)) // simulate network
+
+      const db = getUsersDb()
+      const emailKey = email.trim().toLowerCase()
+
+      if (db[emailKey]) {
+        // Direct Login if email already exists
+        const entry = db[emailKey]
+        localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(entry.user))
+        setUser(entry.user)
+        return { success: true }
+      }
+
+      // Auto-resolve username conflict
+      let finalUsername = username.trim()
+      let usernameExists = Object.values(db).some(
+        e => e.user.username.toLowerCase() === finalUsername.toLowerCase()
+      )
+      if (usernameExists) {
+        finalUsername = `${finalUsername}_${Math.floor(100 + Math.random() * 900)}`
+      }
+
+      const newUser: User = {
+        id: generateId(),
+        name: name.trim(),
+        email: emailKey,
+        username: finalUsername,
+        role: 'Operator',
+        joinedAt: new Date().toISOString(),
+      }
+
+      db[emailKey] = { user: newUser, passwordHash: simpleHash(password) }
+      saveUsersDb(db)
+      localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(newUser))
+      setUser(newUser)
       return { success: true }
     }
-
-    // Auto-resolve username conflict
-    let finalUsername = username.trim()
-    let usernameExists = Object.values(db).some(
-      e => e.user.username.toLowerCase() === finalUsername.toLowerCase()
-    )
-    if (usernameExists) {
-      finalUsername = `${finalUsername}_${Math.floor(100 + Math.random() * 900)}`
-    }
-
-    const newUser: User = {
-      id: generateId(),
-      name: name.trim(),
-      email: emailKey,
-      username: finalUsername,
-      role: 'Operator',
-      joinedAt: new Date().toISOString(),
-    }
-
-    db[emailKey] = { user: newUser, passwordHash: simpleHash(password) }
-    saveUsersDb(db)
-    localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(newUser))
-    setUser(newUser)
-    return { success: true }
   }, [])
 
   const logout = useCallback(() => {
-    localStorage.removeItem(STORAGE_USER_KEY)
-    setUser(null)
+    if (USE_FIREBASE) {
+      signOut(auth).catch(err => console.error('Firebase Signout Error:', err))
+      setUser(null)
+    } else {
+      localStorage.removeItem(STORAGE_USER_KEY)
+      setUser(null)
+    }
   }, [])
 
   return (
@@ -169,3 +271,4 @@ export function useAuth(): AuthContextValue {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
   return ctx
 }
+
