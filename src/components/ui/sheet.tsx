@@ -1,5 +1,6 @@
 import * as React from "react"
 import * as SheetPrimitive from "@radix-ui/react-dialog"
+import { X } from "lucide-react"
 import { cn } from "../../lib/utils"
 
 export const Sheet = SheetPrimitive.Root
@@ -29,8 +30,9 @@ export const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content> & {
     side?: "top" | "bottom" | "left" | "right"
+    hideClose?: boolean
   }
->(({ side = "right", className, children, ...props }, ref) => (
+>(({ side = "right", hideClose = false, className, children, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitive.Content
@@ -44,6 +46,12 @@ export const SheetContent = React.forwardRef<
       {...props}
     >
       {children}
+      {!hideClose && (
+        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-lg p-1.5 text-muted hover:text-foreground hover:bg-surface/80 opacity-70 hover:opacity-100 focus:outline-none transition-all cursor-pointer">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </SheetPrimitive.Close>
+      )}
     </SheetPrimitive.Content>
   </SheetPortal>
 ))

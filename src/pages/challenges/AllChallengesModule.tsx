@@ -9,7 +9,8 @@ import {
   Copy, 
   Trash2, 
   ChevronLeft, 
-  ChevronRight
+  ChevronRight,
+  MoreVertical
 } from 'lucide-react'
 import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/button'
@@ -17,6 +18,13 @@ import { Input } from '../../components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
 import { Sheet, SheetContent } from '../../components/ui/sheet'
 import { DateTimePicker } from '../../components/ui/date-time-picker'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator
+} from '../../components/ui/dropdown-menu'
 import { useChallenges } from '../../context/ChallengesContext'
 import type { ChallengeStatus, ChallengeCategoryType } from '../../context/ChallengesContext'
 
@@ -265,6 +273,7 @@ export const AllChallengesModule: React.FC = () => {
               </TableHead>
               <TableHead className="text-xs font-mono">ID</TableHead>
               <TableHead className="text-xs font-mono">Title & Category</TableHead>
+              <TableHead className="text-xs font-mono">Source</TableHead>
               <TableHead className="text-xs font-mono">Time Period</TableHead>
               <TableHead className="text-xs font-mono">Type</TableHead>
               <TableHead className="text-xs font-mono">Creator</TableHead>
@@ -278,13 +287,14 @@ export const AllChallengesModule: React.FC = () => {
           <TableBody>
             {paginatedChallenges.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-10 text-muted font-mono text-xs">
+                <TableCell colSpan={11} className="text-center py-10 text-muted font-mono text-xs">
                   No challenges found matching your search and filter criteria.
                 </TableCell>
               </TableRow>
             ) : (
               paginatedChallenges.map(c => {
                 const isSelected = selectedIds.includes(c.id)
+                const isAdminSource = (c.source || (c.creatorId === 'USR_01' || c.creatorName === 'Operator Admin' ? 'Admin Portal' : 'Mobile App')) === 'Admin Portal'
                 return (
                   <TableRow key={c.id} className={isSelected ? 'bg-primary/5' : ''}>
                     <TableCell>
@@ -308,6 +318,13 @@ export const AllChallengesModule: React.FC = () => {
                       </div>
                     </TableCell>
                     <TableCell>
+                      {isAdminSource ? (
+                        <Badge variant="pro" className="text-[9px] gap-1">👑 Admin</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[9px] text-cyan-400 border-cyan-500/30 gap-1">📱 App</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <div className="flex flex-col gap-0.5 font-mono text-[11px]">
                         <span className="text-foreground/90">{c.startDate} → {c.endDate}</span>
                         <span className="text-[10px] text-muted font-mono">
@@ -322,49 +339,50 @@ export const AllChallengesModule: React.FC = () => {
                     <TableCell className="font-mono text-xs font-bold text-emerald-400">{c.prizePool.toLocaleString()} BET</TableCell>
                     <TableCell>{getStatusBadge(c.status)}</TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => setSelectedChallenge(c)}
-                          title="View Details"
-                          className="h-7 w-7 text-muted hover:text-primary"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-
-                        {c.status === 'Pending Review' && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button
                             size="icon"
                             variant="ghost"
-                            onClick={() => approveChallenge(c.id)}
-                            title="Approve Challenge"
-                            className="h-7 w-7 text-muted hover:text-emerald-400"
+                            className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer"
                           >
-                            <CheckCircle className="h-3.5 w-3.5" />
+                            <MoreVertical className="h-4 w-4" />
                           </Button>
-                        )}
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                          <DropdownMenuItem
+                            onClick={() => setSelectedChallenge(c)}
+                            className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-primary/15 hover:text-primary cursor-pointer rounded-md p-2"
+                          >
+                            <Eye className="h-3.5 w-3.5 text-primary" /> View Details
+                          </DropdownMenuItem>
 
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => duplicateChallenge(c.id)}
-                          title="Duplicate"
-                          className="h-7 w-7 text-muted hover:text-foreground"
-                        >
-                          <Copy className="h-3.5 w-3.5" />
-                        </Button>
+                          {c.status === 'Pending Review' && (
+                            <DropdownMenuItem
+                              onClick={() => approveChallenge(c.id)}
+                              className="flex items-center gap-2 text-xs font-mono text-emerald-400 hover:bg-emerald-500/15 cursor-pointer rounded-md p-2"
+                            >
+                              <CheckCircle className="h-3.5 w-3.5 text-emerald-400" /> Approve Challenge
+                            </DropdownMenuItem>
+                          )}
 
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => deleteChallenge(c.id)}
-                          title="Delete"
-                          className="h-7 w-7 text-muted hover:text-red-400"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
+                          <DropdownMenuItem
+                            onClick={() => duplicateChallenge(c.id)}
+                            className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2"
+                          >
+                            <Copy className="h-3.5 w-3.5 text-muted" /> Duplicate
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator className="my-1 bg-border/50" />
+
+                          <DropdownMenuItem
+                            onClick={() => deleteChallenge(c.id)}
+                            className="flex items-center gap-2 text-xs font-mono text-red-400 hover:bg-red-500/15 cursor-pointer rounded-md p-2"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-red-400" /> Delete Challenge
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 )
@@ -407,7 +425,7 @@ export const AllChallengesModule: React.FC = () => {
       <Sheet open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
         <SheetContent side="right" className="w-full sm:max-w-md bg-background border-l border-border p-6 overflow-y-auto">
           <div className="flex flex-col gap-6">
-            <div>
+            <div className="border-b border-border/40 pb-4 pr-8">
               <h3 className="text-lg font-bold font-sans text-foreground">Create New Challenge</h3>
               <p className="text-xs text-muted font-sans mt-0.5">Define challenge specs, rules, and stake parameters.</p>
             </div>

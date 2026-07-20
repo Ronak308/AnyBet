@@ -86,6 +86,7 @@ export interface ChallengeItem {
   category: ChallengeCategoryType
   type: string
   frequency?: ChallengeFrequency
+  source?: 'Mobile App' | 'Admin Portal'
   creatorId: string
   creatorName: string
   participantsCount: number
@@ -699,10 +700,45 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (items.length > 0) setDisputes(items)
     })
 
+    // Automatic Status Auto-Transition Worker (Approved -> Live & Live -> Settlement)
+    const autoStatusInterval = setInterval(() => {
+      const now = new Date().getTime()
+      setChallenges(prev => {
+        let changed = false
+        const updated = prev.map(c => {
+          const startTime = c.startDate ? new Date(c.startDate).getTime() : NaN
+          const endTime = c.endDate ? new Date(c.endDate).getTime() : NaN
+
+          // 1. Auto Approved -> Live if Start Date/Time reached
+          if (c.status === 'Approved' && !isNaN(startTime) && startTime <= now) {
+            changed = true
+            const item = { ...c, status: 'Live' as ChallengeStatus }
+            updateChallengeInFirestore(c.id, { status: 'Live' })
+            return item
+          }
+
+          // 2. Auto Live -> Under Review when End Date/Time reached
+          if (c.status === 'Live' && !isNaN(endTime) && endTime <= now) {
+            changed = true
+            const item = { 
+              ...c, 
+              settlement: { ...c.settlement, status: 'Under Review' as const } 
+            }
+            updateChallengeInFirestore(c.id, { settlement: { ...c.settlement, status: 'Under Review' } })
+            return item
+          }
+
+          return c
+        })
+        return changed ? updated : prev
+      })
+    }, 10000)
+
     return () => {
       unsubChallenges?.()
       unsubCategories?.()
       unsubDisputes?.()
+      clearInterval(autoStatusInterval)
     }
   }, [])
 
@@ -721,6 +757,7 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       category: newChallenge.category || 'Custom',
       type: newChallenge.type || 'Custom Wager',
       frequency: newChallenge.frequency || 'Single Event',
+      source: newChallenge.source || 'Admin Portal',
       creatorId: newChallenge.creatorId || 'USR_01',
       creatorName: newChallenge.creatorName || 'Operator Admin',
       participantsCount: count,

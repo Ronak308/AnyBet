@@ -15,8 +15,8 @@ export const Badge = ({ className, variant = "primary", ...props }: BadgeProps) 
     danger: "bg-red-500/10 text-red-400 border-red-500/20",
     success: "bg-green-500/10 text-green-400 border-green-500/20",
     warning: "bg-orange-500/10 text-orange-400 border-orange-500/20",
-    elite: "bg-primary/20 text-foreground border-primary/40 shadow-glow",
-    pro: "bg-secondary/20 text-foreground border-secondary/40 shadow-cyanGlow",
+    elite: "bg-primary/20 text-primary border-primary/40",
+    pro: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
     new: "bg-surface text-muted border-border"
   }
 

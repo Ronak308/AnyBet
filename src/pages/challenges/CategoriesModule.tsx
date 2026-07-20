@@ -226,7 +226,7 @@ export const CategoriesModule: React.FC = () => {
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="w-full sm:max-w-md bg-background border-l border-border p-6 overflow-y-auto">
           <div className="flex flex-col gap-6">
-            <div>
+            <div className="border-b border-border/40 pb-4 pr-8">
               <h3 className="text-lg font-bold font-sans text-foreground">
                 {editingCategory ? 'Edit Category' : 'Create Category'}
               </h3>

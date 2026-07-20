@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { motion } from 'framer-motion'
 import { 
   X, 
   CheckCircle, 
@@ -27,6 +28,7 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
   const { 
     settleChallenge, 
     approveChallenge, 
+    updateChallenge,
     showToastNotice 
   } = useChallenges()
 
@@ -70,6 +72,7 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
     <Sheet open={!!challenge} onOpenChange={(open) => { if (!open) onClose() }}>
       <SheetContent 
         side="right" 
+        hideClose={true}
         className="w-full sm:max-w-2xl lg:max-w-3xl bg-background border-l border-border p-0 overflow-hidden flex flex-col h-full shadow-2xl"
       >
         {challenge && (
@@ -98,6 +101,17 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
                     <CheckCircle className="h-3.5 w-3.5" /> Approve
                   </Button>
                 )}
+                {challenge.status === 'Approved' && (
+                  <Button 
+                    size="sm" 
+                    variant="primary"
+                    glow
+                    onClick={() => updateChallenge(challenge.id, { status: 'Live' })}
+                    className="gap-1.5 text-xs font-mono bg-emerald-600 hover:bg-emerald-500 text-white"
+                  >
+                    <TrendingUp className="h-3.5 w-3.5" /> Go Live
+                  </Button>
+                )}
                 {challenge.status === 'Live' && (
                   <Button 
                     size="sm" 
@@ -119,32 +133,38 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
               </div>
             </div>
 
-            {/* Sub Navigation Tabs */}
-            <div className="flex border-b border-border/50 bg-surface/20 px-6 gap-2 overflow-x-auto shrink-0">
-              {[
-                { id: 'info', label: 'Overview & Rules', icon: FileText },
-                { id: 'participants', label: `Participants (${challenge.participantsCount})`, icon: Users },
-                { id: 'financials', label: 'Financials', icon: Coins },
-                { id: 'settlement', label: 'Settlement & Oracle', icon: Cpu },
-                { id: 'timeline', label: 'Audit Timeline', icon: Clock }
-              ].map(tab => {
-                const Icon = tab.icon
-                const isActive = activeSubTab === tab.id
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveSubTab(tab.id as any)}
-                    className={`flex items-center gap-2 px-4 py-3 text-xs font-mono tracking-wider transition-all border-b-2 font-medium cursor-pointer whitespace-nowrap ${
-                      isActive 
-                        ? 'border-primary text-primary font-bold bg-primary/5' 
-                        : 'border-transparent text-muted hover:text-foreground hover:bg-surface/40'
-                    }`}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span>{tab.label}</span>
-                  </button>
-                )
-              })}
+            {/* Sub Navigation Tabs (Swipable & Draggable) */}
+            <div className="border-b border-border/50 bg-surface/20 px-6 overflow-hidden shrink-0">
+              <motion.div 
+                drag="x"
+                dragConstraints={{ left: -120, right: 0 }}
+                className="flex items-center gap-2 overflow-x-auto scrollbar-none cursor-grab active:cursor-grabbing select-none py-1"
+              >
+                {[
+                  { id: 'info', label: 'Overview & Rules', icon: FileText },
+                  { id: 'participants', label: `Participants (${challenge.participantsCount})`, icon: Users },
+                  { id: 'financials', label: 'Financials', icon: Coins },
+                  { id: 'settlement', label: 'Settlement & Oracle', icon: Cpu },
+                  { id: 'timeline', label: 'Audit Timeline', icon: Clock }
+                ].map(tab => {
+                  const Icon = tab.icon
+                  const isActive = activeSubTab === tab.id
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveSubTab(tab.id as any)}
+                      className={`flex items-center gap-2 px-4 py-2 text-xs font-mono tracking-wider transition-all border-b-2 font-medium cursor-pointer whitespace-nowrap shrink-0 ${
+                        isActive 
+                          ? 'border-primary text-primary font-bold bg-primary/5' 
+                          : 'border-transparent text-muted hover:text-foreground hover:bg-surface/40'
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      <span>{tab.label}</span>
+                    </button>
+                  )
+                })}
+              </motion.div>
             </div>
 
             {/* Sheet Body Content */}
