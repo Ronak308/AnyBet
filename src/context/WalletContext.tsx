@@ -1,5 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
-// Firestore collection references can be added here for live Firestore persistence when needed
+import {
+  subscribeToWallets,
+  subscribeToTransactions,
+  subscribeToWithdrawals,
+  subscribeToCoinPackages,
+  updateWalletInFirestore,
+  addTransactionToFirestore,
+  saveCoinPackageInFirestore,
+  deleteCoinPackageFromFirestore,
+  seedInitialFinancialsData
+} from '../services/financialsService'
 
 // ─── Interfaces & Types ───────────────────────────────────────────────────────
 
@@ -43,18 +53,26 @@ export interface CoinPackage {
 
 export interface RewardRule {
   id: string
+  name?: string
   event: string
+  trigger?: string
+  rewardCoins?: number
   coinReward: number
   xpReward: number
   cooldownHours: number
+  isEnabled?: boolean
 }
 
 export interface BonusCampaign {
   id: string
+  name?: string
+  code?: string
   title: string
   type: string
   bonusCoins: number
   minStake: number
+  currentClaims?: number
+  maxClaims?: number
   status: 'Active' | 'Upcoming' | 'Expired'
   expiresAt: string
 }
@@ -76,6 +94,9 @@ export interface TreasuryStats {
   totalRewardsDistributed: number
   pendingWithdrawals: number
   platformReserve: number
+  totalCollectedFees?: number
+  platformFeePercent?: number
+  reserveFundBalance?: number
 }
 
 interface WalletContextValue {
@@ -86,6 +107,11 @@ interface WalletContextValue {
   bonusCampaigns: BonusCampaign[]
   withdrawalRequests: WithdrawalRequest[]
   treasury: TreasuryStats
+  totalCoinsIssued: number
+  coinsInCirculation: number
+  coinsLockedInBets: number
+  totalRewardsDistributed: number
+  pendingWithdrawalCount: number
   dailyRewardConfig: {
     dailyCoins: number
     cooldownHours: number
@@ -219,22 +245,40 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return saved ? parseInt(saved, 10) : null
   })
 
-  // Persistence effects
+  // Firestore Subscriptions & Initial Seeder
   useEffect(() => {
-    localStorage.setItem(STORAGE_WALLETS, JSON.stringify(wallets))
-  }, [wallets])
+    seedInitialFinancialsData(INITIAL_WALLETS, INITIAL_TRANSACTIONS, {
+      totalCoinsIssued: 250000,
+      coinsInCirculation: 180000,
+      coinsLockedInBets: 45000,
+      totalRewardsDistributed: 14500,
+      pendingWithdrawals: 12500,
+      platformReserve: 500000,
+      totalCollectedFees: 48500,
+      platformFeePercent: 5,
+      reserveFundBalance: 500000
+    }, INITIAL_WITHDRAWALS, INITIAL_PACKAGES)
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_TRANSACTIONS, JSON.stringify(transactions))
-  }, [transactions])
+    const unsubWallets = subscribeToWallets((items: UserWallet[]) => {
+      if (items.length > 0) setWallets(items)
+    })
+    const unsubTxs = subscribeToTransactions((items: CoinTransaction[]) => {
+      if (items.length > 0) setTransactions(items)
+    })
+    const unsubWithdrawals = subscribeToWithdrawals((items: WithdrawalRequest[]) => {
+      if (items.length > 0) setWithdrawalRequests(items)
+    })
+    const unsubPackages = subscribeToCoinPackages((items: CoinPackage[]) => {
+      if (items.length > 0) setCoinPackages(items)
+    })
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_PACKAGES, JSON.stringify(coinPackages))
-  }, [coinPackages])
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_WITHDRAWALS, JSON.stringify(withdrawalRequests))
-  }, [withdrawalRequests])
+    return () => {
+      unsubWallets?.()
+      unsubTxs?.()
+      unsubWithdrawals?.()
+      unsubPackages?.()
+    }
+  }, [])
 
   // Helper generator for tx hashes
   const generateTxHash = () => {
@@ -268,17 +312,20 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       description
     }
     setTransactions(prev => [newTx, ...prev])
+    addTransactionToFirestore(newTx)
   }, [])
 
   const creditCoins = useCallback((userId: string, amount: number, type: TransactionType, description: string) => {
     setWallets(prev => prev.map(w => {
       if (w.userId === userId || w.id === userId) {
         createTransactionRecord(w.userId, w.username, type, amount, 'Settled', description)
-        return {
+        const updated = {
           ...w,
           totalBalance: w.totalBalance + amount,
           lastActivity: 'Just now'
         }
+        updateWalletInFirestore(w.id, updated)
+        return updated
       }
       return w
     }))
@@ -292,11 +339,13 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (w.totalBalance >= amount && w.status === 'Active') {
           createTransactionRecord(w.userId, w.username, type, amount, 'Settled', description)
           success = true
-          return {
+          const updated = {
             ...w,
             totalBalance: w.totalBalance - amount,
             lastActivity: 'Just now'
           }
+          updateWalletInFirestore(w.id, updated)
+          return updated
         }
       }
       return w
@@ -311,12 +360,14 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (w.totalBalance >= amount && w.status === 'Active') {
           createTransactionRecord(w.userId, w.username, 'Bet Stake', amount, 'Settled', `Staked in Challenge ${challengeId}`)
           success = true
-          return {
+          const updated = {
             ...w,
             totalBalance: w.totalBalance - amount,
             lockedBalance: w.lockedBalance + amount,
             lastActivity: 'Just now'
           }
+          updateWalletInFirestore(w.id, updated)
+          return updated
         }
       }
       return w
@@ -328,11 +379,13 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setWallets(prev => prev.map(w => {
       if (w.userId === userId || w.id === userId) {
         const unlockAmt = Math.min(w.lockedBalance, amount)
-        return {
+        const updated = {
           ...w,
           lockedBalance: w.lockedBalance - unlockAmt,
           lastActivity: 'Just now'
         }
+        updateWalletInFirestore(w.id, updated)
+        return updated
       }
       return w
     }))
@@ -340,18 +393,34 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [])
 
   const freezeWallet = useCallback((walletId: string) => {
-    setWallets(prev => prev.map(w => w.id === walletId ? { ...w, status: 'Frozen' } : w))
+    setWallets(prev => prev.map(w => {
+      if (w.id === walletId) {
+        const updated = { ...w, status: 'Frozen' as const }
+        updateWalletInFirestore(w.id, { status: 'Frozen' })
+        return updated
+      }
+      return w
+    }))
   }, [])
 
   const unfreezeWallet = useCallback((walletId: string) => {
-    setWallets(prev => prev.map(w => w.id === walletId ? { ...w, status: 'Active' } : w))
+    setWallets(prev => prev.map(w => {
+      if (w.id === walletId) {
+        const updated = { ...w, status: 'Active' as const }
+        updateWalletInFirestore(w.id, { status: 'Active' })
+        return updated
+      }
+      return w
+    }))
   }, [])
 
   const resetWallet = useCallback((walletId: string, newBalance = 1000) => {
     setWallets(prev => prev.map(w => {
       if (w.id === walletId) {
         createTransactionRecord(w.userId, w.username, 'Deposit', newBalance, 'Settled', 'Operator Wallet Reset')
-        return { ...w, totalBalance: newBalance, lockedBalance: 0, status: 'Active', lastActivity: 'Just now' }
+        const updated = { ...w, totalBalance: newBalance, lockedBalance: 0, status: 'Active' as const, lastActivity: 'Just now' }
+        updateWalletInFirestore(w.id, updated)
+        return updated
       }
       return w
     }))
@@ -364,18 +433,34 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       id: `pkg_${Date.now()}`
     }
     setCoinPackages(prev => [...prev, newPkg])
+    saveCoinPackageInFirestore(newPkg)
   }, [])
 
   const updateCoinPackage = useCallback((id: string, pkg: Partial<CoinPackage>) => {
-    setCoinPackages(prev => prev.map(p => p.id === id ? { ...p, ...pkg } : p))
+    setCoinPackages(prev => prev.map(p => {
+      if (p.id === id) {
+        const updated = { ...p, ...pkg }
+        saveCoinPackageInFirestore(updated)
+        return updated
+      }
+      return p
+    }))
   }, [])
 
   const deleteCoinPackage = useCallback((id: string) => {
     setCoinPackages(prev => prev.filter(p => p.id !== id))
+    deleteCoinPackageFromFirestore(id)
   }, [])
 
   const toggleCoinPackage = useCallback((id: string) => {
-    setCoinPackages(prev => prev.map(p => p.id === id ? { ...p, isEnabled: !p.isEnabled } : p))
+    setCoinPackages(prev => prev.map(p => {
+      if (p.id === id) {
+        const updated = { ...p, isEnabled: !p.isEnabled }
+        saveCoinPackageInFirestore(updated)
+        return updated
+      }
+      return p
+    }))
   }, [])
 
   // Reward management
@@ -469,17 +554,18 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     .filter(t => t.type === 'Reward' && t.status === 'Settled')
     .reduce((acc, t) => acc + t.amount, 14500)
 
-  const pendingWithdrawals = withdrawalRequests
-    .filter(r => r.status === 'Pending')
-    .reduce((acc, r) => acc + r.amount, 0)
+  const pendingWithdrawalCount = withdrawalRequests.filter(r => r.status === 'Pending').length
 
-  const treasury: TreasuryStats = {
+  const treasuryStats: TreasuryStats = {
     totalCoinsIssued,
     coinsInCirculation,
     coinsLockedInBets,
     totalRewardsDistributed,
-    pendingWithdrawals,
-    platformReserve: 500000
+    pendingWithdrawals: pendingWithdrawalCount,
+    platformReserve: 500000,
+    totalCollectedFees: 48500,
+    platformFeePercent: 5,
+    reserveFundBalance: 500000
   }
 
   return (
@@ -490,7 +576,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       rewardRules: INITIAL_REWARD_RULES,
       bonusCampaigns: INITIAL_CAMPAIGNS,
       withdrawalRequests,
-      treasury,
+      treasury: treasuryStats,
+      totalCoinsIssued,
+      coinsInCirculation,
+      coinsLockedInBets,
+      totalRewardsDistributed,
+      pendingWithdrawalCount,
       dailyRewardConfig,
       userLastClaimTimestamp,
       creditCoins,

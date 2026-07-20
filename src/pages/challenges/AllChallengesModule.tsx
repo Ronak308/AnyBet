@@ -40,8 +40,7 @@ export const AllChallengesModule: React.FC = () => {
     bulkApprove,
     bulkReject,
     bulkSuspend,
-    bulkDelete,
-    showToastNotice
+    bulkDelete
   } = useChallenges()
 
   // Filter & Search states
@@ -68,12 +67,24 @@ export const AllChallengesModule: React.FC = () => {
   const [newCategory, setNewCategory] = useState<ChallengeCategoryType>('Prediction')
   const [newType, setNewType] = useState('Binary Option')
   const [newFrequency, setNewFrequency] = useState<'Single Event' | 'Day-wise' | 'Weekly' | 'Monthly'>('Single Event')
+  const [newSource, setNewSource] = useState<'Admin Portal' | 'Mobile App'>('Admin Portal')
+  const [newCreatorName, setNewCreatorName] = useState('System Admin')
+  const [newOpponentName, setNewOpponentName] = useState('')
   const [newStartDate, setNewStartDate] = useState(() => formatDateTimeLocal(new Date()))
   const [newEndDate, setNewEndDate] = useState(() => formatDateTimeLocal(new Date(Date.now() + 7 * 86400000)))
   const [newDescription, setNewDescription] = useState('')
   const [newStake, setNewStake] = useState('100')
   const [newMaxParticipants, setNewMaxParticipants] = useState('100')
   const [newRules, setNewRules] = useState('Standard AnyBet rules apply')
+
+  // Computed Auto-Generated Title Preview
+  const computedTitlePreview = useMemo(() => {
+    if (newTitle.trim()) return newTitle.trim()
+    if (newOpponentName.trim()) {
+      return `${newCreatorName || 'User'} vs ${newOpponentName.trim()}: ${newCategory} ${newType}`
+    }
+    return `${newCreatorName || 'System'}: ${newCategory} ${newType}`
+  }, [newTitle, newCreatorName, newOpponentName, newCategory, newType])
 
   // Filtered List
   const filteredChallenges = useMemo(() => {
@@ -128,16 +139,15 @@ export const AllChallengesModule: React.FC = () => {
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newTitle.trim()) {
-      showToastNotice('Title is required', 'warning')
-      return
-    }
+    const finalTitle = computedTitlePreview
 
     createChallenge({
-      title: newTitle.trim(),
+      title: finalTitle,
       category: newCategory,
       type: newType.trim(),
       frequency: newFrequency,
+      source: newSource,
+      creatorName: newCreatorName.trim() || 'System Admin',
       startDate: newStartDate,
       endDate: newEndDate,
       description: newDescription.trim() || 'No detailed description provided.',
@@ -149,6 +159,7 @@ export const AllChallengesModule: React.FC = () => {
 
     setIsAddSheetOpen(false)
     setNewTitle('')
+    setNewOpponentName('')
     setNewDescription('')
   }
 
@@ -431,13 +442,52 @@ export const AllChallengesModule: React.FC = () => {
             </div>
 
             <form onSubmit={handleCreateSubmit} className="space-y-4">
+              {/* Live Title Preview Banner */}
+              <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl text-xs font-mono text-foreground space-y-1">
+                <span className="text-[10px] text-primary uppercase font-bold block">Generated Title Preview</span>
+                <p className="font-bold text-xs text-primary">{computedTitlePreview}</p>
+              </div>
+
               <div>
-                <label className="text-[10px] font-mono uppercase text-muted block mb-1">Challenge Title</label>
+                <label className="text-[10px] font-mono uppercase text-muted block mb-1">Custom Title (Optional Override)</label>
                 <Input
                   value={newTitle}
                   onChange={e => setNewTitle(e.target.value)}
-                  placeholder="e.g. Marathon Completion Under 3h"
-                  required
+                  placeholder="Leave empty to use generated title preview..."
+                  className="bg-surface/40 text-xs font-mono"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Creation Source</label>
+                  <select
+                    value={newSource}
+                    onChange={e => setNewSource(e.target.value as any)}
+                    className="w-full bg-surface/40 border border-border rounded-md p-2 text-xs font-mono text-foreground outline-none cursor-pointer"
+                  >
+                    <option value="Admin Portal">👑 Admin Portal</option>
+                    <option value="Mobile App">📱 Mobile App</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Challenger (User A)</label>
+                  <Input
+                    value={newCreatorName}
+                    onChange={e => setNewCreatorName(e.target.value)}
+                    placeholder="e.g. System Admin or crypto_king"
+                    className="bg-surface/40 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-mono uppercase text-muted block mb-1">Opponent Username (User B - Optional for 1v1)</label>
+                <Input
+                  value={newOpponentName}
+                  onChange={e => setNewOpponentName(e.target.value)}
+                  placeholder="e.g. alex_runner (or leave empty for Open Pool)"
                   className="bg-surface/40 text-xs font-mono"
                 />
               </div>

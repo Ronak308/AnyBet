@@ -111,6 +111,10 @@ function AuthGate() {
             <Route path="challenges-analytics" element={<ChallengesRoute />} />
             <Route path="reputation" element={<ReputationRoute />} />
             <Route path="financials" element={<FinancialsRoute />} />
+            <Route path="financials-wallet" element={<FinancialsRoute />} />
+            <Route path="financials-transactions" element={<FinancialsRoute />} />
+            <Route path="financials-rewards" element={<FinancialsRoute />} />
+            <Route path="financials-treasury" element={<FinancialsRoute />} />
             <Route path="financials-revenue" element={<FinancialsRoute />} />
             <Route path="financials-escrow" element={<FinancialsRoute />} />
             <Route path="financials-fees" element={<FinancialsRoute />} />
