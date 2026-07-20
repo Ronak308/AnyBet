@@ -1,14 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
 } from 'firebase/auth'
-import { 
-  doc, 
-  getDoc, 
-  setDoc 
+import {
+  doc,
+  getDoc,
+  setDoc
 } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 
@@ -92,45 +92,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (USE_FIREBASE) {
       const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
+          // 1. Immediately restore from cache so there's zero blank screen
+          const cached = getStoredUser()
+          if (cached && cached.id === firebaseUser.uid) {
+            setUser(cached)
+            setIsLoading(false)
+          }
+
+          // 2. Fetch fresh Firestore data in the background
           try {
             const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
             if (userDoc.exists()) {
               const data = userDoc.data()
-              setUser({
+              const freshUser = {
                 ...data,
                 role: data.role ? (data.role.trim().toLowerCase() === 'admin' ? 'admin' : 'user') : 'user'
-              } as User)
+              } as User
+              setUser(freshUser)
+              localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(freshUser))
             } else {
-              // Fallback details if Firestore doc doesn't exist yet
+              // No Firestore doc — build minimal profile from Auth
+              const email = firebaseUser.email || ''
+              const isAdmin = email.trim().toLowerCase() === 'admin@anybet.com'
+              const fallback: User = {
+                id: firebaseUser.uid,
+                name: isAdmin ? 'Admin User' : (firebaseUser.displayName || email.split('@')[0] || 'User'),
+                email,
+                username: email.split('@')[0] || 'user',
+                role: isAdmin ? 'admin' : 'user',
+                joinedAt: new Date().toISOString()
+              }
+              setUser(fallback)
+              localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(fallback))
+            }
+          } catch (error) {
+            console.error('Error fetching user document from Firestore:', error)
+            // Keep cached/fallback user on network error — don't clear session
+            if (!cached) {
               const email = firebaseUser.email || ''
               const isAdmin = email.trim().toLowerCase() === 'admin@anybet.com'
               setUser({
                 id: firebaseUser.uid,
                 name: isAdmin ? 'Admin User' : (firebaseUser.displayName || email.split('@')[0] || 'User'),
-                email: email,
+                email,
                 username: email.split('@')[0] || 'user',
                 role: isAdmin ? 'admin' : 'user',
                 joinedAt: new Date().toISOString()
               })
             }
-          } catch (error) {
-            console.error('Error fetching user document from Firestore:', error)
-            // Graceful fallback to basic user info
-            const email = firebaseUser.email || ''
-            const isAdmin = email.trim().toLowerCase() === 'admin@anybet.com'
-            setUser({
-              id: firebaseUser.uid,
-              name: isAdmin ? 'Admin User' : (firebaseUser.displayName || email.split('@')[0] || 'User'),
-              email: email,
-              username: email.split('@')[0] || 'user',
-              role: isAdmin ? 'admin' : 'user',
-              joinedAt: new Date().toISOString()
-            })
+          } finally {
+            setIsLoading(false)
           }
         } else {
+          localStorage.removeItem(STORAGE_USER_KEY)
           setUser(null)
+          setIsLoading(false)
         }
-        setIsLoading(false)
       })
       return () => unsubscribe()
     } else {
