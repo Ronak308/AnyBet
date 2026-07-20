@@ -34,10 +34,10 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
   const [chartType, setChartType] = useState<'area' | 'bar'>('area')
   const [isCalibrating, setIsCalibrating] = useState(false)
   const [streamingFeed, setStreamingFeed] = useState([
-    { id: '#20459-B', market: 'UCL: Real Madrid vs Man City', outcome: 'Draw (3-3)', type: 'AI Oracle', value: '$12,450.00', time: 'Just now', source: 'oracle' },
-    { id: '#20458-X', market: 'BTC/USD > $65k (24h)', outcome: 'True', type: 'API Feed', value: '$8,120.00', time: '2m ago', source: 'api' },
-    { id: '#20457-A', market: 'Formula 1: Monaco GP Winner', outcome: 'Verstappen', type: 'AI Oracle', value: '$45,000.00', time: '5m ago', source: 'oracle' },
-    { id: '#20456-D', market: 'Oscars: Best Picture 2024', outcome: 'Oppenheimer', type: 'API Feed', value: '$2,900.00', time: '12m ago', source: 'api' },
+    { id: '#20459-B', market: 'UCL: Real Madrid vs Man City', outcome: 'Draw (3-3)', type: 'AI Oracle', value: '12,450 BET', time: 'Just now', source: 'oracle' },
+    { id: '#20458-X', market: 'BTC Closes Above 100k (24h)', outcome: 'True', type: 'API Feed', value: '8,120 BET', time: '2m ago', source: 'api' },
+    { id: '#20457-A', market: 'Formula 1: Monaco GP Winner', outcome: 'Verstappen', type: 'AI Oracle', value: '45,000 BET', time: '5m ago', source: 'oracle' },
+    { id: '#20456-D', market: 'Oscars: Best Picture 2024', outcome: 'Oppenheimer', type: 'API Feed', value: '2,900 BET', time: '12m ago', source: 'api' },
   ])
 
   // Mock charts data
@@ -82,13 +82,13 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
   useEffect(() => {
     const interval = setInterval(() => {
       const markets = [
-        'ETH/USD > $3.5k (1h)', 'Super Bowl Winner 2026',
+        'ETH Closes Above 5k (1h)', 'Super Bowl Winner 2026',
         'NBA Finals Game 1 Winner', 'Nasdaq closing rate > +1.2%',
-        'Solana TVL > $6B (24h)', 'Cannes Film Festival Palme d\'Or'
+        'Solana TVL > 10B (24h)', 'Cannes Film Festival Palme d\'Or'
       ]
       const outcomes = ['True', 'False', 'Awaiting API', 'Settled (AI)', 'Override Pending']
       const sources = ['oracle', 'api']
-      const values = ['$4,200.00', '$1,850.00', '$22,400.00', '$9,800.00', '$32,150.00']
+      const values = ['4,200 BET', '1,850 BET', '22,400 BET', '9,800 BET', '32,150 BET']
       
       const newId = `#20${Math.floor(Math.random() * 900) + 100}-${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`
       const newMarket = markets[Math.floor(Math.random() * markets.length)]
@@ -132,7 +132,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
   // KPI metadata
   const kpis = [
     { title: 'Active Challenges', value: '2,450', change: '+12%', isPositive: true, subtext: 'Daily operations', icon: Zap, color: 'text-primary border-primary/20 bg-primary/5', tab: 'challenges' },
-    { title: 'TVL Locked', value: '$4.2M', change: '+5.2%', isPositive: true, subtext: 'Total value locked', icon: Wallet, color: 'text-secondary border-secondary/20 bg-secondary/5', tab: 'financials' },
+    { title: 'Coins Locked', value: '4.2M BET', change: '+5.2%', isPositive: true, subtext: 'Staked in challenges', icon: Wallet, color: 'text-secondary border-secondary/20 bg-secondary/5', tab: 'financials' },
     { title: 'AI Settled Efficiency', value: '98.4%', change: 'Precision', isPositive: true, subtext: 'Arbitration rate', icon: Cpu, color: 'text-[#8026FF] border-[#8026FF]/20 bg-[#8026FF]/5', tab: 'ai-oracle' },
     { title: 'Active Users', value: '12k', change: '+1.8%', isPositive: true, subtext: 'Hourly interaction', icon: Users, color: 'text-secondary border-secondary/20 bg-secondary/5', tab: 'reputation' }
   ]
@@ -227,7 +227,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
 
               {/* Chart Visualizer */}
               <div className="h-[250px] w-full mt-2 font-mono text-[10px]">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100}>
                   {chartType === 'area' ? (
                     <AreaChart data={chartData[chartRange]} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                       <defs>
@@ -270,6 +270,9 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
                         fillOpacity={1} 
                         fill="url(#purpleGlow)" 
                         name="TVL Volume"
+                        dot={false}
+                        activeDot={{ r: 4 }}
+                        isAnimationActive={false}
                       />
                       <Area 
                         type="monotone" 
@@ -279,6 +282,9 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
                         fillOpacity={1} 
                         fill="url(#cyanGlow)" 
                         name="Transactions"
+                        dot={false}
+                        activeDot={{ r: 4 }}
+                        isAnimationActive={false}
                       />
                     </AreaChart>
                   ) : (
@@ -311,6 +317,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
                         radius={[4, 4, 0, 0]}
                         maxBarSize={40}
                         name="TVL Volume"
+                        isAnimationActive={false}
                       />
                       <Bar 
                         dataKey="transactions" 
@@ -318,6 +325,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
                         radius={[4, 4, 0, 0]}
                         maxBarSize={40}
                         name="Transactions"
+                        isAnimationActive={false}
                       />
                     </BarChart>
                   )}

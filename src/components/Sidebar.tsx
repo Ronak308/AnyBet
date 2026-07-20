@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   LayoutDashboard, 
@@ -9,7 +9,18 @@ import {
   HelpCircle, 
   LogOut, 
   ChevronLeft, 
-  ChevronRight
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Wallet,
+  History,
+  Gift,
+  PieChart,
+  ListFilter,
+  Layers,
+  Zap,
+  AlertTriangle,
+  BarChart3
 } from 'lucide-react'
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
@@ -34,13 +45,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { logout, user } = useAuth()
   const [logoutConfirm, setLogoutConfirm] = useState(false)
+  const [financialsOpen, setFinancialsOpen] = useState(() => activeTab.startsWith('financials'))
+  const [challengesOpen, setChallengesOpen] = useState(() => activeTab.startsWith('challenges'))
+
+  useEffect(() => {
+    if (activeTab.startsWith('financials')) {
+      setFinancialsOpen(true)
+    }
+    if (activeTab.startsWith('challenges')) {
+      setChallengesOpen(true)
+    }
+  }, [activeTab])
 
   const menuItems = [
     { id: 'operations', label: 'Operations', icon: LayoutDashboard },
-    { id: 'challenges', label: 'Challenges', icon: Sword },
+    { id: 'challenges', label: 'Challenges', icon: Sword, isDropdown: true },
     { id: 'reputation', label: 'Reputation', icon: Users },
-    { id: 'financials', label: 'Financials', icon: Coins },
+    { id: 'financials', label: 'Financials', icon: Coins, isDropdown: true },
     { id: 'ai-oracle', label: 'AI Oracle', icon: Cpu },
+  ]
+
+  const challengeSubItems = [
+    { id: 'challenges-all', label: 'All Challenges', icon: ListFilter },
+    { id: 'challenges-categories', label: 'Categories', icon: Layers },
+    { id: 'challenges-live', label: 'Live & Settlement', icon: Zap },
+    { id: 'challenges-disputes', label: 'Disputes', icon: AlertTriangle },
+    { id: 'challenges-analytics', label: 'Analytics', icon: BarChart3 },
+  ]
+
+  const financialSubItems = [
+    { id: 'financials-wallet', label: 'Wallet', icon: Wallet },
+    { id: 'financials-transactions', label: 'Transactions', icon: History },
+    { id: 'financials-rewards', label: 'Rewards', icon: Gift },
+    { id: 'financials-treasury', label: 'Treasury', icon: PieChart },
   ]
 
   const handleLogout = () => {
@@ -101,10 +138,165 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Menu Navigation */}
-        <nav className="flex flex-col gap-2">
+        <nav className="flex flex-col gap-1.5 overflow-y-auto max-h-[calc(100vh-220px)] pr-1 scrollbar-thin">
           {menuItems.map((item) => {
             const Icon = item.icon
-            const isActive = activeTab === item.id
+            const isChallengesGroup = item.id === 'challenges'
+            const isFinancialsGroup = item.id === 'financials'
+            const isChallengesActive = activeTab.startsWith('challenges')
+            const isFinancialsActive = activeTab.startsWith('financials')
+
+            const isActive = isChallengesGroup 
+              ? isChallengesActive 
+              : isFinancialsGroup 
+                ? isFinancialsActive 
+                : activeTab === item.id
+
+            if (isChallengesGroup) {
+              return (
+                <div key={item.id} className="flex flex-col gap-1">
+                  <Button
+                    variant={isActive ? "nav-active" : "nav"}
+                    onClick={() => {
+                      if (isCollapsed) {
+                        setIsCollapsed(false)
+                        setChallengesOpen(true)
+                        setActiveTab('challenges-all')
+                      } else {
+                        const newOpen = !challengesOpen
+                        setChallengesOpen(newOpen)
+                        if (newOpen && !activeTab.startsWith('challenges')) {
+                          setActiveTab('challenges-all')
+                        }
+                      }
+                    }}
+                    className={`flex items-center justify-between ${isCollapsed ? 'justify-center px-0' : 'px-4'} h-11 w-full transition-all duration-200`}
+                    glow={isActive}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-primary' : 'text-muted'}`} />
+                      {!isCollapsed && (
+                        <span className="font-medium text-sm font-sans">
+                          {item.label}
+                        </span>
+                      )}
+                    </div>
+
+                    {!isCollapsed && (
+                      <div className="text-muted hover:text-foreground">
+                        {challengesOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </div>
+                    )}
+                  </Button>
+
+                  {/* Challenges Sub-menu Dropdown */}
+                  <AnimatePresence>
+                    {challengesOpen && !isCollapsed && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex flex-col gap-1 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
+                      >
+                        {challengeSubItems.map((sub) => {
+                          const SubIcon = sub.icon
+                          const isSubActive = activeTab === sub.id || (activeTab === 'challenges' && sub.id === 'challenges-all')
+
+                          return (
+                            <button
+                              key={sub.id}
+                              onClick={() => setActiveTab(sub.id)}
+                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono tracking-wider transition-all duration-200 cursor-pointer w-full text-left ${
+                                isSubActive
+                                  ? 'bg-primary/15 text-primary font-bold border border-primary/30'
+                                  : 'text-muted hover:text-foreground hover:bg-surface/60'
+                              }`}
+                            >
+                              <SubIcon className={`h-3.5 w-3.5 ${isSubActive ? 'text-primary' : 'text-muted'}`} />
+                              <span>{sub.label}</span>
+                            </button>
+                          )
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )
+            }
+
+            if (isFinancialsGroup) {
+              return (
+                <div key={item.id} className="flex flex-col gap-1">
+                  <Button
+                    variant={isActive ? "nav-active" : "nav"}
+                    onClick={() => {
+                      if (isCollapsed) {
+                        setIsCollapsed(false)
+                        setFinancialsOpen(true)
+                        setActiveTab('financials-wallet')
+                      } else {
+                        const newOpen = !financialsOpen
+                        setFinancialsOpen(newOpen)
+                        if (newOpen && !activeTab.startsWith('financials')) {
+                          setActiveTab('financials-wallet')
+                        }
+                      }
+                    }}
+                    className={`flex items-center justify-between ${isCollapsed ? 'justify-center px-0' : 'px-4'} h-11 w-full transition-all duration-200`}
+                    glow={isActive}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-primary' : 'text-muted'}`} />
+                      {!isCollapsed && (
+                        <span className="font-medium text-sm font-sans">
+                          {item.label}
+                        </span>
+                      )}
+                    </div>
+
+                    {!isCollapsed && (
+                      <div className="text-muted hover:text-foreground">
+                        {financialsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </div>
+                    )}
+                  </Button>
+
+                  {/* Financials Sub-menu Accordion Dropdown */}
+                  <AnimatePresence>
+                    {financialsOpen && !isCollapsed && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex flex-col gap-1 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
+                      >
+                        {financialSubItems.map((sub) => {
+                          const SubIcon = sub.icon
+                          const isSubActive = activeTab === sub.id || (activeTab === 'financials' && sub.id === 'financials-wallet')
+
+                          return (
+                            <button
+                              key={sub.id}
+                              onClick={() => setActiveTab(sub.id)}
+                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono tracking-wider transition-all duration-200 cursor-pointer w-full text-left ${
+                                isSubActive
+                                  ? 'bg-primary/15 text-primary font-bold border border-primary/30'
+                                  : 'text-muted hover:text-foreground hover:bg-surface/60'
+                              }`}
+                            >
+                              <SubIcon className={`h-3.5 w-3.5 ${isSubActive ? 'text-primary' : 'text-muted'}`} />
+                              <span>{sub.label}</span>
+                            </button>
+                          )
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )
+            }
 
             return (
               <Button

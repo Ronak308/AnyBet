@@ -11,6 +11,8 @@ import { LoginPage } from './pages/LoginPage'
 import { SignupPage } from './pages/SignupPage'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { WalletProvider } from './context/WalletContext'
+import { ChallengesProvider } from './context/ChallengesContext'
 import { LayoutDashboard, Sword, Users, Coins, Cpu } from 'lucide-react'
 
 // Interface for floating particle
@@ -137,7 +139,7 @@ function Dashboard() {
   // Mobile Bottom Navigation tabs list
   const mobileTabs = [
     { id: 'operations', label: 'Ops', icon: LayoutDashboard },
-    { id: 'challenges', label: 'Bets', icon: Sword },
+    { id: 'challenges-all', label: 'Bets', icon: Sword },
     { id: 'reputation', label: 'Rep', icon: Users },
     { id: 'financials', label: 'Finance', icon: Coins },
     { id: 'ai-oracle', label: 'Oracle', icon: Cpu },
@@ -145,19 +147,22 @@ function Dashboard() {
 
   // Render the current view
   const renderActiveView = () => {
+    if (activeTab.startsWith('financials')) {
+      return <FinancialsView activeTab={activeTab} navigate={navigate} />
+    }
+    if (activeTab.startsWith('challenges')) {
+      return <ChallengesView activeTab={activeTab} navigate={navigate} />
+    }
+
     switch (activeTab) {
       case 'operations':
-        return <OperationsView onNavigateToChallenges={() => navigate('challenges')} navigate={navigate} />
-      case 'challenges':
-        return <ChallengesView navigate={navigate} />
+        return <OperationsView onNavigateToChallenges={() => navigate('challenges-all')} navigate={navigate} />
       case 'reputation':
         return <ReputationView navigate={navigate} />
-      case 'financials':
-        return <FinancialsView navigate={navigate} />
       case 'ai-oracle':
         return <OracleConfigView navigate={navigate} />
       default:
-        return <OperationsView onNavigateToChallenges={() => navigate('challenges')} navigate={navigate} />
+        return <OperationsView onNavigateToChallenges={() => navigate('challenges-all')} navigate={navigate} />
     }
   }
 
@@ -283,7 +288,11 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <AuthGate />
+        <WalletProvider>
+          <ChallengesProvider>
+            <AuthGate />
+          </ChallengesProvider>
+        </WalletProvider>
       </AuthProvider>
     </ThemeProvider>
   )
