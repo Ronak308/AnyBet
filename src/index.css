@@ -135,6 +135,13 @@
   color: #111827 !important;
 }
 
+:root.light input.bg-card,
+:root.light select.bg-card,
+:root.light input.bg-white,
+:root.light select.bg-white {
+  background-color: #FFFFFF !important;
+}
+
 :root.light input::placeholder {
   color: #9CA3AF !important;
 }

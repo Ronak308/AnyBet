@@ -19,7 +19,8 @@ import {
   BarChart3,
   Trophy,
   Settings,
-  HelpCircle
+  HelpCircle,
+  MessageSquare
 } from 'lucide-react'
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
@@ -44,6 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [financialsOpen, setFinancialsOpen] = useState(() => activeTab.startsWith('financials'))
   const [challengesOpen, setChallengesOpen] = useState(() => activeTab.startsWith('challenges'))
   const [oracleOpen, setOracleOpen] = useState(() => activeTab.startsWith('ai-oracle') || activeTab.startsWith('oracle'))
+  const [supportOpen, setSupportOpen] = useState(() => activeTab.startsWith('support'))
 
   useEffect(() => {
     if (activeTab.startsWith('financials')) {
@@ -55,6 +57,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (activeTab.startsWith('ai-oracle') || activeTab.startsWith('oracle')) {
       setOracleOpen(true)
     }
+    if (activeTab.startsWith('support')) {
+      setSupportOpen(true)
+    }
   }, [activeTab])
 
   const menuItems = [
@@ -64,6 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'reputation', label: 'Reputation', icon: Trophy },
     { id: 'financials', label: 'Financials', icon: Coins, isDropdown: true },
     { id: 'ai-oracle', label: 'AI Oracle', icon: Cpu, isDropdown: true },
+    { id: 'support-center', label: 'Support Center', icon: HelpCircle, isDropdown: true },
   ]
 
   const challengeSubItems = [
@@ -87,6 +93,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'ai-oracle-config', label: 'Configuration', icon: Layers },
     { id: 'ai-oracle-monitoring', label: 'Monitoring', icon: BarChart3 },
   ]
+
+  const supportSubItems = [
+    { id: 'support-tickets', label: 'Support Tickets', icon: MessageSquare },
+    { id: 'support-categories', label: 'Support Categories', icon: Layers },
+    { id: 'support-faq', label: 'FAQ Manager', icon: HelpCircle },
+  ]
+
   return (
     <motion.div
       animate={{ width: isCollapsed ? 76 : 260 }}
@@ -130,17 +143,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
             const isChallengesGroup = item.id === 'challenges'
             const isFinancialsGroup = item.id === 'financials'
             const isOracleGroup = item.id === 'ai-oracle'
+            const isSupportGroup = item.id === 'support-center'
+
             const isChallengesActive = activeTab.startsWith('challenges')
             const isFinancialsActive = activeTab.startsWith('financials')
             const isOracleActive = activeTab.startsWith('ai-oracle') || activeTab.startsWith('oracle')
+            const isSupportActive = activeTab.startsWith('support')
 
-            const isActive = isChallengesGroup 
-              ? isChallengesActive 
-              : isFinancialsGroup 
-                ? isFinancialsActive 
+            const isActive = isChallengesGroup
+              ? isChallengesActive
+              : isFinancialsGroup
+                ? isFinancialsActive
                 : isOracleGroup
                   ? isOracleActive
-                  : activeTab === item.id
+                  : isSupportGroup
+                    ? isSupportActive
+                    : activeTab === item.id
 
             if (isChallengesGroup) {
               return (
@@ -341,11 +359,82 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <button
                               key={sub.id}
                               onClick={() => setActiveTab(sub.id)}
-                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono tracking-wider transition-all duration-200 cursor-pointer w-full text-left ${
-                                isSubActive
-                                  ? 'bg-primary/15 text-primary font-bold border border-primary/30'
-                                  : 'text-muted hover:text-foreground hover:bg-surface/60'
-                              }`}
+                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono tracking-wider transition-all duration-200 cursor-pointer w-full text-left ${isSubActive
+                                ? 'bg-primary/15 text-primary font-bold border border-primary/30'
+                                : 'text-muted hover:text-foreground hover:bg-surface/60'
+                                }`}
+                            >
+                              <SubIcon className={`h-3.5 w-3.5 ${isSubActive ? 'text-primary' : 'text-muted'}`} />
+                              <span>{sub.label}</span>
+                            </button>
+                          )
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )
+            }
+
+            if (isSupportGroup) {
+              return (
+                <div key={item.id} className="flex flex-col gap-1">
+                  <Button
+                    variant={isActive ? "nav-active" : "nav"}
+                    onClick={() => {
+                      if (isCollapsed) {
+                        setIsCollapsed(false)
+                        setSupportOpen(true)
+                        setActiveTab('support-tickets')
+                      } else {
+                        const newOpen = !supportOpen
+                        setSupportOpen(newOpen)
+                        if (newOpen && !activeTab.startsWith('support')) {
+                          setActiveTab('support-tickets')
+                        }
+                      }
+                    }}
+                    className={`flex items-center justify-between ${isCollapsed ? 'justify-center px-0' : 'px-4'} h-11 w-full transition-all duration-200`}
+                    glow={isActive}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-primary' : 'text-muted'}`} />
+                      {!isCollapsed && (
+                        <span className="font-medium text-sm font-sans">
+                          {item.label}
+                        </span>
+                      )}
+                    </div>
+
+                    {!isCollapsed && (
+                      <div className="text-muted hover:text-foreground">
+                        {supportOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </div>
+                    )}
+                  </Button>
+
+                  {/* Support Sub-menu Dropdown */}
+                  <AnimatePresence>
+                    {supportOpen && !isCollapsed && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex flex-col gap-1 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
+                      >
+                        {supportSubItems.map((sub) => {
+                          const SubIcon = sub.icon
+                          const isSubActive = activeTab === sub.id || (activeTab === 'support-center' && sub.id === 'support-tickets')
+
+                          return (
+                            <button
+                              key={sub.id}
+                              onClick={() => setActiveTab(sub.id)}
+                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono tracking-wider transition-all duration-200 cursor-pointer w-full text-left ${isSubActive
+                                ? 'bg-primary/15 text-primary font-bold border border-primary/30'
+                                : 'text-muted hover:text-foreground hover:bg-surface/60'
+                                }`}
                             >
                               <SubIcon className={`h-3.5 w-3.5 ${isSubActive ? 'text-primary' : 'text-muted'}`} />
                               <span>{sub.label}</span>
@@ -395,19 +484,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         >
           <Settings className="h-5 w-5 shrink-0" />
           {!isCollapsed && <span>Settings</span>}
-        </Button>
-
-        {/* Support Button */}
-        <Button
-          variant="ghost"
-          className={cn(
-            "w-full justify-start text-muted hover:text-foreground font-sans text-sm font-medium transition-all duration-200",
-            isCollapsed ? 'justify-center p-0 h-10' : 'px-4 gap-3 h-10'
-          )}
-          onClick={() => alert("Ops Support desk online. Channel #ops-support.")}
-        >
-          <HelpCircle className="h-5 w-5 shrink-0" />
-          {!isCollapsed && <span>Support</span>}
         </Button>
       </div>
     </motion.div>

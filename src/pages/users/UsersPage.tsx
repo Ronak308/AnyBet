@@ -28,10 +28,10 @@ import {
   Edit3,
   ShieldAlert,
   MoreHorizontal,
-  Filter,
   Eye,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  X
 } from 'lucide-react'
 
 const normalizeRole = (role: string): string => {
@@ -426,6 +426,8 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize))
 
+  const hasActiveFilters = searchQuery.trim() !== '' || roleFilter !== 'all' || statusFilter !== 'all'
+
   useEffect(() => {
     setCurrentPage(prev => Math.min(prev, totalPages))
   }, [totalPages])
@@ -477,51 +479,64 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
 
       {/* Control Bar: Search, Filters & Create Action */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-1">
-        {/* Search Input */}
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted/80 pointer-events-none" />
-          <Input
-            placeholder="Search by Name, Email, or Username..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9 text-xs font-sans bg-surface/80 border border-muted/30 focus-visible:ring-primary/30"
-          />
+        {/* Left Side: Search & Filters */}
+        <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto flex-1">
+          {/* Search Input */}
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted/80 pointer-events-none" />
+            <Input
+              placeholder="Search by Name, Email, or Username..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 text-xs font-sans bg-card border border-border focus-visible:ring-primary/30"
+            />
+          </div>
+
+          {/* Role Filter */}
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value as any)}
+            className="h-9 px-3 rounded-lg text-xs font-mono bg-card border border-border text-foreground focus:outline-none focus:border-primary/50 w-full md:w-auto"
+          >
+            <option value="all" className="bg-[#151221] text-foreground">All Roles</option>
+            <option value="admin" className="bg-[#151221] text-foreground">Admin</option>
+            <option value="user" className="bg-[#151221] text-foreground">User</option>
+          </select>
+
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="h-9 px-3 rounded-lg text-xs font-mono bg-card border border-border text-foreground focus:outline-none focus:border-primary/50 w-full md:w-auto"
+          >
+            <option value="all" className="bg-[#151221] text-foreground">All Statuses</option>
+            <option value="active" className="bg-[#151221] text-foreground">Active</option>
+            <option value="inactive" className="bg-[#151221] text-foreground">Inactive</option>
+          </select>
+
+          {/* Clear Filters Action */}
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSearchQuery('')
+                setRoleFilter('all')
+                setStatusFilter('all')
+              }}
+              className="h-9 px-3 text-xs font-mono gap-1 text-muted hover:text-foreground shrink-0 border border-dashed border-border"
+            >
+              <X className="h-3.5 w-3.5" /> Clear Filters
+            </Button>
+          )}
         </div>
 
-        {/* Filters & Create Action */}
-        <div className="flex items-center gap-3 w-full md:w-auto flex-wrap justify-between md:justify-end">
-          <div className="flex items-center gap-1.5 bg-surface/80 border border-muted/30 rounded-lg px-2.5 py-1 text-xs font-mono">
-            <Filter className="h-3.5 w-3.5 text-muted/80" />
-            <span className="text-muted/80 text-[10px] uppercase font-semibold">Role:</span>
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value as any)}
-              className="bg-transparent text-foreground outline-none cursor-pointer text-xs font-sans font-medium"
-            >
-              <option value="all" className="bg-[#120F1D] text-foreground">All Roles</option>
-              <option value="admin" className="bg-[#120F1D] text-foreground">Admin</option>
-              <option value="user" className="bg-[#120F1D] text-foreground">User</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-1.5 bg-surface/80 border border-muted/30 rounded-lg px-2.5 py-1 text-xs font-mono">
-            <span className="text-muted/80 text-[10px] uppercase font-semibold">Status:</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="bg-transparent text-foreground outline-none cursor-pointer text-xs font-sans font-medium"
-            >
-              <option value="all" className="bg-[#120F1D] text-foreground">All Statuses</option>
-              <option value="active" className="bg-[#120F1D] text-foreground">Active</option>
-              <option value="inactive" className="bg-[#120F1D] text-foreground">Inactive</option>
-            </select>
-          </div>
-
+        {/* Right Side: Create Action */}
+        <div className="w-full md:w-auto flex justify-end">
           <Button
             variant="primary"
             glow
             onClick={openCreateUser}
-            className="gap-2 text-xs font-mono shrink-0 h-9"
+            className="gap-2 text-xs font-mono shrink-0 h-9 w-full md:w-auto"
           >
             <UserPlus className="h-4 w-4" /> Add User
           </Button>
