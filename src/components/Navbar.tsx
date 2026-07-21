@@ -5,8 +5,7 @@ import {
   User,
   LogOut,
   ChevronDown,
-  Shield,
-  Activity
+  Settings
 } from 'lucide-react'
 import { Button } from './ui/button'
 import {
@@ -16,10 +15,8 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator
 } from './ui/dropdown-menu'
-import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '@/context/AuthContext'
 import { ConfirmationModal } from './ui/confirmation-modal'
-import { ThemeToggleButton2 } from './ui/skiper4'
 import { Logo } from './ui/Logo'
 
 interface NavbarProps {
@@ -35,7 +32,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   sidebarCollapsed,
   setSidebarCollapsed
 }) => {
-  const { isDark, toggleTheme } = useTheme()
   const { user, logout } = useAuth()
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
 
@@ -112,15 +108,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Theme Toggle — Skiper4 */}
-        <ThemeToggleButton2
-          isDark={isDark}
-          onToggle={toggleTheme}
-          className="h-8 w-8 p-1.5 shrink-0"
-        />
 
-        {/* Separator */}
-        <span className="h-6 w-px bg-border/80"></span>
 
         {/* User profile section */}
         {user && (
@@ -135,7 +123,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         ? user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
                         : 'U'}
                     </div>
-                    
+
                     <div className="hidden sm:block min-w-0 text-left">
                       <span className="text-xs font-semibold text-foreground truncate group-hover/profile:text-primary transition-colors font-sans">
                         {user.name}
@@ -151,29 +139,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border border-muted/30 p-1.5 shadow-2xl rounded-xl">
                 {/* Profile */}
                 <DropdownMenuItem
-                  onClick={() => setActiveTab('reputation')}
+                  onClick={() => setActiveTab('profile')}
                   className="flex items-center gap-2 text-[11px] font-sans text-foreground hover:bg-surface/80 cursor-pointer rounded-lg p-2"
                 >
                   <User className="h-3.5 w-3.5 text-muted" />
                   <span>Profile</span>
                 </DropdownMenuItem>
 
-                {/* Access Control */}
+                {/* Profile Settings */}
                 <DropdownMenuItem
-                  onClick={() => setActiveTab('users')}
+                  onClick={() => {
+                    setActiveTab('profile-settings')
+                  }}
                   className="flex items-center gap-2 text-[11px] font-sans text-foreground hover:bg-surface/80 cursor-pointer rounded-lg p-2"
                 >
-                  <Shield className="h-3.5 w-3.5 text-muted" />
-                  <span>Access Control</span>
-                </DropdownMenuItem>
-
-                {/* Telemetry Logs */}
-                <DropdownMenuItem
-                  onClick={() => setActiveTab('operations')}
-                  className="flex items-center gap-2 text-[11px] font-sans text-foreground hover:bg-surface/80 cursor-pointer rounded-lg p-2"
-                >
-                  <Activity className="h-3.5 w-3.5 text-muted" />
-                  <span>Telemetry Logs</span>
+                  <Settings className="h-3.5 w-3.5 text-muted" />
+                  <span>Profile Settings</span>
                 </DropdownMenuItem>
 
                 <div className="my-1 border-t border-border/40" />

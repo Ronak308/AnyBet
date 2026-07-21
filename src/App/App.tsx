@@ -13,6 +13,8 @@ import { ReputationView } from '@/pages/ReputationView'
 import { FinancialsView } from '@/pages/FinancialsView'
 import { OracleConfigView } from '@/pages/OracleConfigView'
 import { UsersPage } from '@/pages/users/UsersPage'
+import { ProfilePage } from '@/pages/profile/ProfilePage'
+import { ProfileSettings } from '@/pages/profile/ProfileSettings'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { ThemeProvider } from '@/context/ThemeContext'
@@ -58,6 +60,16 @@ function OracleRoute() {
 function UsersRoute() {
   const navigate = useNavigate()
   return <UsersPage navigate={(tab) => navigate('/' + tab)} />
+}
+
+function ProfileRoute() {
+  const navigate = useNavigate()
+  return <ProfilePage navigate={(tab) => navigate('/' + tab)} />
+}
+
+function ProfileSettingsRoute() {
+  const navigate = useNavigate()
+  return <ProfileSettings navigate={(tab) => navigate('/' + tab)} />
 }
 
 function LoginPageView() {
@@ -122,6 +134,8 @@ function AuthGate() {
             <Route path="financials-disputes" element={<FinancialsRoute />} />
             <Route path="ai-oracle" element={<OracleRoute />} />
             <Route path="users" element={<UsersRoute />} />
+            <Route path="profile" element={<ProfileRoute />} />
+            <Route path="profile-settings" element={<ProfileSettingsRoute />} />
             <Route path="*" element={<Navigate to="/operations" replace />} />
           </Route>
         </>
