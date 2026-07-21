@@ -231,45 +231,109 @@ export const TransactionsModule: React.FC = () => {
       <Sheet open={!!selectedTx} onOpenChange={open => !open && setSelectedTx(null)}>
         <SheetContent side="right" className="w-full sm:max-w-md bg-background border-l border-border p-6 overflow-y-auto font-sans">
           {selectedTx && (
-            <div className="flex flex-col gap-6">
-              <div className="border-b border-border/40 pb-4 pr-8">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-mono text-primary font-bold">{selectedTx.id}</span>
-                  {getTypeBadge(selectedTx.type)}
-                </div>
-                <h3 className="text-lg font-bold text-foreground">Transaction Spec</h3>
-              </div>
-
-              <div className="space-y-4 font-mono text-xs">
-                <div className="p-3 bg-surface/40 border border-border/50 rounded-xl space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted">Transaction Hash</span>
-                    <span className="text-primary font-bold">{selectedTx.txHash}</span>
+            <div className="flex flex-col gap-6 h-full justify-between">
+              <div>
+                <div className="border-b border-border/40 pb-4 pr-8">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-mono text-muted uppercase tracking-wider">Transaction Invoice</span>
+                    {getTypeBadge(selectedTx.type)}
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted">User Account</span>
-                    <span className="text-foreground">{selectedTx.username} ({selectedTx.userId})</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted">Amount</span>
-                    <span className="text-emerald-400 font-bold">{selectedTx.amount.toLocaleString()} BET</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted">Status</span>
-                    <span className="text-foreground">{selectedTx.status}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted">Timestamp</span>
-                    <span className="text-muted">{new Date(selectedTx.timestamp).toLocaleString()}</span>
-                  </div>
+                  <h3 className="text-lg font-bold text-foreground font-mono">Receipt Specs</h3>
                 </div>
 
-                <div>
-                  <span className="text-[10px] text-muted uppercase block mb-1">Description</span>
-                  <div className="p-3 bg-surface/30 border border-border/40 rounded-lg text-foreground/90">
+                {/* Premium Ticket/Invoice Styling */}
+                <div className="mt-6 border border-border bg-surface/20 rounded-2xl p-5 relative overflow-hidden space-y-4 shadow-xl">
+                  {/* Decorative cutouts on sides */}
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background border-r border-border rounded-r-full -ml-px"></div>
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-background border-l border-border rounded-l-full -mr-px"></div>
+                  
+                  {/* Receipt Header */}
+                  <div className="flex items-center justify-between border-b border-dashed border-border/60 pb-3">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-foreground font-mono">ANYBET PROTOCOL</span>
+                      <span className="text-[9px] font-mono text-muted">VIRTUAL CASHOUT RECEIPT</span>
+                    </div>
+                    <Badge variant={selectedTx.status === 'Settled' ? 'success' : selectedTx.status === 'Pending' ? 'warning' : 'danger'}>
+                      {selectedTx.status.toUpperCase()}
+                    </Badge>
+                  </div>
+
+                  {/* Financial Details Table */}
+                  <div className="space-y-2.5 font-mono text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted">Transaction ID:</span>
+                      <span className="text-foreground font-bold">{selectedTx.id}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted">Tx Hash Ref:</span>
+                      <span className="text-primary font-bold">{selectedTx.txHash}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted">Username:</span>
+                      <span className="text-foreground">@{selectedTx.username}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted">User ID:</span>
+                      <span className="text-muted">{selectedTx.userId}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted">Timestamp:</span>
+                      <span className="text-muted">{new Date(selectedTx.timestamp).toLocaleString()}</span>
+                    </div>
+                    
+                    <div className="border-t border-dashed border-border/60 my-2 pt-2 space-y-1.5">
+                      <div className="flex justify-between text-muted text-[11px]">
+                        <span>Amount:</span>
+                        <span>{selectedTx.amount.toLocaleString()} BET</span>
+                      </div>
+                      <div className="flex justify-between text-muted text-[11px]">
+                        <span>Gas/Platform Fee:</span>
+                        <span>0 BET (Virtual)</span>
+                      </div>
+                      <div className="flex justify-between text-foreground font-bold text-sm border-t border-border/40 pt-2">
+                        <span>Total Credited:</span>
+                        <span className="text-emerald-400">+{selectedTx.amount.toLocaleString()} BET</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Receipt Description Box */}
+                  <div className="bg-surface/40 p-3 rounded-xl border border-border/40 text-xs font-mono text-muted">
+                    <span className="text-[9px] uppercase tracking-wider text-muted font-bold block mb-1">Audit Log Context</span>
                     {selectedTx.description}
                   </div>
+
+                  {/* Mock Barcode */}
+                  <div className="pt-3 border-t border-dashed border-border/60 flex flex-col items-center gap-1.5">
+                    <div className="text-[20px] tracking-[3px] font-mono text-foreground/35 select-none leading-none">
+                      ||| | ||| |||| | ||| || |||
+                    </div>
+                    <span className="text-[8px] font-mono text-muted uppercase">Signed: ANYBET-AI-ORACLE-GATEWAY</span>
+                  </div>
                 </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 pt-4 border-t border-border/40">
+                <Button 
+                  variant="primary" 
+                  glow 
+                  className="w-full text-xs font-mono"
+                  onClick={() => {
+                    showNotice(`Receipt generated and sent to user email.`, 'success');
+                  }}
+                >
+                  ✉️ Email Receipt
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full text-xs font-mono"
+                  onClick={() => {
+                    window.print();
+                  }}
+                >
+                  🖨️ Print Invoice
+                </Button>
               </div>
             </div>
           )}

@@ -15,15 +15,13 @@ import {
   Sparkles,
   Check,
   ArrowRight,
-  ArrowLeft,
-  Wand2
+  ArrowLeft
 } from 'lucide-react'
 import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
 import { Sheet, SheetContent } from '../../components/ui/sheet'
-import { DateTimePicker } from '../../components/ui/date-time-picker'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -42,13 +40,13 @@ export const AllChallengesModule: React.FC = () => {
     setSelectedChallenge,
     createChallenge,
     approveChallenge,
+    updateChallenge,
     duplicateChallenge,
     deleteChallenge,
     bulkApprove,
     bulkReject,
     bulkSuspend,
-    bulkDelete,
-    clearAllChallenges
+    bulkDelete
   } = useChallenges()
 
   const walletContext = useWallet()
@@ -79,7 +77,7 @@ export const AllChallengesModule: React.FC = () => {
   const [newCategory, setNewCategory] = useState<ChallengeCategoryType>('Prediction')
   const [newType, setNewType] = useState('Binary Option')
   const [newFrequency, setNewFrequency] = useState<'Single Event' | 'Day-wise' | 'Weekly' | 'Monthly'>('Single Event')
-  const [newSource, setNewSource] = useState<'Admin Portal' | 'Mobile App'>('Admin Portal')
+  const [newSource] = useState<'Admin Portal' | 'Mobile App'>('Admin Portal')
   const [newCreatorName, setNewCreatorName] = useState('System Admin')
   const [newOpponentName, setNewOpponentName] = useState('')
   const [newStartDate, setNewStartDate] = useState(() => formatDateTimeLocal(new Date()))
@@ -877,21 +875,29 @@ export const AllChallengesModule: React.FC = () => {
                 </div>
 
                 {/* Live Financial Breakdown Card */}
-                <div className="p-4 bg-primary/10 border border-primary/30 rounded-xl space-y-3 font-mono">
-                  <span className="text-[10px] text-primary uppercase font-bold block">Financial Calculations</span>
-                  <div className="flex items-center justify-between text-xs py-1 border-b border-border/30">
-                    <span className="text-muted">Total Prize Pool</span>
-                    <span className="font-bold text-emerald-400">{(Number(newStake) * Number(newMaxParticipants)).toLocaleString()} BET</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs py-1 border-b border-border/30">
-                    <span className="text-muted">Platform Treasury Fee (5%)</span>
-                    <span className="text-muted">{((Number(newStake) * Number(newMaxParticipants)) * 0.05).toLocaleString()} BET</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs py-1">
-                    <span className="text-muted">Net Winner Payout</span>
-                    <span className="font-bold text-primary">{((Number(newStake) * Number(newMaxParticipants)) * 0.95).toLocaleString()} BET</span>
-                  </div>
-                </div>
+                {(() => {
+                  const feePercent = walletContext ? walletContext.platformFeePercent : 5;
+                  const totalPool = Number(newStake) * Number(newMaxParticipants);
+                  const feeAmt = (totalPool * feePercent) / 100;
+                  const netPayout = totalPool - feeAmt;
+                  return (
+                    <div className="p-4 bg-primary/10 border border-primary/30 rounded-xl space-y-3 font-mono">
+                      <span className="text-[10px] text-primary uppercase font-bold block">Financial Calculations</span>
+                      <div className="flex items-center justify-between text-xs py-1 border-b border-border/30">
+                        <span className="text-muted">Total Prize Pool</span>
+                        <span className="font-bold text-emerald-400">{totalPool.toLocaleString()} BET</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs py-1 border-b border-border/30">
+                        <span className="text-muted">Platform Treasury Fee ({feePercent}%)</span>
+                        <span className="text-muted">{feeAmt.toLocaleString()} BET</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs py-1">
+                        <span className="text-muted">Net Winner Payout</span>
+                        <span className="font-bold text-primary">{netPayout.toLocaleString()} BET</span>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="pt-2 flex items-center justify-between">
                   <Button type="button" onClick={() => { setStepError(null); setWizardStep(2) }} variant="outline" className="gap-2 text-xs font-mono">

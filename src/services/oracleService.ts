@@ -1,6 +1,6 @@
 import { collection, doc, setDoc, onSnapshot, query } from 'firebase/firestore'
 import { db } from '../firebase/firebase'
-import type { SettlementQueueItem, OracleNode, AILogEntry } from '../context/OracleContext'
+import type { SettlementQueueItem, OracleNode } from '../context/OracleContext'
 
 const ORACLE_QUEUE_COL = 'oracle_queue'
 const ORACLE_NODES_COL = 'oracle_nodes'

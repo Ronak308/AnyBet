@@ -1,18 +1,12 @@
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
 import { 
   Cpu, 
-  Binary, 
-  GitCompare, 
   AlertTriangle, 
   Save, 
   Play, 
   Plus, 
-  Check, 
   Trash2, 
   RotateCcw,
-  CheckCircle,
-  XCircle,
   Settings,
   ListFilter,
   FileCode,
@@ -52,7 +46,7 @@ export const OracleConfiguration: React.FC = () => {
   const [newRuleName, setNewRuleName] = useState('')
   const [newRuleCondition, setNewRuleCondition] = useState('AI Confidence ≥ 90.0%')
   const [newRuleAction, setNewRuleAction] = useState<OracleRuleItem['action']>('Auto Settlement')
-  const [newRuleThreshold, setNewRuleThreshold] = useState('90.0')
+  const [newRuleThreshold] = useState('90.0')
 
   // Kill Switch State
   const [isKillSwitchOpen, setIsKillSwitchOpen] = useState(false)

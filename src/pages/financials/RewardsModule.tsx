@@ -6,7 +6,10 @@ import {
   Coins, 
   Clock,
   Sparkles,
-  Edit2
+  Edit2,
+  Trash2,
+  Power,
+  Ban
 } from 'lucide-react'
 import { Card, CardContent } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'
@@ -20,27 +23,59 @@ import type { BonusCampaign } from '../../context/WalletContext'
 export const RewardsModule: React.FC = () => {
   const {
     rewardRules,
-    bonusCampaigns: initialBonusCampaigns,
+    bonusCampaigns,
     dailyRewardConfig,
     updateDailyRewardConfig,
+    createBonusCampaign,
+    updateBonusCampaign,
+    deleteBonusCampaign,
+    transactions,
     totalRewardsDistributed
   } = useWallet()
 
   const [dailyCoinsInput, setDailyCoinsInput] = useState(dailyRewardConfig.dailyCoins.toString())
   const [cooldownInput, setCooldownInput] = useState(dailyRewardConfig.cooldownHours.toString())
 
-  // Local state for Bonus Campaigns so user can Create/Edit new campaigns
-  const [campaignsList, setCampaignsList] = useState<BonusCampaign[]>(initialBonusCampaigns)
+  // Select last 4 reward claims or promo code usage for audit ledger
+  const rewardTransactions = React.useMemo(() => {
+    return transactions.filter(t => t.type === 'Reward').slice(0, 4)
+  }, [transactions])
 
   // Campaign Modal States
   const [isCampModalOpen, setIsCampModalOpen] = useState(false)
   const [editingCampId, setEditingCampId] = useState<string | null>(null)
   const [campTitle, setCampTitle] = useState('')
   const [campCode, setCampCode] = useState('')
-  const [campBonus, setCampBonus] = useState('500')
-  const [campMinStake, setCampMinStake] = useState('100')
+  const [campBonus, setCampBonus] = useState('10')
+  const [campMinStake, setCampMinStake] = useState('10')
   const [campMaxClaims, setCampMaxClaims] = useState('100')
-  const [campExpiry, setCampExpiry] = useState('2026-12-31')
+  const [campExpiry, setCampExpiry] = useState('2026-12-31T23:59')
+
+  // Helper to safely format stored date string to HTML5 datetime-local format
+  const formatToDateTimeLocal = (dateStr: string) => {
+    if (!dateStr) return '2026-12-31T23:59'
+    if (dateStr.includes('T')) {
+      return dateStr.substring(0, 16) // extract YYYY-MM-DDTHH:MM
+    }
+    return `${dateStr}T23:59`
+  }
+
+  // Format date display for campaigns
+  const formatExpiryDisplay = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr)
+      if (isNaN(d.getTime())) return dateStr
+      return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+    } catch {
+      return dateStr
+    }
+  }
 
   // Custom Toast helper
   const showNotice = (message: string, type: 'info' | 'success' | 'warning' = 'info') => {
@@ -68,18 +103,18 @@ export const RewardsModule: React.FC = () => {
       setEditingCampId(camp.id)
       setCampTitle(camp.title || camp.name || '')
       setCampCode(camp.code || camp.title.toUpperCase().replace(/\s+/g, '_'))
-      setCampBonus((camp.bonusCoins || 500).toString())
-      setCampMinStake((camp.minStake || 0).toString())
+      setCampBonus((camp.bonusCoins || 10).toString())
+      setCampMinStake((camp.minStake || 10).toString())
       setCampMaxClaims((camp.maxClaims || 100).toString())
-      setCampExpiry(camp.expiresAt || '2026-12-31')
+      setCampExpiry(formatToDateTimeLocal(camp.expiresAt))
     } else {
       setEditingCampId(null)
       setCampTitle('')
       setCampCode('')
-      setCampBonus('500')
-      setCampMinStake('100')
+      setCampBonus('10')
+      setCampMinStake('10')
       setCampMaxClaims('100')
-      setCampExpiry('2026-12-31')
+      setCampExpiry('2026-12-31T23:59')
     }
     setIsCampModalOpen(true)
   }
@@ -91,14 +126,13 @@ export const RewardsModule: React.FC = () => {
       return
     }
 
-    const bonus = parseInt(campBonus, 10) || 500
+    const bonus = parseInt(campBonus, 10) || 10
     const minStake = parseInt(campMinStake, 10) || 0
     const maxClaims = parseInt(campMaxClaims, 10) || 100
     const code = campCode.trim().toUpperCase() || campTitle.trim().toUpperCase().replace(/\s+/g, '_')
 
     if (editingCampId) {
-      setCampaignsList(prev => prev.map(c => c.id === editingCampId ? {
-        ...c,
+      updateBonusCampaign(editingCampId, {
         title: campTitle,
         name: campTitle,
         code,
@@ -106,23 +140,20 @@ export const RewardsModule: React.FC = () => {
         minStake,
         maxClaims,
         expiresAt: campExpiry
-      } : c))
+      })
       showNotice(`Campaign "${campTitle}" updated successfully.`, 'success')
     } else {
-      const newCamp: BonusCampaign = {
-        id: `cmp_${Date.now()}`,
+      createBonusCampaign({
         title: campTitle,
         name: campTitle,
         code,
         type: 'Promo Code',
         bonusCoins: bonus,
         minStake,
-        currentClaims: 0,
-        maxClaims,
         status: 'Active',
-        expiresAt: campExpiry
-      }
-      setCampaignsList(prev => [newCamp, ...prev])
+        expiresAt: campExpiry,
+        maxClaims
+      })
       showNotice(`Created new campaign "${campTitle}" (${code}).`, 'success')
     }
 
@@ -130,7 +161,14 @@ export const RewardsModule: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col gap-6 font-sans">
+    <div className="flex flex-col gap-6 font-sans relative">
+      {/* Top Action Bar - Aligned to Page Header */}
+      <div className="flex justify-end md:absolute md:-top-16 md:right-0 z-30">
+        <Button size="sm" variant="primary" glow onClick={() => handleOpenCampModal()} className="gap-1.5 text-xs font-mono">
+          <Plus className="h-3.5 w-3.5" /> Create Campaign
+        </Button>
+      </div>
+
       {/* Overview Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="bg-surface/30 border-border/60">
@@ -170,43 +208,78 @@ export const RewardsModule: React.FC = () => {
         </Card>
       </div>
 
-      {/* Daily Reward Settings Card */}
-      <Card className="bg-surface/30 border-border/60">
-        <CardContent className="p-6 flex flex-col gap-4">
-          <div className="border-b border-border/40 pb-3">
-            <h3 className="text-base font-bold text-foreground">Daily Login Reward Engine</h3>
-            <p className="text-xs text-muted">Configure daily free coin grants and claim cooldown rules for players.</p>
-          </div>
-
-          <form onSubmit={handleSaveDailyConfig} className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
-            <div className="flex-1">
-              <label className="text-[10px] font-mono uppercase text-muted block mb-1">Daily Coin Amount ($BET)</label>
-              <Input
-                type="number"
-                value={dailyCoinsInput}
-                onChange={e => setDailyCoinsInput(e.target.value)}
-                className="bg-surface/40 text-xs font-mono text-foreground"
-              />
+      {/* Daily Reward Settings & Audit Logs Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Daily Reward Settings Card */}
+        <Card className="bg-surface/30 border-border/60">
+          <CardContent className="p-6 flex flex-col justify-between h-full gap-4">
+            <div className="border-b border-border/40 pb-3">
+              <h3 className="text-base font-bold text-foreground">Daily Login Reward Engine</h3>
+              <p className="text-xs text-muted">Configure daily free coin grants and claim cooldown rules for players.</p>
             </div>
 
-            <div className="flex-1">
-              <label className="text-[10px] font-mono uppercase text-muted block mb-1">Cooldown Duration (Hours)</label>
-              <Input
-                type="number"
-                value={cooldownInput}
-                onChange={e => setCooldownInput(e.target.value)}
-                className="bg-surface/40 text-xs font-mono text-foreground"
-              />
+            <form onSubmit={handleSaveDailyConfig} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Daily Coins ($BET)</label>
+                  <Input
+                    type="number"
+                    value={dailyCoinsInput}
+                    onChange={e => setDailyCoinsInput(e.target.value)}
+                    className="bg-surface/40 text-xs font-mono text-foreground"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Cooldown (Hours)</label>
+                  <Input
+                    type="number"
+                    value={cooldownInput}
+                    onChange={e => setCooldownInput(e.target.value)}
+                    className="bg-surface/40 text-xs font-mono text-foreground"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <Button type="submit" variant="primary" glow className="text-xs font-mono h-9 px-5 w-full sm:w-auto">
+                  <Check className="h-4 w-4 mr-1.5" /> Save Reward Config
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Recent Reward Claims Log Card */}
+        <Card className="bg-surface/30 border-border/60">
+          <CardContent className="p-6 flex flex-col justify-between h-full gap-4">
+            <div className="border-b border-border/40 pb-3">
+              <h3 className="text-base font-bold text-foreground">Recent Reward Claims Log</h3>
+              <p className="text-xs text-muted">Audited login reward claims and promo redemptions.</p>
             </div>
 
-            <div className="shrink-0">
-              <Button type="submit" variant="primary" glow className="text-xs font-mono h-9 px-5 w-full sm:w-auto">
-                <Check className="h-4 w-4 mr-1.5" /> Save Reward Config
-              </Button>
+            <div className="space-y-3.5">
+              {rewardTransactions.length === 0 ? (
+                <p className="text-xs text-muted font-mono py-4 text-center">No login reward or promo claim logs recorded yet.</p>
+              ) : (
+                rewardTransactions.map(tx => (
+                  <div key={tx.id} className="flex items-center justify-between p-2.5 rounded-xl border border-border/30 bg-surface/20">
+                    <div>
+                      <span className="text-xs font-bold text-foreground">@{tx.username}</span>
+                      <p className="text-[10px] text-muted font-mono mt-0.5">{tx.description || 'Claimed login bonus'}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-mono font-bold text-emerald-400">+{tx.amount} BET</span>
+                      <p className="text-[9px] text-muted font-mono mt-0.5">{new Date(tx.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Streak Multiplier Rules Table */}
       <div className="flex flex-col gap-3">
@@ -249,13 +322,10 @@ export const RewardsModule: React.FC = () => {
             <h3 className="text-sm font-bold text-foreground">Active Bonus & Promo Campaigns</h3>
             <p className="text-xs text-muted">Create promo codes and deposit bonus campaigns for players.</p>
           </div>
-          <Button size="sm" variant="primary" glow onClick={() => handleOpenCampModal()} className="gap-1.5 text-xs font-mono">
-            <Plus className="h-3.5 w-3.5" /> Create Campaign
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {campaignsList.map(camp => (
+          {bonusCampaigns.map(camp => (
             <Card key={camp.id} className="bg-surface/30 border-border/60">
               <CardContent className="p-4 flex flex-col justify-between h-full gap-3">
                 <div className="flex items-start justify-between">
@@ -272,11 +342,42 @@ export const RewardsModule: React.FC = () => {
                   <span className="text-muted text-[10px] ml-2">({camp.currentClaims || 0} / {camp.maxClaims || 100} claims)</span>
                 </div>
 
-                <div className="pt-2 border-t border-border/40 text-[10px] font-mono text-muted flex justify-between items-center">
-                  <span>Expires: {camp.expiresAt}</span>
-                  <button onClick={() => handleOpenCampModal(camp)} className="text-primary hover:underline cursor-pointer flex items-center gap-1 font-bold">
-                    <Edit2 className="h-3 w-3" /> Edit
-                  </button>
+                <div className="pt-2 border-t border-border/40 text-[10px] font-mono text-muted flex justify-between items-center gap-2">
+                  <span>Expires: {formatExpiryDisplay(camp.expiresAt)}</span>
+                  <div className="flex items-center gap-1 bg-surface/20 border border-border/40 rounded-lg p-0.5 shrink-0">
+                    <button
+                      onClick={() => {
+                        const newStatus = camp.status === 'Active' ? 'Expired' : 'Active';
+                        updateBonusCampaign(camp.id, { status: newStatus });
+                        showNotice(`Campaign status changed to ${newStatus}`, 'info');
+                      }}
+                      className={`p-1.5 rounded-md hover:bg-surface/60 transition-colors cursor-pointer ${
+                        camp.status === 'Active' ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300'
+                      }`}
+                      title={camp.status === 'Active' ? 'Pause Campaign' : 'Activate Campaign'}
+                    >
+                      {camp.status === 'Active' ? <Ban className="h-3.5 w-3.5" /> : <Power className="h-3.5 w-3.5" />}
+                    </button>
+                    <button 
+                      onClick={() => handleOpenCampModal(camp)} 
+                      className="p-1.5 rounded-md text-primary hover:bg-surface/60 hover:text-primary-foreground transition-colors cursor-pointer"
+                      title="Edit Campaign"
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        if (confirm(`Are you sure you want to delete campaign "${camp.title}"?`)) {
+                          deleteBonusCampaign(camp.id);
+                          showNotice(`Deleted campaign "${camp.title}"`, 'info');
+                        }
+                      }} 
+                      className="p-1.5 rounded-md text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors cursor-pointer"
+                      title="Delete Campaign"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -286,7 +387,7 @@ export const RewardsModule: React.FC = () => {
 
       {/* CREATE / EDIT CAMPAIGN MODAL SHEET */}
       <Sheet open={isCampModalOpen} onOpenChange={setIsCampModalOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md bg-background border-l border-border p-6 overflow-y-auto font-sans">
+        <SheetContent side="right" className="w-full sm:max-w-xl bg-background border-l border-border p-6 overflow-y-auto font-sans">
           <div className="flex flex-col gap-6">
             <div className="border-b border-border/40 pb-4 pr-8">
               <h3 className="text-lg font-bold text-foreground">
@@ -351,9 +452,9 @@ export const RewardsModule: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Expiry Date</label>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Expiry Date & Time</label>
                   <Input
-                    type="date"
+                    type="datetime-local"
                     value={campExpiry}
                     onChange={e => setCampExpiry(e.target.value)}
                     className="bg-surface/40 text-xs font-mono text-foreground"

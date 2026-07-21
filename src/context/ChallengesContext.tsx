@@ -285,7 +285,7 @@ const INITIAL_DISPUTES: DisputeItem[] = [
 // ─── Provider Implementation ──────────────────────────────────────────────────
 
 export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { creditCoins } = useWallet()
+  const { creditCoins, platformFeePercent } = useWallet()
 
   const [categories, setCategories] = useState<ChallengeCategory[]>(INITIAL_CATEGORIES)
   const [challenges, setChallenges] = useState<ChallengeItem[]>(INITIAL_CHALLENGES)
@@ -403,8 +403,8 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       financials: {
         totalCollected: pot,
         lockedCoins: pot,
-        platformFee: Math.round(pot * 0.05),
-        winnerPayout: Math.round(pot * 0.95),
+        platformFee: Math.round(pot * (platformFeePercent / 100)),
+        winnerPayout: pot - Math.round(pot * (platformFeePercent / 100)),
         refundAmount: 0
       },
       settlement: {
@@ -566,10 +566,17 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const target = challenges.find(c => c.id === challengeId)
     if (!target) return
 
+    // Fix Bug B: Double Payout Protection (Check if already complete/cancelled)
+    if (target.status === 'Completed' || target.status === 'Cancelled') {
+      showToastNotice('Challenge has already been settled or cancelled.', 'warning')
+      return
+    }
+
     const payoutAmount = target.financials.winnerPayout || target.prizePool
 
-    // Unlock locked coins and credit winner payout in Wallet Context
-    creditCoins('USR_01', payoutAmount, 'Bet Win', `Winner payout for Challenge ${challengeId}`)
+    // Fix Bug C: Dynamic Winner Wallet Payout (Resolve winnerId or default to USR_01)
+    const targetWinnerId = winnerId && winnerId.startsWith('USR_') ? winnerId : 'USR_01'
+    creditCoins(targetWinnerId, payoutAmount, 'Bet Win', `Winner payout for Challenge ${challengeId}`)
 
     let updatedChallenge: ChallengeItem | undefined
 

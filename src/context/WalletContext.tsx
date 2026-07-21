@@ -5,6 +5,7 @@ import {
   subscribeToWithdrawals,
   subscribeToCoinPackages,
   updateWalletInFirestore,
+  createWalletInFirestore,
   addTransactionToFirestore,
   saveCoinPackageInFirestore,
   deleteCoinPackageFromFirestore,
@@ -85,6 +86,13 @@ export interface WithdrawalRequest {
   status: 'Pending' | 'Approved' | 'Rejected'
   requestedAt: string
   processedAt?: string
+  payoutMethod?: 'Crypto (USDT)' | 'Bank Wire' | 'PayPal'
+  payoutDetails?: string
+  txHash?: string
+  taxDeducted?: number
+  feeDeducted?: number
+  netDisbursed?: number
+  adminNotes?: string
 }
 
 export interface TreasuryStats {
@@ -127,6 +135,9 @@ interface WalletContextValue {
   freezeWallet: (walletId: string) => void
   unfreezeWallet: (walletId: string) => void
   resetWallet: (walletId: string, newBalance?: number) => void
+  createWallet: (userId: string, username: string) => void
+  platformFeePercent: number
+  updatePlatformFeePercent: (percent: number) => void
   
   // Package Actions
   createCoinPackage: (pkg: Omit<CoinPackage, 'id'>) => void
@@ -137,52 +148,86 @@ interface WalletContextValue {
   // Reward Actions
   claimDailyReward: (userId: string) => { success: boolean; message: string; coinsGranted?: number }
   updateDailyRewardConfig: (config: Partial<{ dailyCoins: number; cooldownHours: number }>) => void
+  createBonusCampaign: (camp: Omit<BonusCampaign, 'id' | 'currentClaims'>) => void
+  updateBonusCampaign: (id: string, updates: Partial<BonusCampaign>) => void
+  deleteBonusCampaign: (id: string) => void
+  redeemPromoCode: (userId: string, code: string) => { success: boolean; message: string; coinsGranted?: number }
   
   // Withdrawal Actions
-  approveWithdrawal: (requestId: string) => void
-  rejectWithdrawal: (requestId: string) => void
+  approveWithdrawal: (
+    requestId: string,
+    txHash?: string,
+    taxDeducted?: number,
+    feeDeducted?: number,
+    netDisbursed?: number,
+    adminNotes?: string
+  ) => void
+  rejectWithdrawal: (requestId: string, adminNotes?: string) => void
   requestWithdrawal: (userId: string, username: string, amount: number) => { success: boolean; message: string }
 }
 
 // ─── Initial Mock Data ────────────────────────────────────────────────────────
 
 const INITIAL_WALLETS: UserWallet[] = [
-  { id: 'wal_1', userId: 'USR_01', username: 'Ronak', totalBalance: 12500, lockedBalance: 1500, status: 'Active', createdAt: '2026-01-10T10:00:00Z', lastActivity: 'Just now' },
-  { id: 'wal_2', userId: 'USR_02', username: 'block_wizard', totalBalance: 4500, lockedBalance: 600, status: 'Active', createdAt: '2026-02-14T14:30:00Z', lastActivity: '12m ago' },
-  { id: 'wal_3', userId: 'USR_03', username: 'crypto_king', totalBalance: 89000, lockedBalance: 12000, status: 'Active', createdAt: '2026-03-01T09:15:00Z', lastActivity: '1h ago' },
-  { id: 'wal_4', userId: 'USR_04', username: 'risky_bets', totalBalance: 1200, lockedBalance: 0, status: 'Frozen', createdAt: '2026-04-20T16:00:00Z', lastActivity: '2d ago' },
-  { id: 'wal_5', userId: 'USR_05', username: 'oracle_eye', totalBalance: 24500, lockedBalance: 3200, status: 'Active', createdAt: '2026-05-11T11:45:00Z', lastActivity: '30m ago' },
+  { id: 'wal_1', userId: 'USR_01', username: 'Ronak', totalBalance: 250, lockedBalance: 30, status: 'Active', createdAt: '2026-01-10T10:00:00Z', lastActivity: 'Just now' },
+  { id: 'wal_2', userId: 'USR_02', username: 'block_wizard', totalBalance: 90, lockedBalance: 10, status: 'Active', createdAt: '2026-02-14T14:30:00Z', lastActivity: '12m ago' },
+  { id: 'wal_3', userId: 'USR_03', username: 'crypto_king', totalBalance: 1500, lockedBalance: 200, status: 'Active', createdAt: '2026-03-01T09:15:00Z', lastActivity: '1h ago' },
+  { id: 'wal_4', userId: 'USR_04', username: 'risky_bets', totalBalance: 50, lockedBalance: 0, status: 'Frozen', createdAt: '2026-04-20T16:00:00Z', lastActivity: '2d ago' },
+  { id: 'wal_5', userId: 'USR_05', username: 'oracle_eye', totalBalance: 400, lockedBalance: 50, status: 'Active', createdAt: '2026-05-11T11:45:00Z', lastActivity: '30m ago' },
 ]
 
 const INITIAL_TRANSACTIONS: CoinTransaction[] = [
-  { id: 'tx_101', txHash: '0x8F9...2E1', userId: 'USR_01', username: 'Ronak', type: 'Deposit', amount: 5000, status: 'Settled', timestamp: '2026-07-20T10:30:00Z', description: 'Starter Coin Pack Purchase (Virtual)' },
-  { id: 'tx_102', txHash: '0x32A...BF8', userId: 'USR_02', username: 'block_wizard', type: 'Bet Win', amount: 1200, status: 'Settled', timestamp: '2026-07-20T09:15:00Z', description: 'Won Challenge #AB-9821 Payout' },
-  { id: 'tx_103', txHash: '0x1A2...FF0', userId: 'USR_03', username: 'crypto_king', type: 'Reward', amount: 250, status: 'Settled', timestamp: '2026-07-20T08:00:00Z', description: 'Daily Login Streak Bonus (Day 5)' },
-  { id: 'tx_104', txHash: '0xC4D...789', userId: 'USR_01', username: 'Ronak', type: 'Bet Stake', amount: 500, status: 'Settled', timestamp: '2026-07-19T22:10:00Z', description: 'Staked on Challenge #AB-9942' },
-  { id: 'tx_105', txHash: '0xE5F...112', userId: 'USR_05', username: 'oracle_eye', type: 'Withdrawal', amount: 2000, status: 'Pending', timestamp: '2026-07-19T18:45:00Z', description: 'Requested Virtual Coin Redemption' },
+  { id: 'tx_101', txHash: '0x8F9...2E1', userId: 'USR_01', username: 'Ronak', type: 'Deposit', amount: 50, status: 'Settled', timestamp: '2026-07-20T10:30:00Z', description: 'Starter Coin Pack Purchase (Virtual)' },
+  { id: 'tx_102', txHash: '0x32A...BF8', userId: 'USR_02', username: 'block_wizard', type: 'Bet Win', amount: 20, status: 'Settled', timestamp: '2026-07-20T09:15:00Z', description: 'Won Challenge #AB-9821 Payout' },
+  { id: 'tx_103', txHash: '0x1A2...FF0', userId: 'USR_03', username: 'crypto_king', type: 'Reward', amount: 5, status: 'Settled', timestamp: '2026-07-20T08:00:00Z', description: 'Daily Login Streak Bonus (Day 5)' },
+  { id: 'tx_104', txHash: '0xC4D...789', userId: 'USR_01', username: 'Ronak', type: 'Bet Stake', amount: 10, status: 'Settled', timestamp: '2026-07-19T22:10:00Z', description: 'Staked on Challenge #AB-9942' },
+  { id: 'tx_105', txHash: '0xE5F...112', userId: 'USR_05', username: 'oracle_eye', type: 'Withdrawal', amount: 20, status: 'Pending', timestamp: '2026-07-19T18:45:00Z', description: 'Requested Virtual Coin Redemption' },
 ]
 
 const INITIAL_PACKAGES: CoinPackage[] = [
-  { id: 'pkg_starter', name: 'Starter Pack', coins: 1000, bonusCoins: 100, tag: 'POPULAR', priceUsd: 10, isEnabled: true },
-  { id: 'pkg_pro', name: 'Pro Pack', coins: 5000, bonusCoins: 750, tag: 'BEST VALUE', priceUsd: 45, isEnabled: true },
-  { id: 'pkg_highroller', name: 'High Roller Pack', coins: 25000, bonusCoins: 5000, tag: 'VIP BONUS', priceUsd: 200, isEnabled: true },
+  { id: 'pkg_starter', name: 'Starter Pack', coins: 10, bonusCoins: 1, tag: 'POPULAR', priceUsd: 10, isEnabled: true },
+  { id: 'pkg_pro', name: 'Pro Pack', coins: 50, bonusCoins: 5, tag: 'BEST VALUE', priceUsd: 50, isEnabled: true },
+  { id: 'pkg_highroller', name: 'High Roller Pack', coins: 200, bonusCoins: 25, tag: 'VIP BONUS', priceUsd: 200, isEnabled: true },
 ]
 
 const INITIAL_REWARD_RULES: RewardRule[] = [
-  { id: 'rr_1', event: 'Daily Login', coinReward: 100, xpReward: 10, cooldownHours: 24 },
-  { id: 'rr_2', event: 'Win Physical Challenge', coinReward: 150, xpReward: 25, cooldownHours: 0 },
-  { id: 'rr_3', event: 'Win Prediction Market', coinReward: 200, xpReward: 30, cooldownHours: 0 },
-  { id: 'rr_4', event: 'Participate Loss Consolation', coinReward: 20, xpReward: 5, cooldownHours: 0 },
+  { id: 'rr_1', event: 'Daily Login', coinReward: 2, xpReward: 10, cooldownHours: 24 },
+  { id: 'rr_2', event: 'Win Physical Challenge', coinReward: 5, xpReward: 25, cooldownHours: 0 },
+  { id: 'rr_3', event: 'Win Prediction Market', coinReward: 10, xpReward: 30, cooldownHours: 0 },
+  { id: 'rr_4', event: 'Participate Loss Consolation', coinReward: 1, xpReward: 5, cooldownHours: 0 },
 ]
 
 const INITIAL_CAMPAIGNS: BonusCampaign[] = [
-  { id: 'cmp_1', title: 'Welcome Bonus', type: 'Onboarding', bonusCoins: 500, minStake: 0, status: 'Active', expiresAt: '2026-12-31' },
-  { id: 'cmp_2', title: 'Weekly Prediction League', type: 'Tournament', bonusCoins: 2500, minStake: 100, status: 'Active', expiresAt: '2026-07-27' },
+  { id: 'cmp_1', title: 'Welcome Bonus', type: 'Onboarding', bonusCoins: 10, minStake: 0, status: 'Active', expiresAt: '2026-12-31' },
+  { id: 'cmp_2', title: 'Weekly Prediction League', type: 'Tournament', bonusCoins: 50, minStake: 10, status: 'Active', expiresAt: '2026-07-27' },
 ]
 
 const INITIAL_WITHDRAWALS: WithdrawalRequest[] = [
-  { id: 'wd_1', userId: 'USR_05', username: 'oracle_eye', amount: 2000, status: 'Pending', requestedAt: '2026-07-19T18:45:00Z' },
-  { id: 'wd_2', userId: 'USR_02', username: 'block_wizard', amount: 500, status: 'Approved', requestedAt: '2026-07-18T12:00:00Z', processedAt: '2026-07-18T14:20:00Z' },
+  { 
+    id: 'wd_1', 
+    userId: 'USR_05', 
+    username: 'oracle_eye', 
+    amount: 40, 
+    status: 'Pending', 
+    requestedAt: '2026-07-19T18:45:00Z',
+    payoutMethod: 'Crypto (USDT)',
+    payoutDetails: 'TY7H2jKx8L9PzQ10wsDmV3yTR5xzA9eS'
+  },
+  { 
+    id: 'wd_2', 
+    userId: 'USR_02', 
+    username: 'block_wizard', 
+    amount: 10, 
+    status: 'Approved', 
+    requestedAt: '2026-07-18T12:00:00Z', 
+    processedAt: '2026-07-18T14:20:00Z',
+    payoutMethod: 'Bank Wire',
+    payoutDetails: 'Chase Bank - A/C *****4820 (Routing: 021000021)',
+    txHash: 'TXN-BANK-8820921-ACH',
+    taxDeducted: 0.10,
+    feeDeducted: 5.00,
+    netDisbursed: 4.90
+  },
 ]
 
 // ─── Local Storage Keys ──────────────────────────────────────────────────────
@@ -234,8 +279,26 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   })
 
+  const [bonusCampaigns, setBonusCampaigns] = useState<BonusCampaign[]>(() => {
+    try {
+      const saved = localStorage.getItem('anybet_campaigns')
+      return saved ? JSON.parse(saved) : INITIAL_CAMPAIGNS
+    } catch {
+      return INITIAL_CAMPAIGNS
+    }
+  })
+
+  const [platformFeePercent, setPlatformFeePercent] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('anybet_platform_fee')
+      return saved ? parseInt(saved, 10) : 5
+    } catch {
+      return 5
+    }
+  })
+
   const [dailyRewardConfig, setDailyRewardConfig] = useState({
-    dailyCoins: 100,
+    dailyCoins: 2,
     cooldownHours: 24,
     streakMultipliers: [1.0, 1.2, 1.5, 1.8, 2.0, 2.5, 3.0]
   })
@@ -248,15 +311,15 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Firestore Subscriptions & Initial Seeder
   useEffect(() => {
     seedInitialFinancialsData(INITIAL_WALLETS, INITIAL_TRANSACTIONS, {
-      totalCoinsIssued: 250000,
-      coinsInCirculation: 180000,
-      coinsLockedInBets: 45000,
-      totalRewardsDistributed: 14500,
-      pendingWithdrawals: 12500,
-      platformReserve: 500000,
-      totalCollectedFees: 48500,
+      totalCoinsIssued: 5000,
+      coinsInCirculation: 3000,
+      coinsLockedInBets: 500,
+      totalRewardsDistributed: 300,
+      pendingWithdrawals: 100,
+      platformReserve: 10000,
+      totalCollectedFees: 850,
       platformFeePercent: 5,
-      reserveFundBalance: 500000
+      reserveFundBalance: 10000
     }, INITIAL_WITHDRAWALS, INITIAL_PACKAGES)
 
     const unsubWallets = subscribeToWallets((items: UserWallet[]) => {
@@ -381,6 +444,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const unlockAmt = Math.min(w.lockedBalance, amount)
         const updated = {
           ...w,
+          totalBalance: w.totalBalance + unlockAmt, // FIX: return to total balance
           lockedBalance: w.lockedBalance - unlockAmt,
           lastActivity: 'Just now'
         }
@@ -425,6 +489,39 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return w
     }))
   }, [createTransactionRecord])
+
+  const createWallet = useCallback((userId: string, username: string) => {
+    // Check if wallet already exists
+    const exists = wallets.some(w => w.userId === userId)
+    if (exists) return
+
+    // Find dynamic Welcome Bonus from campaigns state
+    const welcomeCmp = bonusCampaigns.find(c => c.title.toLowerCase().includes('welcome') || c.id === 'cmp_1')
+    const welcomeAmount = (welcomeCmp && welcomeCmp.status === 'Active') ? welcomeCmp.bonusCoins : 0
+
+    const newWallet: UserWallet = {
+      id: `wal_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      userId,
+      username,
+      totalBalance: welcomeAmount,
+      lockedBalance: 0,
+      status: 'Active' as const,
+      createdAt: new Date().toISOString(),
+      lastActivity: 'Account Created'
+    }
+
+    setWallets(prev => {
+      const updated = [newWallet, ...prev]
+      localStorage.setItem(STORAGE_WALLETS, JSON.stringify(updated))
+      return updated
+    })
+
+    if (welcomeAmount > 0) {
+      createTransactionRecord(userId, username, 'Reward', welcomeAmount, 'Settled', `Dynamic Welcome Bonus Claimed`)
+    }
+
+    createWalletInFirestore(newWallet)
+  }, [wallets, bonusCampaigns, createTransactionRecord])
 
   // Package management
   const createCoinPackage = useCallback((pkg: Omit<CoinPackage, 'id'>) => {
@@ -491,6 +588,75 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setDailyRewardConfig(prev => ({ ...prev, ...config }))
   }, [])
 
+  const updateBonusCampaign = useCallback((id: string, updates: Partial<BonusCampaign>) => {
+    setBonusCampaigns(prev => {
+      const updated = prev.map(c => c.id === id ? { ...c, ...updates } : c)
+      localStorage.setItem('anybet_campaigns', JSON.stringify(updated))
+      return updated
+    })
+  }, [])
+
+  const createBonusCampaign = useCallback((camp: Omit<BonusCampaign, 'id' | 'currentClaims'>) => {
+    const newCamp: BonusCampaign = {
+      ...camp,
+      id: `cmp_${Date.now()}`,
+      currentClaims: 0
+    }
+    setBonusCampaigns(prev => {
+      const updated = [newCamp, ...prev]
+      localStorage.setItem('anybet_campaigns', JSON.stringify(updated))
+      return updated
+    })
+  }, [])
+
+  const deleteBonusCampaign = useCallback((id: string) => {
+    setBonusCampaigns(prev => {
+      const updated = prev.filter(c => c.id !== id)
+      localStorage.setItem('anybet_campaigns', JSON.stringify(updated))
+      return updated
+    })
+  }, [])
+
+  const redeemPromoCode = useCallback((userId: string, codeStr: string) => {
+    const code = codeStr.trim().toUpperCase()
+    let rewardAmt = 0
+    let matchedCamp: BonusCampaign | null = null
+
+    // Find the campaign matching the code
+    setBonusCampaigns(prev => {
+      const target = prev.find(c => c.code?.toUpperCase() === code && c.status === 'Active')
+      if (target) {
+        const claims = target.currentClaims || 0
+        const max = target.maxClaims || 9999
+        if (claims < max) {
+          rewardAmt = target.bonusCoins
+          matchedCamp = target
+          const updated = prev.map(c => c.id === target.id ? { ...c, currentClaims: claims + 1 } : c)
+          localStorage.setItem('anybet_campaigns', JSON.stringify(updated))
+          return updated
+        }
+      }
+      return prev
+    })
+
+    if (!matchedCamp) {
+      return { success: false, message: 'Invalid, inactive, or fully claimed promotional code.' }
+    }
+
+    // Find user details to credit coins
+    const uWallet = wallets.find(w => w.userId === userId || w.id === userId)
+    if (!uWallet) {
+      return { success: false, message: 'User wallet not found.' }
+    }
+
+    creditCoins(uWallet.userId, rewardAmt, 'Reward', `Promo code ${code} redeemed successfully`)
+    return {
+      success: true,
+      message: `Promo code ${code} redeemed! Credited +${rewardAmt} BET to @${uWallet.username}`,
+      coinsGranted: rewardAmt
+    }
+  }, [wallets, creditCoins])
+
   // Withdrawal management
   const requestWithdrawal = useCallback((userId: string, username: string, amount: number) => {
     let allowed = false
@@ -525,22 +691,50 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return { success: true, message: 'Withdrawal request submitted for operator review.' }
   }, [createTransactionRecord])
 
-  const approveWithdrawal = useCallback((requestId: string) => {
+  const approveWithdrawal = useCallback((
+    requestId: string,
+    txHash?: string,
+    taxDeducted?: number,
+    feeDeducted?: number,
+    netDisbursed?: number,
+    adminNotes?: string
+  ) => {
     setWithdrawalRequests(prev => prev.map(req => {
       if (req.id === requestId) {
-        createTransactionRecord(req.userId, req.username, 'Withdrawal', req.amount, 'Settled', 'Virtual Withdrawal Approved by Operator')
-        return { ...req, status: 'Approved', processedAt: new Date().toISOString() }
+        createTransactionRecord(
+          req.userId, 
+          req.username, 
+          'Withdrawal', 
+          req.amount, 
+          'Settled', 
+          `Withdrawal Approved: Disbursed $${netDisbursed || req.amount} (Tax: $${taxDeducted || 0}, Fee: $${feeDeducted || 0})`
+        )
+        return { 
+          ...req, 
+          status: 'Approved', 
+          processedAt: new Date().toISOString(),
+          txHash,
+          taxDeducted,
+          feeDeducted,
+          netDisbursed,
+          adminNotes
+        }
       }
       return req
     }))
   }, [createTransactionRecord])
 
-  const rejectWithdrawal = useCallback((requestId: string) => {
+  const rejectWithdrawal = useCallback((requestId: string, adminNotes?: string) => {
     setWithdrawalRequests(prev => prev.map(req => {
       if (req.id === requestId && req.status === 'Pending') {
         // Refund coins back to user
-        creditCoins(req.userId, req.amount, 'Refund', 'Virtual Withdrawal Rejected - Coins Refunded')
-        return { ...req, status: 'Rejected', processedAt: new Date().toISOString() }
+        creditCoins(req.userId, req.amount, 'Refund', `Withdrawal Rejected - Coins Refunded. Notes: ${adminNotes || 'None'}`)
+        return { 
+          ...req, 
+          status: 'Rejected', 
+          processedAt: new Date().toISOString(),
+          adminNotes
+        }
       }
       return req
     }))
@@ -556,6 +750,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const pendingWithdrawalCount = withdrawalRequests.filter(r => r.status === 'Pending').length
 
+  const updatePlatformFeePercent = useCallback((percent: number) => {
+    const val = Math.max(0, Math.min(10, percent)) // FIX: allow 0% fee rate
+    setPlatformFeePercent(val)
+    localStorage.setItem('anybet_platform_fee', val.toString())
+  }, [])
+
   const treasuryStats: TreasuryStats = {
     totalCoinsIssued,
     coinsInCirculation,
@@ -564,7 +764,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     pendingWithdrawals: pendingWithdrawalCount,
     platformReserve: 500000,
     totalCollectedFees: 48500,
-    platformFeePercent: 5,
+    platformFeePercent: platformFeePercent, // FIX: use dynamic state
     reserveFundBalance: 500000
   }
 
@@ -574,7 +774,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       transactions,
       coinPackages,
       rewardRules: INITIAL_REWARD_RULES,
-      bonusCampaigns: INITIAL_CAMPAIGNS,
+      bonusCampaigns,
       withdrawalRequests,
       treasury: treasuryStats,
       totalCoinsIssued,
@@ -591,12 +791,19 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       freezeWallet,
       unfreezeWallet,
       resetWallet,
+      createWallet,
+      platformFeePercent,
+      updatePlatformFeePercent,
       createCoinPackage,
       updateCoinPackage,
       deleteCoinPackage,
       toggleCoinPackage,
       claimDailyReward,
       updateDailyRewardConfig,
+      createBonusCampaign,
+      updateBonusCampaign,
+      deleteBonusCampaign,
+      redeemPromoCode,
       approveWithdrawal,
       rejectWithdrawal,
       requestWithdrawal

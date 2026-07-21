@@ -10,7 +10,6 @@ import {
   TrendingUp, 
   RefreshCw, 
   Shield, 
-  Search,
   ListFilter,
   FileText,
   Play
@@ -23,8 +22,6 @@ import {
   ResponsiveContainer, 
   AreaChart, 
   Area, 
-  LineChart, 
-  Line, 
   BarChart, 
   Bar, 
   PieChart, 
@@ -53,15 +50,6 @@ const requests24hData = [
   { time: '24:00', requests: 310, latency: 105 }
 ]
 
-const confidenceTrendData = [
-  { day: 'Mon', confidence: 95.2 },
-  { day: 'Tue', confidence: 96.8 },
-  { day: 'Wed', confidence: 94.1 },
-  { day: 'Thu', confidence: 97.4 },
-  { day: 'Fri', confidence: 98.1 },
-  { day: 'Sat', confidence: 96.4 },
-  { day: 'Sun', confidence: 97.9 }
-]
 
 const settlementVolumeData = [
   { category: 'Sports', volume: 420 },
@@ -355,7 +343,7 @@ export const OracleControlCenter: React.FC<OracleControlCenterProps> = ({
               <span className="text-[10px] font-mono text-muted">Resolution distribution</span>
             </CardHeader>
             <CardContent className="pt-2 flex flex-col items-center justify-center h-[280px]">
-              <ResponsiveContainer width="100%" height="180">
+              <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
                   <Pie
                     data={autoVsManualData}

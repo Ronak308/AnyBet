@@ -157,8 +157,8 @@ import { OracleProvider } from '@/context/OracleContext'
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <WalletProvider>
+      <WalletProvider>
+        <AuthProvider>
           <ChallengesProvider>
             <OracleProvider>
               <BrowserRouter>
@@ -167,8 +167,8 @@ function App() {
               </BrowserRouter>
             </OracleProvider>
           </ChallengesProvider>
-        </WalletProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </WalletProvider>
     </ThemeProvider>
   )
 }

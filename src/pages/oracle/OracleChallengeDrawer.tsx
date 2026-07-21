@@ -1,24 +1,17 @@
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
 import { 
   X, 
   CheckCircle, 
   Clock, 
   Coins, 
-  Users, 
   FileText, 
-  TrendingUp, 
   Cpu, 
   Award, 
   Check,
-  AlertTriangle,
   RotateCcw,
   ShieldCheck,
   Image as ImageIcon,
-  Video,
   Navigation,
-  FileSpreadsheet,
-  ExternalLink,
   Search
 } from 'lucide-react'
 import { Badge } from '../../components/ui/badge'
@@ -37,14 +30,11 @@ interface OracleChallengeDrawerProps {
 export const OracleChallengeDrawer: React.FC<OracleChallengeDrawerProps> = ({ item, onClose }) => {
   const { 
     approveSettlement, 
-    rejectSettlement, 
     refundSettlement, 
     triggerRetryAI 
   } = useOracle()
 
   const [activeTab, setActiveTab] = useState<'overview' | 'ai_decision' | 'evidence' | 'financials' | 'timeline'>('ai_decision')
-  const [rejectNotes, setRejectNotes] = useState('')
-  const [isRejecting, setIsRejecting] = useState(false)
   const [isOcrScanning, setIsOcrScanning] = useState(false)
 
   const handleScanVisionOCR = async (url: string, label: string) => {

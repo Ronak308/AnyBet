@@ -102,6 +102,15 @@ export const updateWalletInFirestore = async (walletId: string, updates: Partial
   }
 }
 
+export const createWalletInFirestore = async (wallet: UserWallet) => {
+  try {
+    const docRef = doc(db, WALLETS_COL, wallet.id)
+    await setDoc(docRef, wallet)
+  } catch (err) {
+    console.error('Error creating wallet in Firestore:', err)
+  }
+}
+
 export const addTransactionToFirestore = async (tx: CoinTransaction) => {
   try {
     const docRef = doc(db, TRANSACTIONS_COL, tx.id)

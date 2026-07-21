@@ -5,14 +5,9 @@ import {
   signOut,
   onAuthStateChanged
 } from 'firebase/auth'
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  serverTimestamp
-} from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from '../firebase'
+import { useWallet } from './WalletContext'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -252,6 +247,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [])
 
+  const { createWallet } = useWallet()
+
   const signup = useCallback(async (
     name: string,
     email: string,
@@ -275,6 +272,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Save detailed profile info to Firestore
         await setDoc(doc(db, 'users', firebaseUser.uid), cleanUserData)
+
+        // Initialize wallet dynamically for normal user on signup
+        createWallet(firebaseUser.uid, username.trim())
 
         // Sign out immediately since newly registered users have 'user' role and cannot access the admin console
         await signOut(auth)
@@ -327,6 +327,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       db[emailKey] = { user: newUser, passwordHash: simpleHash(password) }
       saveUsersDb(db)
+
+      // Initialize wallet dynamically for local mock user on signup
+      createWallet(newUser.id, newUser.username)
 
       // Do not log them in since their role is 'user'
       localStorage.removeItem(STORAGE_USER_KEY)

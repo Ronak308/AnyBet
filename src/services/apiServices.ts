@@ -100,9 +100,9 @@ export const fetchFootballApiStatus = async () => {
 export const evaluateBetWithGeminiAI = async (
   challengeTitle: string,
   category: string,
-  rules: string[],
-  evidenceText: string,
-  geminiApiKey?: string
+  _rules: string[],
+  _evidenceText: string,
+  _geminiApiKey?: string
 ) => {
   // Real live price lookup for crypto predictions
   let liveMarketPayload = ''
@@ -223,7 +223,7 @@ export const scanImageWithGeminiVisionOCR = async (
 export const evaluateDisputeWithGeminiAI = async (
   disputeReason: string,
   evidenceItems: { type: string; data?: string; url?: string }[],
-  geminiApiKey?: string
+  _geminiApiKey?: string
 ) => {
   const startTime = performance.now()
 

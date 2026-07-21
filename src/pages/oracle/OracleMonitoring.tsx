@@ -1,18 +1,10 @@
 import React, { useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
 import { 
   FileText, 
   Activity, 
   History, 
   Search, 
-  Download, 
-  Filter, 
-  CheckCircle, 
-  AlertTriangle, 
-  XCircle, 
-  RotateCcw,
-  Cpu,
-  Layers
+  Download
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'

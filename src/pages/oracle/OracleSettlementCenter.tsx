@@ -1,17 +1,10 @@
 import React, { useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
 import { 
   Search, 
   Filter, 
   Eye, 
-  CheckCircle, 
-  RotateCcw, 
-  XCircle, 
   RotateCw, 
-  Coins, 
-  Users, 
-  Award,
-  ChevronLeft,
+  ChevronLeft, 
   ChevronRight,
   Plus
 } from 'lucide-react'
@@ -30,8 +23,6 @@ export const OracleSettlementCenter: React.FC = () => {
     selectedQueueItem, 
     setSelectedQueueItem, 
     approveSettlement, 
-    rejectSettlement, 
-    refundSettlement, 
     triggerRetryAI,
     addCustomTestChallenge
   } = useOracle()

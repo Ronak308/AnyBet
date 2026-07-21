@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Cpu, 
   Activity, 
   ListFilter, 
   Settings, 

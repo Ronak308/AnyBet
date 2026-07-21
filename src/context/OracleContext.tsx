@@ -325,7 +325,7 @@ const INITIAL_VERSIONS: OracleVersionItem[] = [
 
 export const OracleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { creditCoins } = useWallet()
-  const { challenges, updateChallenge } = useChallenges()
+  const { challenges } = useChallenges()
 
   const [nodes, setNodes] = useState<OracleNode[]>(INITIAL_NODES)
   const [settlementQueue, setSettlementQueue] = useState<SettlementQueueItem[]>(INITIAL_QUEUE)
