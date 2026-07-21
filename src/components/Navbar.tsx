@@ -15,8 +15,10 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator
 } from './ui/dropdown-menu'
+import { useTheme } from '@/context/ThemeContext'
 import { useAuth } from '@/context/AuthContext'
 import { ConfirmationModal } from './ui/confirmation-modal'
+import { ThemeToggleButton2 } from './ui/skiper4'
 import { Logo } from './ui/Logo'
 
 interface NavbarProps {
@@ -32,6 +34,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   sidebarCollapsed,
   setSidebarCollapsed
 }) => {
+  const { isDark, toggleTheme } = useTheme()
   const { user, logout } = useAuth()
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
 
@@ -108,7 +111,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
 
+        {/* Theme Toggle — Skiper4 */}
+        <ThemeToggleButton2
+          isDark={isDark}
+          onToggle={toggleTheme}
+          className="h-8 w-8 p-1.5 shrink-0"
+        />
 
+        {/* Separator */}
+        <span className="h-6 w-px bg-border/80"></span>
 
         {/* User profile section */}
         {user && (
