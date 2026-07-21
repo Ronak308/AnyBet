@@ -33,7 +33,7 @@ export const AnalyticsModule: React.FC = () => {
   const completedCount = challenges.filter(c => c.status === 'Completed').length
   const disputedCount = challenges.filter(c => c.status === 'Disputed').length
   const totalVolume = challenges.reduce((sum, c) => sum + c.prizePool, 0)
-  const totalFees = challenges.reduce((sum, c) => sum + c.financials.platformFee, 0)
+  const totalFees = challenges.reduce((sum, c) => sum + (c.financials?.platformFee || 0), 0)
 
   // Chart Data Series
   const creationTrendData = [

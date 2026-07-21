@@ -26,11 +26,18 @@ import { useChallenges } from '../../context/ChallengesContext'
 import type { DisputeItem } from '../../context/ChallengesContext'
 
 export const DisputesModule: React.FC = () => {
-  const { disputes, resolveDispute, showToastNotice } = useChallenges()
+  const { disputes, resolveDispute, triggerAIDisputeReview, showToastNotice } = useChallenges()
 
   const [selectedDispute, setSelectedDispute] = useState<DisputeItem | null>(null)
   const [resolutionNotes, setResolutionNotes] = useState('')
   const [winnerClaimant, setWinnerClaimant] = useState('')
+  const [isReviewing, setIsReviewing] = useState(false)
+
+  const handleAIArbitration = async (id: string) => {
+    setIsReviewing(true)
+    await triggerAIDisputeReview(id)
+    setIsReviewing(false)
+  }
 
   const getStatusBadge = (status: DisputeItem['status']) => {
     switch (status) {
@@ -183,14 +190,26 @@ export const DisputesModule: React.FC = () => {
               </div>
 
               {/* AI Review Recommendation Box */}
-              <div className="p-4 bg-primary/10 border border-primary/30 rounded-xl space-y-2">
+              <div className="p-4 bg-primary/10 border border-primary/30 rounded-xl space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-primary font-bold text-xs font-mono">
-                    <Cpu className="h-4 w-4" /> AI Oracle Review Rating
+                    <Cpu className="h-4 w-4" /> AI Oracle Review Recommendation
                   </div>
-                  <Badge variant="pro">{selectedDispute.aiReviewResult.confidenceScore}% Confidence</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="pro">{selectedDispute.aiReviewResult.confidenceScore}% Confidence</Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isReviewing}
+                      onClick={() => handleAIArbitration(selectedDispute.id)}
+                      className="h-6 text-[9px] font-mono border-primary/30 text-primary hover:bg-primary/10 gap-1"
+                    >
+                      <RefreshCw className={`h-2.5 w-2.5 ${isReviewing ? 'animate-spin' : ''}`} />
+                      {isReviewing ? 'Analyzing...' : 'Run AI Review'}
+                    </Button>
+                  </div>
                 </div>
-                <p className="text-xs font-mono text-foreground/90 leading-relaxed">{selectedDispute.aiReviewResult.recommendation}</p>
+                <p className="text-xs font-mono text-foreground/90 leading-relaxed bg-background/50 p-2.5 border border-border/30 rounded-lg">{selectedDispute.aiReviewResult.recommendation}</p>
               </div>
 
               {/* Supported Submitted Evidence Logs */}

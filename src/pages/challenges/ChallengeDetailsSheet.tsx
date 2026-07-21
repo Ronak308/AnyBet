@@ -133,13 +133,9 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
               </div>
             </div>
 
-            {/* Sub Navigation Tabs (Swipable & Draggable) */}
-            <div className="border-b border-border/50 bg-surface/20 px-6 overflow-hidden shrink-0">
-              <motion.div 
-                drag="x"
-                dragConstraints={{ left: -120, right: 0 }}
-                className="flex items-center gap-2 overflow-x-auto scrollbar-none cursor-grab active:cursor-grabbing select-none py-1"
-              >
+            {/* Sub Navigation Tabs */}
+            <div className="border-b border-border/50 bg-surface/20 px-6 shrink-0">
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
                 {[
                   { id: 'info', label: 'Overview & Rules', icon: FileText },
                   { id: 'participants', label: `Participants (${challenge.participantsCount})`, icon: Users },
@@ -164,7 +160,7 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
                     </button>
                   )
                 })}
-              </motion.div>
+              </div>
             </div>
 
             {/* Sheet Body Content */}
@@ -274,7 +270,7 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
                         <span className="text-xs font-mono text-muted">Total BET Collected</span>
                         <Coins className="h-4 w-4 text-primary" />
                       </div>
-                      <p className="text-xl font-bold font-mono text-foreground mt-2">{challenge.financials.totalCollected.toLocaleString()} BET</p>
+                      <p className="text-xl font-bold font-mono text-foreground mt-2">{(challenge.financials?.totalCollected || 0).toLocaleString()} BET</p>
                     </div>
 
                     <div className="p-4 bg-surface/40 border border-border/50 rounded-xl flex flex-col justify-between">
@@ -282,7 +278,7 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
                         <span className="text-xs font-mono text-muted">Platform Fee (5%)</span>
                         <TrendingUp className="h-4 w-4 text-emerald-400" />
                       </div>
-                      <p className="text-xl font-bold font-mono text-emerald-400 mt-2">{challenge.financials.platformFee.toLocaleString()} BET</p>
+                      <p className="text-xl font-bold font-mono text-emerald-400 mt-2">{(challenge.financials?.platformFee || 0).toLocaleString()} BET</p>
                     </div>
 
                     <div className="p-4 bg-surface/40 border border-border/50 rounded-xl flex flex-col justify-between">
@@ -290,7 +286,7 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
                         <span className="text-xs font-mono text-muted">Net Winner Payout</span>
                         <Award className="h-4 w-4 text-purple-400" />
                       </div>
-                      <p className="text-xl font-bold font-mono text-purple-400 mt-2">{challenge.financials.winnerPayout.toLocaleString()} BET</p>
+                      <p className="text-xl font-bold font-mono text-purple-400 mt-2">{(challenge.financials?.winnerPayout || 0).toLocaleString()} BET</p>
                     </div>
                   </div>
 
@@ -298,11 +294,11 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
                     <h4 className="text-xs font-mono uppercase text-muted tracking-wider">Escrow Lock & Release Protocol</h4>
                     <div className="flex items-center justify-between text-xs font-mono py-1 border-b border-border/30">
                       <span className="text-muted">Currently Locked Escrow Balance</span>
-                      <span className="text-foreground font-bold">{challenge.financials.lockedCoins.toLocaleString()} BET</span>
+                      <span className="text-foreground font-bold">{(challenge.financials?.lockedCoins || 0).toLocaleString()} BET</span>
                     </div>
                     <div className="flex items-center justify-between text-xs font-mono py-1 border-b border-border/30">
                       <span className="text-muted">Refund Reserve Allocated</span>
-                      <span className="text-foreground font-bold">{challenge.financials.refundAmount.toLocaleString()} BET</span>
+                      <span className="text-foreground font-bold">{(challenge.financials?.refundAmount || 0).toLocaleString()} BET</span>
                     </div>
                   </div>
                 </div>
@@ -391,7 +387,7 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
             {/* Sheet Footer */}
             <div className="p-4 border-t border-border/60 bg-surface/30 flex items-center justify-between shrink-0">
               <span className="text-[10px] font-mono text-muted">AnyBet Audit Protocol Engine v2.4</span>
-              <Button size="sm" variant="ghost" onClick={onClose} className="text-xs font-mono">Close Sheet</Button>
+              <Button size="sm" variant="ghost" onClick={onClose} className="text-xs font-mono">Close</Button>
             </div>
           </div>
         )}

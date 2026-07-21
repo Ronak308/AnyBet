@@ -81,6 +81,17 @@ export const deleteChallengeFromFirestore = async (id: string) => {
   await deleteDoc(docRef)
 }
 
+export const clearAllChallengesFromFirestore = async () => {
+  try {
+    const snap = await getDocs(collection(db, CHALLENGES_COL))
+    const batch = writeBatch(db)
+    snap.forEach(d => batch.delete(d.ref))
+    await batch.commit()
+  } catch (e) {
+    console.warn('Firestore clear error:', e)
+  }
+}
+
 // ─── Category Actions ──────────────────────────────────────────────────────────
 
 export const createCategoryInFirestore = async (category: ChallengeCategory) => {

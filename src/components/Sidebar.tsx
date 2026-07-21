@@ -43,6 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [financialsOpen, setFinancialsOpen] = useState(() => activeTab.startsWith('financials'))
   const [challengesOpen, setChallengesOpen] = useState(() => activeTab.startsWith('challenges'))
+  const [oracleOpen, setOracleOpen] = useState(() => activeTab.startsWith('ai-oracle') || activeTab.startsWith('oracle'))
 
   useEffect(() => {
     if (activeTab.startsWith('financials')) {
@@ -50,6 +51,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
     if (activeTab.startsWith('challenges')) {
       setChallengesOpen(true)
+    }
+    if (activeTab.startsWith('ai-oracle') || activeTab.startsWith('oracle')) {
+      setOracleOpen(true)
     }
   }, [activeTab])
 
@@ -59,7 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'challenges', label: 'Challenges', icon: Sword, isDropdown: true },
     { id: 'reputation', label: 'Reputation', icon: Trophy },
     { id: 'financials', label: 'Financials', icon: Coins, isDropdown: true },
-    { id: 'ai-oracle', label: 'AI Oracle', icon: Cpu },
+    { id: 'ai-oracle', label: 'AI Oracle', icon: Cpu, isDropdown: true },
   ]
 
   const challengeSubItems = [
@@ -77,6 +81,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'financials-treasury', label: 'Treasury', icon: PieChart },
   ]
 
+  const oracleSubItems = [
+    { id: 'ai-oracle-control', label: 'Control Center', icon: Cpu },
+    { id: 'ai-oracle-settlement', label: 'Settlement Center', icon: Sword },
+    { id: 'ai-oracle-config', label: 'Configuration', icon: Layers },
+    { id: 'ai-oracle-monitoring', label: 'Monitoring', icon: BarChart3 },
+  ]
   return (
     <motion.div
       animate={{ width: isCollapsed ? 76 : 260 }}
@@ -119,14 +129,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
             const Icon = item.icon
             const isChallengesGroup = item.id === 'challenges'
             const isFinancialsGroup = item.id === 'financials'
+            const isOracleGroup = item.id === 'ai-oracle'
             const isChallengesActive = activeTab.startsWith('challenges')
             const isFinancialsActive = activeTab.startsWith('financials')
+            const isOracleActive = activeTab.startsWith('ai-oracle') || activeTab.startsWith('oracle')
 
-            const isActive = isChallengesGroup
-              ? isChallengesActive
-              : isFinancialsGroup
-                ? isFinancialsActive
-                : activeTab === item.id
+            const isActive = isChallengesGroup 
+              ? isChallengesActive 
+              : isFinancialsGroup 
+                ? isFinancialsActive 
+                : isOracleGroup
+                  ? isOracleActive
+                  : activeTab === item.id
 
             if (isChallengesGroup) {
               return (
@@ -259,6 +273,79 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 ? 'bg-primary/15 text-primary font-bold border border-primary/30'
                                 : 'text-muted hover:text-foreground hover:bg-surface/60'
                                 }`}
+                            >
+                              <SubIcon className={`h-3.5 w-3.5 ${isSubActive ? 'text-primary' : 'text-muted'}`} />
+                              <span>{sub.label}</span>
+                            </button>
+                          )
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )
+            }
+
+            if (isOracleGroup) {
+              return (
+                <div key={item.id} className="flex flex-col gap-1">
+                  <Button
+                    variant={isActive ? "nav-active" : "nav"}
+                    onClick={() => {
+                      if (isCollapsed) {
+                        setIsCollapsed(false)
+                        setOracleOpen(true)
+                        setActiveTab('ai-oracle-control')
+                      } else {
+                        const newOpen = !oracleOpen
+                        setOracleOpen(newOpen)
+                        if (newOpen && !activeTab.startsWith('ai-oracle') && !activeTab.startsWith('oracle')) {
+                          setActiveTab('ai-oracle-control')
+                        }
+                      }
+                    }}
+                    className={`flex items-center justify-between ${isCollapsed ? 'justify-center px-0' : 'px-4'} h-11 w-full transition-all duration-200`}
+                    glow={isActive}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-primary' : 'text-muted'}`} />
+                      {!isCollapsed && (
+                        <span className="font-medium text-sm font-sans">
+                          {item.label}
+                        </span>
+                      )}
+                    </div>
+
+                    {!isCollapsed && (
+                      <div className="text-muted hover:text-foreground">
+                        {oracleOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </div>
+                    )}
+                  </Button>
+
+                  {/* Oracle Sub-menu Accordion Dropdown */}
+                  <AnimatePresence>
+                    {oracleOpen && !isCollapsed && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex flex-col gap-1 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
+                      >
+                        {oracleSubItems.map((sub) => {
+                          const SubIcon = sub.icon
+                          const isSubActive = activeTab === sub.id || (activeTab === 'ai-oracle' && sub.id === 'ai-oracle-control')
+
+                          return (
+                            <button
+                              key={sub.id}
+                              onClick={() => setActiveTab(sub.id)}
+                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono tracking-wider transition-all duration-200 cursor-pointer w-full text-left ${
+                                isSubActive
+                                  ? 'bg-primary/15 text-primary font-bold border border-primary/30'
+                                  : 'text-muted hover:text-foreground hover:bg-surface/60'
+                              }`}
                             >
                               <SubIcon className={`h-3.5 w-3.5 ${isSubActive ? 'text-primary' : 'text-muted'}`} />
                               <span>{sub.label}</span>

@@ -54,7 +54,9 @@ function FinancialsRoute() {
 
 function OracleRoute() {
   const navigate = useNavigate()
-  return <OracleConfigView navigate={(tab) => navigate('/' + tab)} />
+  const location = useLocation()
+  const currentTab = location.pathname.startsWith('/') ? location.pathname.slice(1) : location.pathname
+  return <OracleConfigView activeTab={currentTab} navigate={(tab) => navigate('/' + tab)} />
 }
 
 function UsersRoute() {
@@ -133,6 +135,10 @@ function AuthGate() {
             <Route path="financials-fees" element={<FinancialsRoute />} />
             <Route path="financials-disputes" element={<FinancialsRoute />} />
             <Route path="ai-oracle" element={<OracleRoute />} />
+            <Route path="ai-oracle-control" element={<OracleRoute />} />
+            <Route path="ai-oracle-settlement" element={<OracleRoute />} />
+            <Route path="ai-oracle-config" element={<OracleRoute />} />
+            <Route path="ai-oracle-monitoring" element={<OracleRoute />} />
             <Route path="users" element={<UsersRoute />} />
             <Route path="profile" element={<ProfileRoute />} />
             <Route path="profile-settings" element={<ProfileSettingsRoute />} />
@@ -146,6 +152,7 @@ function AuthGate() {
 
 import { WalletProvider } from '@/context/WalletContext'
 import { ChallengesProvider } from '@/context/ChallengesContext'
+import { OracleProvider } from '@/context/OracleContext'
 
 function App() {
   return (
@@ -153,10 +160,12 @@ function App() {
       <AuthProvider>
         <WalletProvider>
           <ChallengesProvider>
-            <BrowserRouter>
-              <AuthGate />
-              <ToastContainer />
-            </BrowserRouter>
+            <OracleProvider>
+              <BrowserRouter>
+                <AuthGate />
+                <ToastContainer />
+              </BrowserRouter>
+            </OracleProvider>
           </ChallengesProvider>
         </WalletProvider>
       </AuthProvider>

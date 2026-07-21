@@ -25,11 +25,11 @@ export const LiveSettlementModule: React.FC = () => {
 
   // Live Metric Aggregations
   const liveChallenges = useMemo(() => challenges.filter(c => c.status === 'Live'), [challenges])
-  const pendingSettlement = useMemo(() => challenges.filter(c => c.status === 'Disputed' || c.status === 'Live' || c.settlement.status === 'Under Review'), [challenges])
+  const pendingSettlement = useMemo(() => challenges.filter(c => c.status === 'Disputed' || c.status === 'Live' || c.settlement?.status === 'Under Review'), [challenges])
 
-  const totalLiveParticipants = useMemo(() => liveChallenges.reduce((sum, c) => sum + c.participantsCount, 0), [liveChallenges])
-  const totalLivePrizePool = useMemo(() => liveChallenges.reduce((sum, c) => sum + c.prizePool, 0), [liveChallenges])
-  const totalLockedCoins = useMemo(() => challenges.reduce((sum, c) => sum + c.financials.lockedCoins, 0), [challenges])
+  const totalLiveParticipants = useMemo(() => liveChallenges.reduce((sum, c) => sum + (c.participantsCount || 0), 0), [liveChallenges])
+  const totalLivePrizePool = useMemo(() => liveChallenges.reduce((sum, c) => sum + (c.prizePool || 0), 0), [liveChallenges])
+  const totalLockedCoins = useMemo(() => challenges.reduce((sum, c) => sum + (c.financials?.lockedCoins || 0), 0), [challenges])
 
   const handleExecuteSettlement = (e: React.FormEvent) => {
     e.preventDefault()
@@ -182,14 +182,14 @@ export const LiveSettlementModule: React.FC = () => {
                   <TableCell className="font-medium text-xs text-foreground">{c.title}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
-                      {c.settlement.settlementMethod}
+                      {c.settlement?.settlementMethod || 'AI Oracle'}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Cpu className="h-3.5 w-3.5 text-cyan-400" />
                       <span className="text-xs font-mono text-muted">
-                        {c.settlement.oracleConfidence ? `${c.settlement.oracleConfidence}% Confidence` : 'Feed Active'}
+                        {c.settlement?.oracleConfidence ? `${c.settlement.oracleConfidence}% Confidence` : 'Feed Active'}
                       </span>
                     </div>
                   </TableCell>
@@ -252,15 +252,13 @@ export const LiveSettlementModule: React.FC = () => {
               <span className="font-bold text-foreground">{settleModalChallenge.title}</span>
               <div className="flex items-center justify-between text-[11px] font-mono text-muted pt-1">
                 <span>Net Winner Payout:</span>
-                <span className="text-emerald-400 font-bold">{settleModalChallenge.financials.winnerPayout.toLocaleString()} BET</span>
+                <span className="text-emerald-400 font-bold">{(settleModalChallenge.financials?.winnerPayout || 0).toLocaleString()} BET</span>
               </div>
             </div>
 
-            {settleModalChallenge.settlement.oracleResult && (
+            {settleModalChallenge.settlement?.oracleResult && (
               <div className="p-3 bg-black/50 border border-cyan-500/30 rounded-xl space-y-1">
-                <div className="flex items-center gap-1.5 text-cyan-400 text-xs font-mono font-bold">
-                  <Cpu className="h-3.5 w-3.5" /> AI Oracle Intelligence
-                </div>
+                <span className="text-[10px] font-mono text-cyan-400 uppercase font-bold">AI Oracle Feed Summary</span>
                 <p className="text-xs font-mono text-foreground/80">{settleModalChallenge.settlement.oracleResult}</p>
               </div>
             )}
