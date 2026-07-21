@@ -8,7 +8,9 @@ import {
 import {
   doc,
   getDoc,
-  setDoc
+  setDoc,
+  updateDoc,
+  serverTimestamp
 } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 
@@ -97,7 +99,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (userDoc.exists()) {
               const data = userDoc.data()
               const cleanStatus = (data.status || 'active').trim().toLowerCase()
-              if (cleanStatus === 'inactive') {
+              const cleanRole = (data.role || 'user').trim().toLowerCase()
+              if (cleanStatus === 'inactive' || cleanRole !== 'admin') {
                 localStorage.removeItem(STORAGE_USER_KEY)
                 setUser(null)
                 await signOut(auth)
@@ -106,7 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
               const freshUser = {
                 ...data,
-                role: data.role ? (data.role.trim().toLowerCase() === 'admin' ? 'admin' : 'user') : 'user'
+                role: 'admin'
               } as User
               setUser(freshUser)
               localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(freshUser))
@@ -114,12 +117,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               // No Firestore doc — build minimal profile from Auth
               const email = firebaseUser.email || ''
               const isAdmin = email.trim().toLowerCase() === 'admin@anybet.com'
+              if (!isAdmin) {
+                localStorage.removeItem(STORAGE_USER_KEY)
+                setUser(null)
+                await signOut(auth)
+                setIsLoading(false)
+                return
+              }
               const fallback: User = {
                 id: firebaseUser.uid,
-                name: isAdmin ? 'Admin User' : (firebaseUser.displayName || email.split('@')[0] || 'User'),
+                name: 'Admin User',
                 email,
-                username: email.split('@')[0] || 'user',
-                role: isAdmin ? 'admin' : 'user',
+                username: email.split('@')[0] || 'admin',
+                role: 'admin',
                 joinedAt: new Date().toISOString()
               }
               setUser(fallback)
@@ -161,6 +171,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await signOut(auth)
             return { success: false, error: 'Your account is inactive. Please contact an administrator.' }
           }
+          const cleanRole = (data.role || 'user').trim().toLowerCase()
+          if (cleanRole !== 'admin') {
+            localStorage.removeItem(STORAGE_USER_KEY)
+            setUser(null)
+            await signOut(auth)
+            return { success: false, error: 'Access denied: Only administrators are authorized to log in.' }
+          }
+          await updateDoc(doc(db, 'users', userCred.user.uid), {
+            lastLoginAt: serverTimestamp()
+          })
+        } else {
+          // If Firestore document doesn't exist yet, seed/create it
+          const cleanEmail = (userCred.user.email || email).trim().toLowerCase()
+          const isAdmin = cleanEmail === 'admin@anybet.com'
+          if (!isAdmin) {
+            localStorage.removeItem(STORAGE_USER_KEY)
+            setUser(null)
+            await signOut(auth)
+            return { success: false, error: 'Access denied: Only administrators are authorized to log in.' }
+          }
+          await setDoc(doc(db, 'users', userCred.user.uid), {
+            uid: userCred.user.uid,
+            email: cleanEmail,
+            username: cleanEmail.split('@')[0],
+            name: 'Admin User',
+            role: 'admin',
+            status: 'active',
+            createdAt: serverTimestamp(),
+            lastLoginAt: serverTimestamp()
+          }, { merge: true })
         }
         return { success: true }
       } catch (error: any) {
@@ -182,7 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: isDefault ? 'Ronak' : emailKey.split('@')[0],
           email: emailKey,
           username: isDefault ? 'Ronak' : emailKey.split('@')[0],
-          role: 'User',
+          role: isDefault ? 'admin' : 'user',
           joinedAt: new Date().toISOString(),
           status: 'active'
         }
@@ -195,8 +235,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false, error: 'Your account is inactive. Please contact an administrator.' }
       }
 
-      localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(entry.user))
-      setUser(entry.user)
+      const cleanRole = (entry.user.role || 'user').trim().toLowerCase()
+      if (cleanRole !== 'admin') {
+        return { success: false, error: 'Access denied: Only administrators are authorized to log in.' }
+      }
+
+      const updatedUser = {
+        ...entry.user,
+        lastLoginAt: new Date().toISOString()
+      }
+      db[emailKey].user = updatedUser
+      saveUsersDb(db)
+      localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(updatedUser))
+      setUser(updatedUser)
       return { success: true }
     }
   }, [])
@@ -212,19 +263,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
         const firebaseUser = userCredential.user
 
-        const userData: User = {
-          id: firebaseUser.uid,
+        const cleanUserData = {
+          uid: firebaseUser.uid,
           name: name.trim(),
           email: email.trim().toLowerCase(),
           username: username.trim(),
-          role: 'User',
-          joinedAt: new Date().toISOString()
+          role: 'user',
+          status: 'active',
+          createdAt: serverTimestamp()
         }
 
         // Save detailed profile info to Firestore
-        await setDoc(doc(db, 'users', firebaseUser.uid), userData)
-        setUser(userData)
-        return { success: true }
+        await setDoc(doc(db, 'users', firebaseUser.uid), cleanUserData)
+
+        // Sign out immediately since newly registered users have 'user' role and cannot access the admin console
+        await signOut(auth)
+        localStorage.removeItem(STORAGE_USER_KEY)
+        setUser(null)
+
+        return { 
+          success: false, 
+          error: 'Account created successfully! However, access is denied as only administrators can log into this console.' 
+        }
       } catch (error: any) {
         console.error('Firebase Signup Error:', error)
         return { success: false, error: error.message || 'Signup failed.' }
@@ -236,8 +296,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const emailKey = email.trim().toLowerCase()
 
       if (db[emailKey]) {
-        // Direct Login if email already exists
         const entry = db[emailKey]
+        const cleanRole = (entry.user.role || 'user').trim().toLowerCase()
+        if (cleanRole !== 'admin') {
+          return { success: false, error: 'Access denied: Only administrators are authorized to log in.' }
+        }
         localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(entry.user))
         setUser(entry.user)
         return { success: true }
@@ -257,15 +320,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name: name.trim(),
         email: emailKey,
         username: finalUsername,
-        role: 'Operator',
+        role: 'user', // Default non-admin role
         joinedAt: new Date().toISOString(),
+        status: 'active'
       }
 
       db[emailKey] = { user: newUser, passwordHash: simpleHash(password) }
       saveUsersDb(db)
-      localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(newUser))
-      setUser(newUser)
-      return { success: true }
+
+      // Do not log them in since their role is 'user'
+      localStorage.removeItem(STORAGE_USER_KEY)
+      setUser(null)
+
+      return { 
+        success: false, 
+        error: 'Account created successfully! However, access is denied as only administrators can log into this console.' 
+      }
     }
   }, [])
 

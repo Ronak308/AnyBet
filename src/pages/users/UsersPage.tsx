@@ -16,7 +16,6 @@ import { deleteUserAccount } from '@/services/userAdminService'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { ConfirmationModal } from '@/components/ui/confirmation-modal'
@@ -43,27 +42,47 @@ const normalizeRole = (role: string): string => {
   return role.trim()
 }
 
-const formatLastLoginTable = (u: User) => {
-  const val = (u as any).lastLoginAt
-  if (!val) return '—'
+const parseFirestoreDate = (val: any): Date | null => {
+  if (!val) return null
+  if (val instanceof Date) return val
 
-  let date: Date
   if (typeof val.toDate === 'function') {
-    date = val.toDate()
-  } else if (val.seconds !== undefined) {
-    date = new Date(val.seconds * 1000)
-  } else if (typeof val === 'string' || typeof val === 'number' || val instanceof Date) {
-    date = new Date(val)
-  } else {
-    return '—'
+    const d = val.toDate()
+    if (d instanceof Date && !isNaN(d.getTime())) return d
   }
 
-  if (isNaN(date.getTime())) return '—'
+  const seconds = val.seconds !== undefined ? val.seconds : val._seconds
+  if (seconds !== undefined && seconds !== null) {
+    const d = new Date(Number(seconds) * 1000)
+    if (!isNaN(d.getTime())) return d
+  }
 
-  return date.toLocaleDateString('en-US', {
+  if (typeof val === 'string' || typeof val === 'number') {
+    let cleanVal = val
+    if (typeof val === 'string') {
+      cleanVal = val.replace(/\s+at\s+/i, ' ')
+    }
+    const d = new Date(cleanVal)
+    if (!isNaN(d.getTime())) return d
+  }
+
+  return null
+}
+
+const formatLastLoginTable = (u: User) => {
+  const val = (u as any).lastLoginAt || (u as any)["lastLoginAt "] || (u as any).lastLogin
+  if (!val) return 'Never'
+
+  const date = parseFirestoreDate(val)
+  if (!date) return 'Never'
+
+  return date.toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
   })
 }
 
@@ -100,6 +119,7 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
 
       snapshot.forEach(doc => {
         const data = doc.data()
+        console.log("LOADED USER DOC ID:", doc.id, "DATA:", data)
         const userId = doc.id || data.uid || data.id
         const cleanStatus = (data.status || 'active').trim().toLowerCase()
         fetchedUsers.push({
@@ -113,8 +133,17 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
 
       // If Firestore is empty, seed it with the currently logged-in user
       if (fetchedUsers.length === 0 && currentUser) {
-        await setDoc(doc(db, 'users', currentUser.id), currentUser)
-        fetchedUsers = [currentUser]
+        const seedData = {
+          uid: currentUser.id,
+          name: currentUser.name,
+          email: currentUser.email,
+          username: currentUser.username,
+          role: normalizeRole(currentUser.role),
+          status: currentUser.status || 'active',
+          createdAt: new Date()
+        }
+        await setDoc(doc(db, 'users', currentUser.id), seedData)
+        fetchedUsers = [{ ...seedData, id: currentUser.id } as User]
       }
 
       // Add a default status if missing
@@ -189,42 +218,44 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
       }
 
       const userRef = doc(db, 'users', finalUserId)
-      const joinedAtVal = existingUser
-        ? (existingUser.joinedAt || (existingUser as any).createdAt || new Date().toISOString())
-        : new Date().toISOString()
       const createdAtVal = existingUser
-        ? ((existingUser as any).createdAt || existingUser.joinedAt || new Date())
+        ? ((existingUser as any).createdAt || new Date())
         : new Date()
 
-      // Omit password from firestore record
-      const { password: _password, ...userDataWithoutPassword } = userData
-
-      const updatedData = {
-        ...userDataWithoutPassword,
-        id: finalUserId,
-        uid: finalUserId, // Save uid field matching the Firestore document schema
-        role: normalizeRole(userData.role), // Keep role normalized
-        joinedAt: typeof joinedAtVal === 'string' ? joinedAtVal : (joinedAtVal.toDate ? joinedAtVal.toDate().toISOString() : new Date().toISOString()),
+      // Build clean document matching user's requested schema:
+      const cleanDataToSave = {
+        uid: finalUserId,
+        name: userData.name.trim(),
+        email: userData.email.trim().toLowerCase(),
+        username: userData.username.trim(),
+        role: normalizeRole(userData.role),
+        status: userData.status || 'active',
         createdAt: createdAtVal
       }
 
-      await setDoc(userRef, updatedData, { merge: true })
+      await setDoc(userRef, cleanDataToSave, { merge: true })
+
+      const updatedLocalUser = {
+        ...cleanDataToSave,
+        id: finalUserId, // keep locally for React list rendering keys
+        joinedAt: typeof createdAtVal === 'string' ? createdAtVal : (createdAtVal.toDate ? createdAtVal.toDate().toISOString() : new Date().toISOString())
+      } as User
 
       // Update local state
       setUsers(prev => {
         const index = prev.findIndex(u => u.id === finalUserId)
         if (index > -1) {
           const updatedList = [...prev]
-          updatedList[index] = updatedData as User
+          updatedList[index] = updatedLocalUser
           return updatedList
         } else {
-          return [updatedData as User, ...prev]
+          return [updatedLocalUser, ...prev]
         }
       })
 
       // Update view user details if active
       if (viewUser?.id === finalUserId) {
-        setViewUser(updatedData as User)
+        setViewUser(updatedLocalUser)
       }
 
       window.dispatchEvent(new CustomEvent('show-toast', {
@@ -448,41 +479,41 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-1">
         {/* Search Input */}
         <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted pointer-events-none" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted/80 pointer-events-none" />
           <Input
             placeholder="Search by Name, Email, or Username..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9 text-xs font-sans bg-surface/40 border-border/60"
+            className="pl-9 h-9 text-xs font-sans bg-surface/80 border border-muted/30 focus-visible:ring-primary/30"
           />
         </div>
 
         {/* Filters & Create Action */}
         <div className="flex items-center gap-3 w-full md:w-auto flex-wrap justify-between md:justify-end">
-          <div className="flex items-center gap-1.5 bg-surface/40 border border-border/60 rounded-lg px-2.5 py-1 text-xs font-mono">
-            <Filter className="h-3.5 w-3.5 text-muted" />
-            <span className="text-muted text-[10px] uppercase">Role:</span>
+          <div className="flex items-center gap-1.5 bg-surface/80 border border-muted/30 rounded-lg px-2.5 py-1 text-xs font-mono">
+            <Filter className="h-3.5 w-3.5 text-muted/80" />
+            <span className="text-muted/80 text-[10px] uppercase font-semibold">Role:</span>
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value as any)}
-              className="bg-transparent text-foreground outline-none cursor-pointer text-xs"
+              className="bg-transparent text-foreground outline-none cursor-pointer text-xs font-sans font-medium"
             >
-              <option value="all" className="bg-background text-foreground">All Roles</option>
-              <option value="admin" className="bg-background text-foreground">Admin</option>
-              <option value="user" className="bg-background text-foreground">User</option>
+              <option value="all" className="bg-[#120F1D] text-foreground">All Roles</option>
+              <option value="admin" className="bg-[#120F1D] text-foreground">Admin</option>
+              <option value="user" className="bg-[#120F1D] text-foreground">User</option>
             </select>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-surface/40 border border-border/60 rounded-lg px-2.5 py-1 text-xs font-mono">
-            <span className="text-muted text-[10px] uppercase">Status:</span>
+          <div className="flex items-center gap-1.5 bg-surface/80 border border-muted/30 rounded-lg px-2.5 py-1 text-xs font-mono">
+            <span className="text-muted/80 text-[10px] uppercase font-semibold">Status:</span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="bg-transparent text-foreground outline-none cursor-pointer text-xs"
+              className="bg-transparent text-foreground outline-none cursor-pointer text-xs font-sans font-medium"
             >
-              <option value="all" className="bg-background text-foreground">All Statuses</option>
-              <option value="active" className="bg-background text-foreground">Active</option>
-              <option value="inactive" className="bg-background text-foreground">Inactive</option>
+              <option value="all" className="bg-[#120F1D] text-foreground">All Statuses</option>
+              <option value="active" className="bg-[#120F1D] text-foreground">Active</option>
+              <option value="inactive" className="bg-[#120F1D] text-foreground">Inactive</option>
             </select>
           </div>
 
@@ -518,17 +549,17 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
       {/* Main Content Layout */}
       <div className="grid grid-cols-1 gap-6">
         <motion.div variants={cardVariants} className="col-span-full">
-          <div className="border border-border/60 rounded-xl overflow-hidden bg-surface/20">
+          <div className="border border-muted/30 rounded-xl overflow-hidden bg-surface/30">
             <Table>
-              <TableHeader className="bg-surface/60">
-                <TableRow>
-                  <TableHead className="text-xs font-mono">Name</TableHead>
-                  <TableHead className="text-xs font-mono">Username</TableHead>
-                  <TableHead className="text-xs font-mono">Email</TableHead>
-                  <TableHead className="text-xs font-mono">Role</TableHead>
-                  <TableHead className="text-xs font-mono">Status</TableHead>
-                  <TableHead className="text-xs font-mono">Last Login</TableHead>
-                  <TableHead className="text-xs font-mono text-right">Actions</TableHead>
+              <TableHeader className="bg-surface/75 border-b border-muted/30">
+                <TableRow className="border-b border-muted/30 hover:bg-transparent h-14">
+                  <TableHead className="text-xs font-mono h-14">Name</TableHead>
+                  <TableHead className="text-xs font-mono h-14">Username</TableHead>
+                  <TableHead className="text-xs font-mono h-14">Email</TableHead>
+                  <TableHead className="text-xs font-mono h-14">Role</TableHead>
+                  <TableHead className="text-xs font-mono h-14">Status</TableHead>
+                  <TableHead className="text-xs font-mono h-14">Last Login</TableHead>
+                  <TableHead className="text-xs font-mono h-14 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -541,7 +572,7 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
                           animate={{ rotate: 360 }}
                           transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
                         />
-                        Accessing Firebase User Collection...
+                        Loading data...
                       </div>
                     </TableCell>
                   </TableRow>
@@ -562,7 +593,7 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
                       <TableRow
                         key={u.id}
                         onClick={() => openDetailsForUser(u)}
-                        className={`cursor-pointer transition-colors border-b border-border/55 ${isSelected ? 'bg-primary/5' : ''}`}
+                        className={`cursor-pointer transition-colors border-b border-muted/20 hover:bg-surface/40 ${isSelected ? 'bg-primary/5' : ''}`}
                       >
 
                         {/* Name */}
@@ -598,9 +629,9 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
                         {/* Role */}
                         <TableCell className="py-2.5">
                           {u.role ? (
-                            <Badge variant="outline" className="text-[8px] uppercase font-mono tracking-wider">
+                            <span className="text-xs font-sans text-foreground capitalize">
                               {u.role}
-                            </Badge>
+                            </span>
                           ) : (
                             <span className="text-xs text-muted font-mono">—</span>
                           )}
@@ -608,12 +639,17 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
 
                         {/* Status */}
                         <TableCell className="py-2.5">
-                          <div className="flex items-center gap-1.5 font-mono text-[11px] uppercase">
-                            <span className={`h-1.5 w-1.5 rounded-full ${status === 'active' ? 'bg-emerald-500 shadow-glow' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
-                            <span className={status === 'active' ? 'text-emerald-400' : 'text-red-400'}>
-                              {status}
+                          {status === 'active' ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                              Active
                             </span>
-                          </div>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
+                              <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                              Inactive
+                            </span>
+                          )}
                         </TableCell>
 
                         {/* Last Login */}
@@ -670,7 +706,7 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
             </Table>
 
             {/* Database indicator in footer */}
-            <div className="p-4 border-t border-border/50 bg-surface/30 flex items-center justify-between text-xs font-mono">
+            <div className="p-4 border-t border-muted/30 bg-surface/40 flex items-center justify-between text-xs font-mono">
               <span className="text-muted">
                 Showing {filteredUsers.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}
                 {' '}to {Math.min(currentPage * pageSize, filteredUsers.length)} of {filteredUsers.length} Users

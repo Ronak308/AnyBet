@@ -1,16 +1,14 @@
 import React, { useState } from 'react'
 import {
   Bell,
-  Settings,
-  ChevronDown,
   PanelLeft,
   User,
+  LogOut,
+  ChevronDown,
   Shield,
-  Activity,
-  LogOut
+  Activity
 } from 'lucide-react'
 import { Button } from './ui/button'
-import { Avatar, AvatarFallback } from './ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -18,9 +16,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator
 } from './ui/dropdown-menu'
-import { ConfirmationModal } from './ui/confirmation-modal'
-import { useAuth } from '@/context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '@/context/AuthContext'
+import { ConfirmationModal } from './ui/confirmation-modal'
 import { ThemeToggleButton2 } from './ui/skiper4'
 import { Logo } from './ui/Logo'
 
@@ -31,34 +29,14 @@ interface NavbarProps {
   setSidebarCollapsed: (collapsed: boolean) => void
 }
 
-// Get initials from name
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map(w => w[0]?.toUpperCase() ?? '')
-    .join('')
-}
-
-// Color-hash avatar background based on username
-function getAvatarColor(username: string): string {
-  const colors = [
-    '#8026FF', '#00E0FF', '#10b981', '#f59e0b',
-    '#ef4444', '#6366f1', '#ec4899', '#14b8a6',
-  ]
-  let h = 0
-  for (let i = 0; i < username.length; i++) h = (h + username.charCodeAt(i)) % colors.length
-  return colors[h]
-}
-
 export const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
   sidebarCollapsed,
   setSidebarCollapsed
 }) => {
-  const { user, logout } = useAuth()
   const { isDark, toggleTheme } = useTheme()
+  const { user, logout } = useAuth()
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
 
   const notifications = [
@@ -66,13 +44,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 2, title: 'AI Model Refreshed', text: 'Prediction settling updated for Crypto markets', time: '1h ago', type: 'system' },
     { id: 3, title: 'Security Escalation', text: 'Admin_Beta requested override for ID #AB-8720', time: '3h ago', type: 'security' }
   ]
-
-  const displayName = user?.name ?? 'Guest'
-  const displayUsername = user?.username ?? 'guest'
-  const displayRole = user?.role ?? 'Unknown'
-  const displayEmail = user?.email ?? ''
-  const initials = getInitials(displayName)
-  const avatarColor = getAvatarColor(displayUsername)
 
   return (
     <header className="sticky top-0 z-45 w-full bg-background/80 backdrop-blur-md border-b border-border h-16 flex items-center justify-between px-6 select-none">
@@ -90,7 +61,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="h-8 w-8 text-muted hover:text-foreground hidden md:flex"
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
         >
-          <PanelLeft className="h-5 w-5" />
+          <PanelLeft className="h-4 w-4" />
         </Button>
 
         {/* Dynamic Title (Desktop Only) */}
@@ -116,7 +87,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-80 mt-2 p-2" sideOffset={8}>
+          <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] sm:w-80 mt-2 p-2 border border-muted/30" sideOffset={8}>
             <div className="px-3 py-2 flex items-center justify-between border-b border-border/40 mb-1">
               <span className="text-[10px] font-mono text-muted uppercase tracking-wider">Live System Alerts</span>
               <span className="text-[9px] font-mono text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded font-bold uppercase">
@@ -141,16 +112,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Quick Settings Shortcut */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted hover:text-foreground"
-          onClick={() => setActiveTab('ai-oracle')}
-        >
-          <Settings className="h-5 w-5" />
-        </Button>
-
         {/* Theme Toggle — Skiper4 */}
         <ThemeToggleButton2
           isDark={isDark}
@@ -159,60 +120,77 @@ export const Navbar: React.FC<NavbarProps> = ({
         />
 
         {/* Separator */}
-        <span className="h-6 w-px bg-border/60 hidden sm:block"></span>
+        <span className="h-6 w-px bg-border/80"></span>
 
-        {/* Profile Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <div className="flex items-center gap-2 cursor-pointer group">
-              <Avatar className="h-8 w-8 ring-1 ring-border group-hover:ring-primary/50 transition-all duration-200">
-                <AvatarFallback
-                  style={{ backgroundColor: avatarColor + '22', color: avatarColor, border: `1px solid ${avatarColor}44` }}
-                  className="text-xs font-bold font-sans"
+        {/* User profile section */}
+        {user && (
+          <div className="flex items-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className="flex items-center justify-between cursor-pointer group/profile transition-all duration-200 hover:bg-surface/30 rounded-lg select-none p-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {/* Avatar square with rounded corners */}
+                    <div className="h-9 w-9 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0 text-foreground font-semibold text-xs group-hover/profile:border-primary/50 transition-colors">
+                      {user.name
+                        ? user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                        : 'U'}
+                    </div>
+                    
+                    <div className="hidden sm:block min-w-0 text-left">
+                      <span className="text-xs font-semibold text-foreground truncate group-hover/profile:text-primary transition-colors font-sans">
+                        {user.name}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="h-8 w-8 text-muted group-hover/profile:text-foreground shrink-0 rounded-lg flex items-center justify-center transition-colors ml-1">
+                    <ChevronDown className="h-4 w-4" />
+                  </div>
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border border-muted/30 p-1.5 shadow-2xl rounded-xl">
+                {/* Profile */}
+                <DropdownMenuItem
+                  onClick={() => setActiveTab('reputation')}
+                  className="flex items-center gap-2 text-[11px] font-sans text-foreground hover:bg-surface/80 cursor-pointer rounded-lg p-2"
                 >
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="hidden lg:flex flex-col text-left">
-                <span className="text-xs font-semibold text-foreground leading-none font-sans group-hover:text-primary transition-all duration-200">
-                  {displayUsername}
-                </span>
-                <span className="text-[9px] font-mono text-muted uppercase tracking-widest mt-0.5">
-                  {displayRole}
-                </span>
-              </div>
-              <ChevronDown className="h-3 w-3 text-muted group-hover:text-foreground hidden lg:block" />
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 right-0 mt-2 p-2" sideOffset={8}>
-            <div className="px-3 py-2 flex flex-col mb-1 border-b border-border/40">
-              <span className="text-xs font-bold text-foreground">{displayName}</span>
-              <span className="text-[9px] font-mono text-muted uppercase tracking-widest mt-0.5">{displayEmail}</span>
-              <span className="text-[9px] font-mono text-primary/70 uppercase tracking-widest mt-0.5">{user?.id}</span>
-            </div>
-            <DropdownMenuItem onClick={() => setActiveTab('reputation')} className="gap-2.5">
-              <User className="h-4 w-4 text-muted" />
-              <span>Profile Hub</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2.5">
-              <Shield className="h-4 w-4 text-muted" />
-              <span>Access Control</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2.5">
-              <Activity className="h-4 w-4 text-muted" />
-              <span>Telemetry Logs</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              id="navbar-logout"
-              className="gap-2.5 text-red-400 focus:bg-red-950/20"
-              onClick={() => setLogoutConfirmOpen(true)}
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Sign Out</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                  <User className="h-3.5 w-3.5 text-muted" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+
+                {/* Access Control */}
+                <DropdownMenuItem
+                  onClick={() => setActiveTab('users')}
+                  className="flex items-center gap-2 text-[11px] font-sans text-foreground hover:bg-surface/80 cursor-pointer rounded-lg p-2"
+                >
+                  <Shield className="h-3.5 w-3.5 text-muted" />
+                  <span>Access Control</span>
+                </DropdownMenuItem>
+
+                {/* Telemetry Logs */}
+                <DropdownMenuItem
+                  onClick={() => setActiveTab('operations')}
+                  className="flex items-center gap-2 text-[11px] font-sans text-foreground hover:bg-surface/80 cursor-pointer rounded-lg p-2"
+                >
+                  <Activity className="h-3.5 w-3.5 text-muted" />
+                  <span>Telemetry Logs</span>
+                </DropdownMenuItem>
+
+                <div className="my-1 border-t border-border/40" />
+
+                {/* Log out */}
+                <DropdownMenuItem
+                  id="navbar-logout"
+                  className="flex items-center gap-2 text-[11px] font-sans text-red-400 focus:bg-red-950/20 cursor-pointer rounded-lg p-2"
+                  onClick={() => setLogoutConfirmOpen(true)}
+                >
+                  <LogOut className="h-3.5 w-3.5 text-red-400" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
       </div>
 
       <ConfirmationModal

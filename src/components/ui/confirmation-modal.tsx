@@ -94,14 +94,14 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             <div className="flex items-center justify-end gap-3 mt-6">
               <Button
                 variant="outline"
-                className="text-[10px] font-mono uppercase tracking-wider h-8 px-4"
+                className="text-xs font-sans font-medium uppercase tracking-wider h-8 px-4"
                 onClick={onClose}
                 disabled={isLoading}
               >
                 {cancelText}
               </Button>
               <Button
-                className={`text-[10px] font-mono uppercase tracking-wider h-8 px-4 text-white rounded-lg transition-colors duration-150 ${styles.btnBg}`}
+                className={`text-xs font-sans font-medium uppercase tracking-wider h-8 px-4 text-white rounded-lg transition-colors duration-150 ${styles.btnBg}`}
                 onClick={onConfirm}
                 disabled={isLoading}
               >

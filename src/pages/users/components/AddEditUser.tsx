@@ -163,7 +163,7 @@ export const AddEditUser: React.FC<AddEditUserProps> = ({
                                 value={name}
                                 onChange={e => setName(e.target.value)}
                                 disabled={isLoading}
-                                className="pl-9 text-xs font-sans h-9 bg-card/65 border-border focus:border-primary transition-all rounded-lg"
+                                className="pl-9 text-xs font-sans h-9 bg-surface/80 border border-muted/30 focus:border-primary transition-all rounded-lg focus-visible:ring-primary/30"
                             />
                         </div>
                         {fieldErrors.name && (
@@ -185,7 +185,7 @@ export const AddEditUser: React.FC<AddEditUserProps> = ({
                                 onChange={e => setEmail(e.target.value)}
                                 disabled={isLoading}
                                 required
-                                className="pl-9 text-xs font-sans h-9 bg-card/65 border-border focus:border-primary transition-all rounded-lg"
+                                className="pl-9 text-xs font-sans h-9 bg-surface/80 border border-muted/30 focus:border-primary transition-all rounded-lg focus-visible:ring-primary/30"
                             />
                         </div>
                         {fieldErrors.email && (
@@ -206,7 +206,7 @@ export const AddEditUser: React.FC<AddEditUserProps> = ({
                                 value={username}
                                 onChange={e => setUsername(e.target.value.toLowerCase())}
                                 disabled={isLoading || !!userToEdit}
-                                className={`pl-9 text-xs font-mono h-9 bg-card/65 border-border focus:border-primary transition-all rounded-lg ${userToEdit ? 'opacity-60 cursor-not-allowed bg-surface/40' : ''
+                                className={`pl-9 text-xs font-mono h-9 bg-surface/80 border border-muted/30 focus:border-primary transition-all rounded-lg focus-visible:ring-primary/30 ${userToEdit ? 'opacity-60 cursor-not-allowed bg-surface/40' : ''
                                     }`}
                             />
                         </div>
@@ -224,10 +224,10 @@ export const AddEditUser: React.FC<AddEditUserProps> = ({
                                 value={role}
                                 onChange={e => setRole(e.target.value)}
                                 disabled={isLoading}
-                                className="pl-9 pr-3 py-1.5 w-full h-9 rounded-lg border border-border bg-card/65 text-xs font-mono text-foreground focus-visible:outline-none focus-visible:border-primary transition-all cursor-pointer appearance-none"
+                                className="pl-9 pr-3 py-1.5 w-full h-9 rounded-lg border border-muted/30 bg-surface/80 text-xs font-mono text-foreground focus-visible:outline-none focus-visible:border-primary transition-all cursor-pointer appearance-none"
                             >
-                                <option value="admin" className="bg-card text-foreground">Admin</option>
-                                <option value="user" className="bg-card text-foreground">User</option>
+                                <option value="admin" className="bg-[#120F1D] text-foreground">Admin</option>
+                                <option value="user" className="bg-[#120F1D] text-foreground">User</option>
                             </select>
                         </div>
                     </div>
@@ -241,10 +241,10 @@ export const AddEditUser: React.FC<AddEditUserProps> = ({
                                 value={status}
                                 onChange={e => setStatus(e.target.value)}
                                 disabled={isLoading}
-                                className="pl-9 pr-3 py-1.5 w-full h-9 rounded-lg border border-border bg-card/65 text-xs font-mono text-foreground focus-visible:outline-none focus-visible:border-primary transition-all cursor-pointer appearance-none"
+                                className="pl-9 pr-3 py-1.5 w-full h-9 rounded-lg border border-muted/30 bg-surface/80 text-xs font-mono text-foreground focus-visible:outline-none focus-visible:border-primary transition-all cursor-pointer appearance-none"
                             >
-                                <option value="active" className="bg-card text-foreground">ACTIVE</option>
-                                <option value="inactive" className="bg-card text-foreground">INACTIVE</option>
+                                <option value="active" className="bg-[#120F1D] text-foreground">ACTIVE</option>
+                                <option value="inactive" className="bg-[#120F1D] text-foreground">INACTIVE</option>
                             </select>
                         </div>
                     </div>
@@ -264,7 +264,7 @@ export const AddEditUser: React.FC<AddEditUserProps> = ({
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
                                         disabled={isLoading}
-                                        className="pl-9 pr-10 text-xs font-sans h-9 bg-card/65 border-border focus:border-primary transition-all rounded-lg"
+                                        className="pl-9 pr-10 text-xs font-sans h-9 bg-surface/80 border border-muted/30 focus:border-primary transition-all rounded-lg focus-visible:ring-primary/30"
                                     />
                                     <button
                                         type="button"
@@ -291,7 +291,7 @@ export const AddEditUser: React.FC<AddEditUserProps> = ({
                                         value={confirmPassword}
                                         onChange={e => setConfirmPassword(e.target.value)}
                                         disabled={isLoading}
-                                        className="pl-9 pr-10 text-xs font-sans h-9 bg-card/65 border-border focus:border-primary transition-all rounded-lg"
+                                        className="pl-9 pr-10 text-xs font-sans h-9 bg-surface/80 border border-muted/30 focus:border-primary transition-all rounded-lg focus-visible:ring-primary/30"
                                     />
                                     <button
                                         type="button"

@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  LayoutDashboard, 
-  Sword, 
-  Users, 
-  Coins, 
-  Cpu, 
-  HelpCircle, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  Sword,
+  Users,
+  Coins,
+  Cpu,
   ChevronDown,
   ChevronUp,
   Wallet,
@@ -19,12 +17,12 @@ import {
   Zap,
   AlertTriangle,
   BarChart3,
-  Trophy
+  Trophy,
+  Settings,
+  HelpCircle
 } from 'lucide-react'
 import { Button } from './ui/button'
-import { ConfirmationModal } from './ui/confirmation-modal'
 import { cn } from '../lib/utils'
-import { useAuth } from '@/context/AuthContext'
 
 import { Logo } from './ui/Logo'
 
@@ -43,8 +41,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setIsCollapsed,
   className
 }) => {
-  const { logout, user } = useAuth()
-  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [financialsOpen, setFinancialsOpen] = useState(() => activeTab.startsWith('financials'))
   const [challengesOpen, setChallengesOpen] = useState(() => activeTab.startsWith('challenges'))
 
@@ -85,11 +81,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <motion.div
       animate={{ width: isCollapsed ? 76 : 260 }}
       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-      className={cn("h-screen sticky top-0 bg-background border-r border-border flex flex-col justify-between py-6 px-4 shrink-0 overflow-hidden select-none", className)}
+      className={cn("h-screen sticky top-0 bg-background border-r border-border flex flex-col py-6 px-4 shrink-0 overflow-hidden select-none", className)}
     >
-      <div className="flex flex-col gap-8 flex-grow">
+      <div className="flex flex-col gap-6 flex-1 min-h-0 mb-4">
         {/* Header/Logo */}
-        <div className="flex items-center justify-between min-h-[48px]">
+        <div className="flex items-center justify-between min-h-[48px] shrink-0">
           <AnimatePresence mode="wait">
             {!isCollapsed ? (
               <motion.div
@@ -118,7 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Menu Navigation */}
-        <nav className="flex flex-col gap-1.5 overflow-y-auto max-h-[calc(100vh-220px)] pr-1 scrollbar-thin">
+        <nav className="flex flex-col gap-1.5 overflow-y-auto flex-1 pr-1 scrollbar-thin">
           {menuItems.map((item) => {
             const Icon = item.icon
             const isChallengesGroup = item.id === 'challenges'
@@ -126,10 +122,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             const isChallengesActive = activeTab.startsWith('challenges')
             const isFinancialsActive = activeTab.startsWith('financials')
 
-            const isActive = isChallengesGroup 
-              ? isChallengesActive 
-              : isFinancialsGroup 
-                ? isFinancialsActive 
+            const isActive = isChallengesGroup
+              ? isChallengesActive
+              : isFinancialsGroup
+                ? isFinancialsActive
                 : activeTab === item.id
 
             if (isChallengesGroup) {
@@ -187,11 +183,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <button
                               key={sub.id}
                               onClick={() => setActiveTab(sub.id)}
-                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono tracking-wider transition-all duration-200 cursor-pointer w-full text-left ${
-                                isSubActive
-                                  ? 'bg-primary/15 text-primary font-bold border border-primary/30'
-                                  : 'text-muted hover:text-foreground hover:bg-surface/60'
-                              }`}
+                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono tracking-wider transition-all duration-200 cursor-pointer w-full text-left ${isSubActive
+                                ? 'bg-primary/15 text-primary font-bold border border-primary/30'
+                                : 'text-muted hover:text-foreground hover:bg-surface/60'
+                                }`}
                             >
                               <SubIcon className={`h-3.5 w-3.5 ${isSubActive ? 'text-primary' : 'text-muted'}`} />
                               <span>{sub.label}</span>
@@ -260,11 +255,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <button
                               key={sub.id}
                               onClick={() => setActiveTab(sub.id)}
-                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono tracking-wider transition-all duration-200 cursor-pointer w-full text-left ${
-                                isSubActive
-                                  ? 'bg-primary/15 text-primary font-bold border border-primary/30'
-                                  : 'text-muted hover:text-foreground hover:bg-surface/60'
-                              }`}
+                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono tracking-wider transition-all duration-200 cursor-pointer w-full text-left ${isSubActive
+                                ? 'bg-primary/15 text-primary font-bold border border-primary/30'
+                                : 'text-muted hover:text-foreground hover:bg-surface/60'
+                                }`}
                             >
                               <SubIcon className={`h-3.5 w-3.5 ${isSubActive ? 'text-primary' : 'text-muted'}`} />
                               <span>{sub.label}</span>
@@ -302,59 +296,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      <div className="flex flex-col gap-6 mt-auto">
+      <div className="flex flex-col gap-1 mt-auto pt-4 border-t border-border/70 shrink-0">
+        {/* Settings button */}
+        <Button
+          variant="ghost"
+          className={cn(
+            "w-full justify-start text-muted hover:text-foreground font-sans text-sm font-medium transition-all duration-200",
+            isCollapsed ? 'justify-center p-0 h-10' : 'px-4 gap-3 h-10'
+          )}
+          onClick={() => setActiveTab('ai-oracle')}
+        >
+          <Settings className="h-5 w-5 shrink-0" />
+          {!isCollapsed && <span>Settings</span>}
+        </Button>
 
-        {/* User info strip (collapsed: hidden, expanded: show) */}
-        {!isCollapsed && user && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="px-3 py-2 bg-surface/40 border border-border/50 rounded-lg"
-          >
-            <p className="text-xs font-semibold text-foreground truncate">{user.name}</p>
-            <p className="text-[9px] font-mono text-muted uppercase tracking-widest mt-0.5 truncate">{user.role}</p>
-          </motion.div>
-        )}
-
-        {/* Support & Logout */}
-        <div className="flex flex-col gap-1">
-          <Button
-            variant="ghost"
-            className={`w-full justify-start ${isCollapsed ? 'justify-center p-0' : 'px-4 gap-3'} text-muted hover:text-foreground`}
-            onClick={() => alert("Ops Support desk online. Channel #ops-support.")}
-          >
-            <HelpCircle className="h-5 w-5 shrink-0" />
-            {!isCollapsed && <span className="text-xs font-mono uppercase tracking-wider">Support</span>}
-          </Button>
-
-          <Button
-            id="sidebar-logout"
-            variant="ghost"
-            className={`w-full justify-start ${isCollapsed ? 'justify-center p-0' : 'px-4 gap-3'} transition-colors text-red-400/80 hover:text-red-400 hover:bg-red-950/20`}
-            onClick={() => setLogoutConfirmOpen(true)}
-          >
-            <LogOut className="h-5 w-5 shrink-0" />
-            {!isCollapsed && (
-              <span className="text-xs font-mono uppercase tracking-wider">Sign Out</span>
-            )}
-          </Button>
-        </div>
+        {/* Support Button */}
+        <Button
+          variant="ghost"
+          className={cn(
+            "w-full justify-start text-muted hover:text-foreground font-sans text-sm font-medium transition-all duration-200",
+            isCollapsed ? 'justify-center p-0 h-10' : 'px-4 gap-3 h-10'
+          )}
+          onClick={() => alert("Ops Support desk online. Channel #ops-support.")}
+        >
+          <HelpCircle className="h-5 w-5 shrink-0" />
+          {!isCollapsed && <span>Support</span>}
+        </Button>
       </div>
-
-      <ConfirmationModal
-        isOpen={logoutConfirmOpen}
-        onClose={() => setLogoutConfirmOpen(false)}
-        onConfirm={async () => {
-          setLogoutConfirmOpen(false)
-          await logout()
-        }}
-        title="Sign Out"
-        confirmText="Sign Out"
-        cancelText="Cancel"
-        variant="danger"
-        description="Are you sure you want to sign out of your account?"
-        icon={LogOut}
-      />
     </motion.div>
   )
 }
