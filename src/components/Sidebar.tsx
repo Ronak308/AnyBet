@@ -70,6 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'financials', label: 'Financials', icon: Coins, isDropdown: true },
     { id: 'ai-oracle', label: 'AI Oracle', icon: Cpu, isDropdown: true },
     { id: 'support-center', label: 'Support Center', icon: HelpCircle, isDropdown: true },
+    { id: 'profile-settings', label: 'Settings', icon: Settings },
   ]
 
   const challengeSubItems = [
@@ -472,20 +473,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      <div className="flex flex-col gap-1 mt-auto pt-4 border-t border-border/70 shrink-0">
-        {/* Settings button */}
-        <Button
-          variant="ghost"
-          className={cn(
-            "w-full justify-start text-muted hover:text-foreground font-sans text-sm font-medium transition-all duration-200",
-            isCollapsed ? 'justify-center p-0 h-10' : 'px-4 gap-3 h-10'
-          )}
-          onClick={() => setActiveTab('ai-oracle')}
-        >
-          <Settings className="h-5 w-5 shrink-0" />
-          {!isCollapsed && <span>Settings</span>}
-        </Button>
-      </div>
+
     </motion.div>
   )
 }

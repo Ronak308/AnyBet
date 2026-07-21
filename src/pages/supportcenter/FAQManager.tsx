@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { Plus, Trash2, MoreHorizontal, Edit3 } from 'lucide-react'
+import { Plus, Trash2, MoreHorizontal, Edit3, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
@@ -26,6 +27,7 @@ export const FAQManager: React.FC<FAQManagerProps> = ({
   handleEditFaq,
   handleDeleteFaq
 }) => {
+  const [searchQuery, setSearchQuery] = useState('')
   const [isAddingFaq, setIsAddingFaq] = useState(false)
   const [faqToEdit, setFaqToEdit] = useState<FAQItem | null>(null)
 
@@ -39,12 +41,32 @@ export const FAQManager: React.FC<FAQManagerProps> = ({
     setIsAddingFaq(true)
   }
 
+  const filteredFaqs = faqs.filter(f => {
+    const query = searchQuery.toLowerCase().trim()
+    if (!query) return true
+    return (
+      f.question.toLowerCase().includes(query) ||
+      f.answer.toLowerCase().includes(query) ||
+      (f.category && f.category.toLowerCase().includes(query))
+    )
+  })
+
   return (
     <div className="flex flex-col gap-4 w-full">
-      <div className="flex flex-wrap items-center justify-end gap-3">
+      {/* Control Bar: Search & Action */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-1">
+        <div className="relative w-full md:w-80">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted/80 pointer-events-none" />
+          <Input
+            placeholder="Search FAQs..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-9 text-xs font-sans bg-card border border-border focus-visible:ring-primary/30"
+          />
+        </div>
         <Button
           onClick={openAddSheet}
-          className="h-9 px-4 text-xs font-mono gap-1.5 rounded-lg"
+          className="h-9 px-4 text-xs font-mono gap-1.5 rounded-lg w-full md:w-auto shrink-0"
         >
           <Plus className="h-4 w-4" /> Add FAQ Article
         </Button>
@@ -66,13 +88,13 @@ export const FAQManager: React.FC<FAQManagerProps> = ({
         <Table>
           <TableHeader className="bg-surface/75 border-b border-muted/30">
             <TableRow className="border-b border-muted/30 hover:bg-transparent h-14">
-              <TableHead className="text-xs font-mono h-14">Question</TableHead>
+              <TableHead className="text-xs font-mono h-14 pl-4">Question</TableHead>
               <TableHead className="text-xs font-mono h-14">Answer</TableHead>
               <TableHead className="text-xs font-mono h-14 pr-4 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {faqs.map(f => (
+            {filteredFaqs.map(f => (
               <TableRow key={f.id} className="border-b border-muted/20 hover:bg-surface/40">
                 <TableCell className="py-3 pl-4 align-top text-xs font-bold text-foreground max-w-[320px]">
                   <span className="block truncate">{f.question}</span>
@@ -113,10 +135,10 @@ export const FAQManager: React.FC<FAQManagerProps> = ({
                 </TableCell>
               </TableRow>
             ))}
-            {faqs.length === 0 && (
+            {filteredFaqs.length === 0 && (
               <TableRow className="border-b border-muted/20 hover:bg-transparent">
                 <TableCell colSpan={3} className="py-10 text-center font-mono text-xs text-muted uppercase">
-                  No FAQ articles found
+                  No FAQ articles match search
                 </TableCell>
               </TableRow>
             )}

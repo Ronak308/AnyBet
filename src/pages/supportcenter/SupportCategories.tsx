@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { Plus, MoreHorizontal, Trash2, Edit3 } from 'lucide-react'
+import { Plus, MoreHorizontal, Trash2, Edit3, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
@@ -32,6 +33,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
     handleDeleteCategory,
     handleToggleCategoryStatus
 }) => {
+    const [searchQuery, setSearchQuery] = useState('')
     const [isAddingCat, setIsAddingCat] = useState(false)
     const [categoryToEdit, setCategoryToEdit] = useState<SupportCategory | null>(null)
     const [categoryToDelete, setCategoryToDelete] = useState<{ id: string; name: string } | null>(null)
@@ -42,13 +44,32 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
         setCategoryToEdit(null)
     }
 
+    const filteredCategories = categories.filter(c => {
+        const query = searchQuery.toLowerCase().trim()
+        if (!query) return true
+        return (
+            c.name.toLowerCase().includes(query) ||
+            c.description.toLowerCase().includes(query) ||
+            c.sla.toLowerCase().includes(query)
+        )
+    })
+
     return (
         <div className="flex flex-col gap-4 w-full">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="text-xs font-mono text-muted uppercase">Ticketing Classifications & SLAs</span>
+            {/* Control Bar: Search & Action */}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-1">
+                <div className="relative w-full md:w-80">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted/80 pointer-events-none" />
+                    <Input
+                        placeholder="Search categories..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9 h-9 text-xs font-sans bg-card border border-border focus-visible:ring-primary/30"
+                    />
+                </div>
                 <Button
                     onClick={() => setIsAddingCat(true)}
-                    className="h-9 px-4 text-xs font-mono gap-1.5 rounded-lg"
+                    className="h-9 px-4 text-xs font-mono gap-1.5 rounded-lg w-full md:w-auto shrink-0"
                 >
                     <Plus className="h-4 w-4" /> Add Category
                 </Button>
@@ -100,7 +121,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {categories.map(c => (
+                        {filteredCategories.map(c => (
                             <TableRow key={c.id} className="border-b border-muted/20 hover:bg-surface/40">
                                 <TableCell className="py-3 pl-4">
                                     <span className="text-xs font-bold font-sans text-foreground">{c.name}</span>
@@ -151,6 +172,13 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                                 </TableCell>
                             </TableRow>
                         ))}
+                        {filteredCategories.length === 0 && (
+                            <TableRow className="border-b border-muted/20 hover:bg-transparent">
+                                <TableCell colSpan={5} className="py-10 text-center font-mono text-xs text-muted uppercase">
+                                    No categories match search
+                                </TableCell>
+                            </TableRow>
+                        )}
                     </TableBody>
                 </Table>
             </div>

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   HelpCircle,
   Search,
@@ -181,15 +180,7 @@ const initialCategories: SupportCategory[] = [
   }
 ]
 
-export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: string) => void }> = ({ activeTab = 'support-tickets', navigate: propNavigate }) => {
-  const routerNavigate = useNavigate()
-  const handleNavigate = (tab: string) => {
-    if (propNavigate) {
-      propNavigate(tab)
-    } else {
-      routerNavigate('/' + tab)
-    }
-  }
+export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: string) => void }> = ({ activeTab = 'support-tickets' }) => {
   const [tickets, setTickets] = useState<Ticket[]>(initialTickets)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
 
@@ -761,90 +752,8 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
   }
 
   const renderAnalyticsGrid = () => {
-    if (activeTab === 'support-categories') {
-      return (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="glass-panel border border-muted/30 rounded-xl p-4 bg-surface/30 flex items-center gap-3">
-            <div className="p-2.5 bg-blue-500/10 rounded-lg text-blue-400">
-              <Layers className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="text-[9px] font-mono text-muted uppercase tracking-wider block">Total Categories</span>
-              <span className="text-lg font-bold text-foreground font-mono">{categories.length}</span>
-            </div>
-          </div>
-          <div className="glass-panel border border-muted/30 rounded-xl p-4 bg-surface/30 flex items-center gap-3">
-            <div className="p-2.5 bg-orange-500/10 rounded-lg text-orange-400">
-              <AlertTriangle className="h-5 w-5 animate-pulse" />
-            </div>
-            <div>
-              <span className="text-[9px] font-mono text-muted uppercase tracking-wider block">Critical Issues</span>
-              <span className="text-lg font-bold text-foreground font-mono">2 Active</span>
-            </div>
-          </div>
-          <div className="glass-panel border border-muted/30 rounded-xl p-4 bg-surface/30 flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-500/10 rounded-lg text-emerald-400">
-              <Clock className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="text-[9px] font-mono text-muted uppercase tracking-wider block">Target SLA</span>
-              <span className="text-lg font-bold text-foreground font-mono">4 Hours</span>
-            </div>
-          </div>
-          <div className="glass-panel border border-muted/30 rounded-xl p-4 bg-surface/30 flex items-center gap-3">
-            <div className="p-2.5 bg-purple-500/10 rounded-lg text-purple-400">
-              <Terminal className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="text-[9px] font-mono text-muted uppercase tracking-wider block">Auto-Routing</span>
-              <span className="text-lg font-bold text-foreground font-mono">100% Enabled</span>
-            </div>
-          </div>
-        </div>
-      )
-    }
-
-    if (activeTab === 'support-faq') {
-      return (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="glass-panel border border-muted/30 rounded-xl p-4 bg-surface/30 flex items-center gap-3">
-            <div className="p-2.5 bg-blue-500/10 rounded-lg text-blue-400">
-              <HelpCircle className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="text-[9px] font-mono text-muted uppercase tracking-wider block">Total FAQ Articles</span>
-              <span className="text-lg font-bold text-foreground font-mono">{faqs.length}</span>
-            </div>
-          </div>
-          <div className="glass-panel border border-muted/30 rounded-xl p-4 bg-surface/30 flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-500/10 rounded-lg text-emerald-400">
-              <CheckCircle className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="text-[9px] font-mono text-muted uppercase tracking-wider block">Published Articles</span>
-              <span className="text-lg font-bold text-foreground font-mono">{faqs.length} Active</span>
-            </div>
-          </div>
-          <div className="glass-panel border border-muted/30 rounded-xl p-4 bg-surface/30 flex items-center gap-3">
-            <div className="p-2.5 bg-purple-500/10 rounded-lg text-purple-400">
-              <Layers className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="text-[9px] font-mono text-muted uppercase tracking-wider block">Topics Covered</span>
-              <span className="text-lg font-bold text-foreground font-mono">4 Topics</span>
-            </div>
-          </div>
-          <div className="glass-panel border border-muted/30 rounded-xl p-4 bg-surface/30 flex items-center gap-3">
-            <div className="p-2.5 bg-orange-500/10 rounded-lg text-orange-400">
-              <MessageSquare className="h-5 w-5" />
-            </div>
-            <div>
-              <span className="text-[9px] font-mono text-muted uppercase tracking-wider block">Helpfulness Rating</span>
-              <span className="text-lg font-bold text-foreground font-mono">98.4% Positive</span>
-            </div>
-          </div>
-        </div>
-      )
+    if (activeTab === 'support-categories' || activeTab === 'support-faq') {
+      return null
     }
 
     if (activeTab === 'support-disputes') {
@@ -1305,54 +1214,13 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
   return (
     <div className="p-6 flex flex-col gap-6 w-full font-sans">
       {/* Header */}
-      <div className="flex flex-col gap-4 border-b border-border/50 pb-4">
-        <div>
-          <h2 className="text-xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
-            {headerInfo.icon} {headerInfo.title}
-          </h2>
-          <p className="text-xs text-muted font-mono mt-0.5 uppercase tracking-wider">
-            {headerInfo.desc}
-          </p>
-        </div>
-
-        {/* Sub-Tabs Navigation Bar */}
-        <div className="flex items-center gap-2 flex-wrap pt-1">
-          <button
-            onClick={() => handleNavigate('support-tickets')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono tracking-wider transition-all cursor-pointer ${
-              activeTab === 'support-tickets' || activeTab === 'support-center'
-                ? 'bg-primary/15 text-primary font-bold border border-primary/30'
-                : 'text-muted hover:text-foreground hover:bg-surface/60 border border-transparent'
-            }`}
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
-            <span>Support Tickets</span>
-          </button>
-
-          <button
-            onClick={() => handleNavigate('support-categories')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono tracking-wider transition-all cursor-pointer ${
-              activeTab === 'support-categories'
-                ? 'bg-primary/15 text-primary font-bold border border-primary/30'
-                : 'text-muted hover:text-foreground hover:bg-surface/60 border border-transparent'
-            }`}
-          >
-            <Layers className="h-3.5 w-3.5" />
-            <span>Support Categories</span>
-          </button>
-
-          <button
-            onClick={() => handleNavigate('support-faq')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono tracking-wider transition-all cursor-pointer ${
-              activeTab === 'support-faq'
-                ? 'bg-primary/15 text-primary font-bold border border-primary/30'
-                : 'text-muted hover:text-foreground hover:bg-surface/60 border border-transparent'
-            }`}
-          >
-            <HelpCircle className="h-3.5 w-3.5" />
-            <span>FAQ Manager</span>
-          </button>
-        </div>
+      <div>
+        <h2 className="text-xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
+          {headerInfo.icon} {headerInfo.title}
+        </h2>
+        <p className="text-xs text-muted font-mono mt-0.5 uppercase tracking-wider">
+          {headerInfo.desc}
+        </p>
       </div>
 
       {/* Analytics Overview Grid */}
