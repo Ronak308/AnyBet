@@ -48,15 +48,24 @@
 
 :root.light {
   /* Core palette */
-  --color-background:    #F0F2F5;   /* Cool neutral — no purple tint          */
-  --color-card:          #FFFFFF;   /* Pure white cards with shadow            */
-  --color-surface:       #E8EBF0;   /* Slightly darker for inputs/tags         */
-  --color-primary:       #7C3AED;   /* Vibrant violet 700                      */
-  --color-primary-hover: #5B21B6;   /* Darker violet on hover                  */
-  --color-secondary:     #0284C7;   /* Sky blue — visible on light             */
-  --color-border:        #D1D5DB;   /* Clean gray border (gray-300)            */
-  --color-foreground:    #111827;   /* Near-black text (gray-900)              */
-  --color-muted:         #6B7280;   /* Neutral gray muted (gray-500)           */
+  --color-background: #F0F2F5;
+  /* Cool neutral — no purple tint          */
+  --color-card: #FFFFFF;
+  /* Pure white cards with shadow            */
+  --color-surface: #E8EBF0;
+  /* Slightly darker for inputs/tags         */
+  --color-primary: #7C3AED;
+  /* Vibrant violet 700                      */
+  --color-primary-hover: #5B21B6;
+  /* Darker violet on hover                  */
+  --color-secondary: #0284C7;
+  /* Sky blue — visible on light             */
+  --color-border: #D1D5DB;
+  /* Clean gray border (gray-300)            */
+  --color-foreground: #111827;
+  /* Near-black text (gray-900)              */
+  --color-muted: #6B7280;
+  /* Neutral gray muted (gray-500)           */
 
   --color-error-bg: rgba(220, 38, 38, 0.08);
   --color-error-border: rgba(220, 38, 38, 0.25);
@@ -106,7 +115,7 @@
 :root.light header {
   background: rgba(255, 255, 255, 0.92) !important;
   border-bottom-color: #E5E7EB !important;
-  box-shadow: 0 1px 0 #E5E7EB, 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 0 #E5E7EB, 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 /* ─── Card-like surfaces ─────────────────────────────────────────────────── */
@@ -137,10 +146,10 @@
 
 /* ─── Dropdown menus in light mode ──────────────────────────────────────── */
 :root.light [role="menu"],
-:root.light [data-radix-popper-content-wrapper] > div {
+:root.light [data-radix-popper-content-wrapper]>div {
   background: #FFFFFF !important;
   border-color: #E5E7EB !important;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06) !important;
 }
 
 :root.light [role="menuitem"]:hover {
@@ -185,7 +194,7 @@
 /* ─── Toast notification ────────────────────────────────────────────────── */
 :root.light .fixed.bottom-6 .bg-\[\#151221\] {
   background-color: #FFFFFF !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.14) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14) !important;
 }
 
 /* ─── Recharts / Charts in light mode ───────────────────────────────────── */
@@ -198,10 +207,23 @@
 }
 
 /* ─── Scrollbars ─────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--color-background); }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
 
 /* ─── Purple Glow ────────────────────────────────────────────────────────── */
 .purple-glow {
@@ -209,6 +231,7 @@
     0 0 20px rgba(179, 102, 255, 0.25),
     0 0 40px rgba(179, 102, 255, 0.15);
 }
+
 :root.light .purple-glow {
   box-shadow:
     0 0 16px rgba(124, 58, 237, 0.18),
@@ -221,6 +244,7 @@
     0 0 20px rgba(0, 224, 255, 0.25),
     0 0 40px rgba(0, 224, 255, 0.15);
 }
+
 :root.light .cyan-glow {
   box-shadow:
     0 0 16px rgba(2, 132, 199, 0.2),
@@ -241,12 +265,16 @@
 }
 
 /* ─── Table rows in light ─────────────────────────────────────────────────── */
-:root.light tr:hover {
+:root.light tbody tr:not([class*="bg-primary"]):not([class*="bg-surface"]) {
   background-color: #F9FAFB;
 }
 
+:root.light tbody tr:not([class*="bg-primary"]):not([class*="bg-surface"]):hover {
+  background-color: #F3F4F6;
+}
+
 :root.light tbody tr {
-  border-bottom-color: #F3F4F6;
+  border-bottom-color: #E5E7EB;
 }
 
 /* ─── Separator in light ─────────────────────────────────────────────────── */
@@ -262,7 +290,7 @@
 }
 
 /* ─── Progress bars in light ─────────────────────────────────────────────── */
-:root.light [role="progressbar"] > div {
+:root.light [role="progressbar"]>div {
   background-color: #7C3AED;
 }
 

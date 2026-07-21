@@ -1,16 +1,14 @@
 import React, { useState } from 'react'
 import {
-  Search,
   Bell,
   Settings,
   ChevronDown,
+  PanelLeft,
   User,
   Shield,
   Activity,
-  LogOut,
-  SlidersHorizontal
+  LogOut
 } from 'lucide-react'
-import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { Avatar, AvatarFallback } from './ui/avatar'
 import {
@@ -20,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator
 } from './ui/dropdown-menu'
+import { ConfirmationModal } from './ui/confirmation-modal'
 import { useAuth } from '@/context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { ThemeToggleButton2 } from './ui/skiper4'
@@ -60,22 +59,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const { user, logout } = useAuth()
   const { isDark, toggleTheme } = useTheme()
-  const [logoutConfirm, setLogoutConfirm] = useState(false)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
 
   const notifications = [
     { id: 1, title: 'New Dispute Triggered', text: '#AB-1052 irregular activity reported', time: '2m ago', type: 'dispute' },
     { id: 2, title: 'AI Model Refreshed', text: 'Prediction settling updated for Crypto markets', time: '1h ago', type: 'system' },
     { id: 3, title: 'Security Escalation', text: 'Admin_Beta requested override for ID #AB-8720', time: '3h ago', type: 'security' }
   ]
-
-  const handleLogout = () => {
-    if (!logoutConfirm) {
-      setLogoutConfirm(true)
-      setTimeout(() => setLogoutConfirm(false), 3000)
-      return
-    }
-    logout()
-  }
 
   const displayName = user?.name ?? 'Guest'
   const displayUsername = user?.username ?? 'guest'
@@ -100,7 +90,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="h-8 w-8 text-muted hover:text-foreground hidden md:flex"
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
         >
-          <SlidersHorizontal className="h-4 w-4" />
+          <PanelLeft className="h-5 w-5" />
         </Button>
 
         {/* Dynamic Title (Desktop Only) */}
@@ -113,17 +103,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Right side: Search, Notifications, Settings, Profile */}
       <div className="flex items-center gap-4">
-        {/* Search */}
-        <div className="relative w-48 lg:w-64 hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted" />
-          <Input
-            placeholder="Global query..."
-            className="pl-9 pr-8 h-9 text-xs"
-          />
-          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono text-muted bg-[#22222C] px-1.5 py-0.5 rounded border border-border">
-            /
-          </kbd>
-        </div>
+
 
         {/* Notifications */}
         <DropdownMenu>
@@ -225,15 +205,30 @@ export const Navbar: React.FC<NavbarProps> = ({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               id="navbar-logout"
-              className={`gap-2.5 transition-colors ${logoutConfirm ? 'text-red-300 bg-red-950/30 focus:bg-red-950/40' : 'text-red-400 focus:bg-red-950/20'}`}
-              onClick={handleLogout}
+              className="gap-2.5 text-red-400 focus:bg-red-950/20"
+              onClick={() => setLogoutConfirmOpen(true)}
             >
               <LogOut className="h-4 w-4" />
-              <span>{logoutConfirm ? 'Click again to confirm' : 'Sign Out'}</span>
+              <span>Sign Out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <ConfirmationModal
+        isOpen={logoutConfirmOpen}
+        onClose={() => setLogoutConfirmOpen(false)}
+        onConfirm={async () => {
+          setLogoutConfirmOpen(false)
+          await logout()
+        }}
+        title="Sign Out"
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        variant="danger"
+        description="Are you sure you want to sign out of your account?"
+        icon={LogOut}
+      />
     </header>
   )
 }

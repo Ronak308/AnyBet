@@ -22,6 +22,7 @@ import {
   Trophy
 } from 'lucide-react'
 import { Button } from './ui/button'
+import { ConfirmationModal } from './ui/confirmation-modal'
 import { cn } from '../lib/utils'
 import { useAuth } from '@/context/AuthContext'
 
@@ -43,7 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   className
 }) => {
   const { logout, user } = useAuth()
-  const [logoutConfirm, setLogoutConfirm] = useState(false)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [financialsOpen, setFinancialsOpen] = useState(() => activeTab.startsWith('financials'))
   const [challengesOpen, setChallengesOpen] = useState(() => activeTab.startsWith('challenges'))
 
@@ -79,15 +80,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'financials-rewards', label: 'Rewards', icon: Gift },
     { id: 'financials-treasury', label: 'Treasury', icon: PieChart },
   ]
-
-  const handleLogout = () => {
-    if (!logoutConfirm) {
-      setLogoutConfirm(true)
-      setTimeout(() => setLogoutConfirm(false), 3000)
-      return
-    }
-    logout()
-  }
 
   return (
     <motion.div
@@ -338,21 +330,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Button
             id="sidebar-logout"
             variant="ghost"
-            className={`w-full justify-start ${isCollapsed ? 'justify-center p-0' : 'px-4 gap-3'} transition-colors ${logoutConfirm
-              ? 'text-red-300 bg-red-950/30 hover:bg-red-950/40'
-              : 'text-red-400/80 hover:text-red-400 hover:bg-red-950/20'
-              }`}
-            onClick={handleLogout}
+            className={`w-full justify-start ${isCollapsed ? 'justify-center p-0' : 'px-4 gap-3'} transition-colors text-red-400/80 hover:text-red-400 hover:bg-red-950/20`}
+            onClick={() => setLogoutConfirmOpen(true)}
           >
             <LogOut className="h-5 w-5 shrink-0" />
             {!isCollapsed && (
-              <span className="text-xs font-mono uppercase tracking-wider">
-                {logoutConfirm ? 'Confirm?' : 'Sign Out'}
-              </span>
+              <span className="text-xs font-mono uppercase tracking-wider">Sign Out</span>
             )}
           </Button>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={logoutConfirmOpen}
+        onClose={() => setLogoutConfirmOpen(false)}
+        onConfirm={async () => {
+          setLogoutConfirmOpen(false)
+          await logout()
+        }}
+        title="Sign Out"
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        variant="danger"
+        description="Are you sure you want to sign out of your account?"
+        icon={LogOut}
+      />
     </motion.div>
   )
 }

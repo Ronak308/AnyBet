@@ -3,18 +3,20 @@ import type { User } from '@/context/AuthContext'
 import { Card } from '../../../components/ui/card'
 import { Button } from '../../../components/ui/button'
 import { Badge } from '../../../components/ui/badge'
-import { ShieldCheck, Ban, Calendar, Activity, Mail } from 'lucide-react'
+import { ShieldCheck, Ban, Calendar, Activity, Mail, X } from 'lucide-react'
 
 interface UserDetailsProps {
   user: User
   onToggleStatus: (userId: string) => Promise<void>
   onEdit: (user: User) => void
+  onClose?: () => void
 }
 
 export const UserDetails: React.FC<UserDetailsProps> = ({
   user,
   onToggleStatus,
-  onEdit
+  onEdit,
+  onClose
 }) => {
   const status = (user as any).status || 'active'
 
@@ -73,10 +75,33 @@ export const UserDetails: React.FC<UserDetailsProps> = ({
 
 
   return (
-    <Card className="h-full flex flex-col justify-between p-6 bg-card border-border select-none">
+    <Card className="h-full flex flex-col justify-between p-6 bg-card border-border select-none font-sans">
       <div>
-        {/* Header Profile Section */}
-        <div className="flex flex-col items-center justify-center border-b border-border/40 pb-5 mb-5 text-center">
+        {/* Sheet Header */}
+        <div className="border-b border-border/40 pb-4 mb-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-bold text-foreground font-sans uppercase tracking-wider">
+                User Details
+              </h2>
+              <p className="text-[10px] text-muted font-mono uppercase tracking-widest mt-1">
+                Viewing profile for @{user.username}
+              </p>
+            </div>
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-muted hover:text-foreground p-1.5 transition-colors rounded-md hover:bg-border/30 shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Profile Summary */}
+        <div className="flex flex-col items-center justify-center text-center mb-5">
           <div className="relative mb-3">
             <div className="h-16 w-16 rounded-full border-2 border-primary/20 bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden text-primary font-bold text-base">
               {user.avatar ? (
@@ -94,17 +119,17 @@ export const UserDetails: React.FC<UserDetailsProps> = ({
             </div>
           </div>
 
-          <h3 className="text-base font-bold text-foreground font-sans mt-2">{user.name}</h3>
-          <span className="text-xs font-mono text-muted">@{user.username}</span>
+          <h3 className="text-xl font-bold text-foreground font-sans leading-tight">{user.name}</h3>
+          <span className="text-sm font-mono text-muted mt-0.5">@{user.username}</span>
 
           <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3.5">
-            <Badge variant="outline" className="text-[8px] tracking-wide text-muted-text/80 flex items-center gap-1.5">
+            <Badge variant="outline" className="text-[10px] tracking-wide text-muted-text/80 flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 bg-secondary rounded-full"></span>
               {user.role.toUpperCase()}
             </Badge>
             <Badge 
               variant={status === 'active' ? 'success' : 'danger'} 
-              className="text-[9px]"
+              className="text-[10px]"
             >
               {status.toUpperCase()}
             </Badge>
@@ -113,23 +138,23 @@ export const UserDetails: React.FC<UserDetailsProps> = ({
 
         {/* Profile details */}
         <div className="flex flex-col gap-3.5 mb-5">
-          <span className="text-[9px] font-mono text-muted uppercase tracking-widest">Account Metadata</span>
+          <span className="text-[10px] font-mono text-muted uppercase tracking-widest">Account Metadata</span>
           
-          <div className="flex flex-col gap-2.5 bg-background/55 border border-border/40 p-3.5 rounded-lg text-xs font-sans">
+          <div className="flex flex-col gap-2.5 bg-background/55 border border-border/40 p-3.5 rounded-lg text-sm">
             <div className="flex justify-between items-center">
-              <span className="text-muted flex items-center gap-2">
+              <span className="text-muted flex items-center gap-2 text-sm">
                 <Mail className="h-3.5 w-3.5 shrink-0 text-muted" />
                 Email:
               </span>
-              <span className="text-foreground font-medium font-mono truncate max-w-[180px]">{user.email}</span>
+              <span className="text-foreground font-medium font-mono truncate max-w-[220px]">{user.email}</span>
             </div>
             
             <div className="flex justify-between items-center">
-              <span className="text-muted flex items-center gap-2">
+              <span className="text-muted flex items-center gap-2 text-sm">
                 <Calendar className="h-3.5 w-3.5 shrink-0 text-muted" />
                 Joined:
               </span>
-              <span className="text-foreground font-medium font-mono">{joinedDate}</span>
+              <span className="text-foreground font-medium font-mono text-sm">{joinedDate}</span>
             </div>
           </div>
         </div>
@@ -139,36 +164,36 @@ export const UserDetails: React.FC<UserDetailsProps> = ({
         {/* Recent logs */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[9px] font-mono text-muted uppercase tracking-widest">Activity Log</span>
-            <span className="text-[8px] font-mono text-primary flex items-center gap-1">
+            <span className="text-[10px] font-mono text-muted uppercase tracking-widest">Activity Log</span>
+            <span className="text-[9px] font-mono text-primary flex items-center gap-1">
               <Activity className="h-2.5 w-2.5" />
               Realtime
             </span>
           </div>
           <div className="flex flex-col gap-2.5 font-sans">
-            <div className="flex gap-2.5 text-[11px] leading-tight">
+            <div className="flex gap-2.5 text-sm leading-tight">
               <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1 shadow-[0_0_6px_rgba(128,38,255,0.4)] shrink-0" />
               <div className="flex flex-col">
                 <span className="text-foreground font-semibold">Last authenticated session</span>
-                <span className="text-[9px] text-muted font-mono mt-0.5">
+                <span className="text-xs text-muted font-mono mt-0.5">
                   {formatLastLogin(user)}
                 </span>
               </div>
             </div>
             {status === 'inactive' ? (
-              <div className="flex gap-2.5 text-[11px] leading-tight">
+              <div className="flex gap-2.5 text-sm leading-tight">
                 <div className="h-1.5 w-1.5 rounded-full bg-red-500 mt-1 shadow-[0_0_6px_rgba(239,68,68,0.4)] shrink-0" />
                 <div className="flex flex-col">
                   <span className="text-red-400 font-semibold">Sign-in requests blocked</span>
-                  <span className="text-[9px] text-muted font-mono mt-0.5">Lockout protocol active</span>
+                  <span className="text-xs text-muted font-mono mt-0.5">Lockout protocol active</span>
                 </div>
               </div>
             ) : (
-              <div className="flex gap-2.5 text-[11px] leading-tight">
+              <div className="flex gap-2.5 text-sm leading-tight">
                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 mt-1 shadow-[0_0_6px_rgba(16,185,129,0.4)] shrink-0" />
                 <div className="flex flex-col">
                   <span className="text-emerald-400 font-semibold">Sign-in requests authorized</span>
-                  <span className="text-[9px] text-muted font-mono mt-0.5">Console credentials active</span>
+                  <span className="text-xs text-muted font-mono mt-0.5">Console credentials active</span>
                 </div>
               </div>
             )}
@@ -181,14 +206,14 @@ export const UserDetails: React.FC<UserDetailsProps> = ({
         <div className="flex gap-2 w-full">
           <Button
             variant="outline"
-            className="flex-1 text-[10px] font-mono uppercase tracking-wider py-1.5 h-8 gap-1"
+            className="flex-1 text-xs font-mono uppercase tracking-wider py-1.5 h-9 gap-1"
             onClick={() => onEdit(user)}
           >
             Edit Profile
           </Button>
           <Button
             variant={status === 'inactive' ? 'outline' : 'danger'}
-            className={`flex-1 text-[10px] font-mono uppercase tracking-wider py-1.5 h-8 gap-1.5 ${
+            className={`flex-1 text-xs font-mono uppercase tracking-wider py-1.5 h-9 gap-1.5 ${
               status === 'inactive' ? 'border-emerald-500 text-emerald-400 hover:bg-emerald-500/10' : ''
             }`}
             onClick={() => onToggleStatus(user.id)}

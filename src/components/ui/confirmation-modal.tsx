@@ -1,4 +1,5 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AlertTriangle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -55,16 +56,16 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   const styles = getVariantStyles()
 
-  return (
+  const content = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={isLoading ? undefined : onClose}
           />
 
@@ -74,7 +75,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
             transition={{ duration: 0.15 }}
-            className="relative w-full max-w-md overflow-hidden rounded-xl border border-border bg-card p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-10"
+            className="relative w-full max-w-md overflow-hidden rounded-xl border border-border p-6 shadow-2xl z-10 bg-card/95 backdrop-blur-md"
           >
             <div className="flex gap-4">
               <div className={`h-10 w-10 rounded-full border flex items-center justify-center shrink-0 ${styles.bg}`}>
@@ -84,7 +85,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 <h3 className="text-sm font-bold text-foreground font-sans uppercase tracking-wider">
                   {title}
                 </h3>
-                <div className="text-xs text-muted-text mt-2 leading-relaxed">
+                <div className="text-xs text-muted mt-2 leading-relaxed">
                   {description}
                 </div>
               </div>
@@ -112,4 +113,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       )}
     </AnimatePresence>
   )
+
+  if (typeof document === 'undefined') return content
+  return createPortal(content, document.body)
 }

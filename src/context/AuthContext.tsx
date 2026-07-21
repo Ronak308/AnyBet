@@ -96,6 +96,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
             if (userDoc.exists()) {
               const data = userDoc.data()
+              const cleanStatus = (data.status || 'active').trim().toLowerCase()
+              if (cleanStatus === 'inactive') {
+                localStorage.removeItem(STORAGE_USER_KEY)
+                setUser(null)
+                await signOut(auth)
+                setIsLoading(false)
+                return
+              }
               const freshUser = {
                 ...data,
                 role: data.role ? (data.role.trim().toLowerCase() === 'admin' ? 'admin' : 'user') : 'user'
@@ -142,7 +150,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     if (USE_FIREBASE) {
       try {
-        await signInWithEmailAndPassword(auth, email, password)
+        const userCred = await signInWithEmailAndPassword(auth, email, password)
+        const userDoc = await getDoc(doc(db, 'users', userCred.user.uid))
+        if (userDoc.exists()) {
+          const data = userDoc.data()
+          const cleanStatus = (data.status || 'active').trim().toLowerCase()
+          if (cleanStatus === 'inactive') {
+            localStorage.removeItem(STORAGE_USER_KEY)
+            setUser(null)
+            await signOut(auth)
+            return { success: false, error: 'Your account is inactive. Please contact an administrator.' }
+          }
+        }
         return { success: true }
       } catch (error: any) {
         console.error('Firebase Login Error:', error)
@@ -165,10 +184,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           username: isDefault ? 'Ronak' : emailKey.split('@')[0],
           role: 'User',
           joinedAt: new Date().toISOString(),
+          status: 'active'
         }
         db[emailKey] = { user: newUser, passwordHash: simpleHash(password || 'password123') }
         saveUsersDb(db)
         entry = db[emailKey]
+      }
+
+      if (entry.user.status === 'inactive') {
+        return { success: false, error: 'Your account is inactive. Please contact an administrator.' }
       }
 
       localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(entry.user))

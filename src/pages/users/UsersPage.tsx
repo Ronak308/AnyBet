@@ -1,23 +1,23 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   collection,
   getDocs,
   doc,
   setDoc,
-  deleteDoc,
   updateDoc
 } from 'firebase/firestore'
-import { db, firebaseConfig } from '@/firebase/firebase'
+import { auth, db, firebaseConfig } from '@/firebase/firebase'
 import { initializeApp, deleteApp } from 'firebase/app'
-import { getAuth as getSecondaryAuth, createUserWithEmailAndPassword } from 'firebase/auth'
+import { getAuth as getSecondaryAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { type User, useAuth } from '@/context/AuthContext'
-import { Card } from '@/components/ui/card'
+import { deleteUserAccount } from '@/services/userAdminService'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Sheet } from '@/components/ui/sheet'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { ConfirmationModal } from '@/components/ui/confirmation-modal'
 import { UserDetails } from './components/UserDetails'
@@ -25,11 +25,14 @@ import { AddEditUser } from './components/AddEditUser'
 import {
   UserPlus,
   Search,
-  SlidersHorizontal,
   Trash2,
   Edit3,
   ShieldAlert,
-  MoreHorizontal
+  MoreHorizontal,
+  Filter,
+  Eye,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 
 const normalizeRole = (role: string): string => {
@@ -67,19 +70,23 @@ const formatLastLoginTable = (u: User) => {
 export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navigate: _navigate }) => {
   const { user: currentUser } = useAuth()
   const [users, setUsers] = useState<User[]>([])
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [viewUser, setViewUser] = useState<User | null>(null)
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   // Sheet drawer states
   const [isAddEditOpen, setIsAddEditOpen] = useState(false)
   const [userToEdit, setUserToEdit] = useState<User | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<{ id: string; username: string } | null>(null)
 
   // Filters & Searching
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10
+
   const [error, setError] = useState<string | null>(null)
 
   // Fetch users from Firestore on load
@@ -118,16 +125,6 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
       }))
 
       setUsers(processedUsers)
-      if (processedUsers.length > 0) {
-        // Keep current selected user if it still exists, else pick first
-        setSelectedUser(prev => {
-          if (prev) {
-            const found = processedUsers.find(u => u.id === prev.id)
-            if (found) return found
-          }
-          return processedUsers[0]
-        })
-      }
     } catch (err: any) {
       console.error('Error loading users from Firestore:', err)
       setError(err.message || 'Failed to load users from Firestore')
@@ -139,7 +136,6 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
         status: (u as any).status === 'active' ? 'active' : 'inactive'
       }))
       setUsers(processedFallback)
-      setSelectedUser(processedFallback[0] || null)
     } finally {
       setIsLoading(false)
     }
@@ -149,29 +145,9 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
     loadUsers()
   }, [loadUsers])
 
-  // Deselect user if they are filtered out of the directory
   useEffect(() => {
-    if (selectedUser) {
-      const isStillVisible = users.some(u => {
-        if (u.id !== selectedUser.id) return false
-        const status = (u as any).status || 'active'
-        if (roleFilter !== 'all' && u.role?.toLowerCase() !== roleFilter.toLowerCase()) return false
-        if (statusFilter !== 'all' && status !== statusFilter) return false
-        if (searchQuery.trim() !== '') {
-          const query = searchQuery.toLowerCase()
-          const matchesSearch =
-            (u.username || '').toLowerCase().includes(query) ||
-            (u.name || '').toLowerCase().includes(query) ||
-            (u.email || '').toLowerCase().includes(query)
-          if (!matchesSearch) return false
-        }
-        return true
-      })
-      if (!isStillVisible) {
-        setSelectedUser(null)
-      }
-    }
-  }, [users, roleFilter, statusFilter, searchQuery, selectedUser])
+    setCurrentPage(1)
+  }, [searchQuery, roleFilter, statusFilter])
 
   // Save/Create user details in Firestore
   const handleSaveUser = async (userData: Omit<User, 'joinedAt'> & { status?: string; password?: string }) => {
@@ -221,7 +197,7 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
         : new Date()
 
       // Omit password from firestore record
-      const { password, ...userDataWithoutPassword } = userData
+      const { password: _password, ...userDataWithoutPassword } = userData
 
       const updatedData = {
         ...userDataWithoutPassword,
@@ -246,8 +222,10 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
         }
       })
 
-      // Update selected user details
-      setSelectedUser(updatedData as User)
+      // Update view user details if active
+      if (viewUser?.id === finalUserId) {
+        setViewUser(updatedData as User)
+      }
 
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: {
@@ -258,6 +236,69 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
     } catch (error: any) {
       console.error('Failed to save user:', error)
       throw new Error(error.message || 'Failed to save user.')
+    }
+  }
+
+  // Helpers for drawer handling
+  const openDetailsForUser = (user: User) => {
+    setUserToEdit(null)
+    setViewUser(user)
+    setIsDetailsOpen(true)
+    setIsAddEditOpen(false)
+  }
+
+  const openEditForUser = (user: User) => {
+    setIsDetailsOpen(false)
+    setViewUser(null)
+    setUserToEdit(user)
+    setIsAddEditOpen(true)
+  }
+
+  const openCreateUser = () => {
+    setIsDetailsOpen(false)
+    setViewUser(null)
+    setUserToEdit(null)
+    setIsAddEditOpen(true)
+  }
+
+
+
+  const bulkActivate = async (ids: string[]) => {
+    try {
+      await Promise.all(ids.map(id => updateDoc(doc(db, 'users', id), { status: 'active' })))
+      setUsers(prev => prev.map(u => ids.includes(u.id) ? { ...u, status: 'active' } : u))
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { message: `Successfully activated ${ids.length} users.`, type: 'success' }
+      }))
+    } catch (error) {
+      console.error('Error bulk activating users:', error)
+    }
+  }
+
+  const bulkDeactivate = async (ids: string[]) => {
+    try {
+      await Promise.all(ids.map(id => updateDoc(doc(db, 'users', id), { status: 'inactive' })))
+      setUsers(prev => prev.map(u => ids.includes(u.id) ? { ...u, status: 'inactive' } : u))
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { message: `Successfully deactivated ${ids.length} users.`, type: 'warning' }
+      }))
+    } catch (error) {
+      console.error('Error bulk deactivating users:', error)
+    }
+  }
+
+  const bulkDelete = async (ids: string[]) => {
+    if (!window.confirm(`Are you sure you want to delete ${ids.length} selected users?`)) return
+    try {
+      await Promise.all(ids.map(id => deleteUserAccount(id)))
+      setUsers(prev => prev.filter(u => !ids.includes(u.id)))
+      setSelectedIds([])
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { message: `Successfully deleted ${ids.length} users.`, type: 'warning' }
+      }))
+    } catch (error) {
+      console.error('Error bulk deleting users:', error)
+      alert('Error: Failed to delete one or more users from authentication.')
     }
   }
 
@@ -275,8 +316,8 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
       setUsers(prev => prev.map(u => {
         if (u.id === userId) {
           const updated = { ...u, status: nextStatus }
-          if (selectedUser?.id === userId) {
-            setSelectedUser(updated)
+          if (viewUser?.id === userId) {
+            setViewUser(updated)
           }
           return updated
         }
@@ -307,43 +348,61 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
     setDeleteConfirmUser(null)
 
     try {
-      await deleteDoc(doc(db, 'users', userId))
+      await deleteUserAccount(userId)
 
       setUsers(prev => {
         const filtered = prev.filter(u => u.id !== userId)
-        if (selectedUser?.id === userId) {
-          setSelectedUser(filtered[0] || null)
+        if (viewUser?.id === userId) {
+          setViewUser(null)
+          setIsDetailsOpen(false)
         }
         return filtered
       })
+
+      if (currentUser?.id === userId) {
+        await signOut(auth)
+      }
 
       window.dispatchEvent(new CustomEvent('show-toast', {
         detail: { message: `User @${username} has been deleted.`, type: 'warning' }
       }))
     } catch (error) {
-      console.error('Error deleting user from Firestore:', error)
-      alert('Error: Failed to delete user from Firestore.')
+      console.error('Error deleting user account:', error)
+      alert('Error: Failed to delete user from authentication.')
     }
   }
 
 
   // Filtering users array
-  const filteredUsers = users.filter(u => {
-    const status = (u as any).status || 'active'
-    if (roleFilter !== 'all' && u.role?.toLowerCase() !== roleFilter.toLowerCase()) return false
-    if (statusFilter !== 'all' && status !== statusFilter) return false
+  const filteredUsers = useMemo(() => {
+    return users.filter(u => {
+      const status = (u as any).status || 'active'
+      if (roleFilter !== 'all' && u.role?.toLowerCase() !== roleFilter.toLowerCase()) return false
+      if (statusFilter !== 'all' && status !== statusFilter) return false
 
-    if (searchQuery.trim() !== '') {
-      const query = searchQuery.toLowerCase()
-      const matchesSearch =
-        (u.username || '').toLowerCase().includes(query) ||
-        (u.name || '').toLowerCase().includes(query) ||
-        (u.email || '').toLowerCase().includes(query)
-      if (!matchesSearch) return false
-    }
+      if (searchQuery.trim() !== '') {
+        const query = searchQuery.toLowerCase()
+        const matchesSearch =
+          (u.username || '').toLowerCase().includes(query) ||
+          (u.name || '').toLowerCase().includes(query) ||
+          (u.email || '').toLowerCase().includes(query)
+        if (!matchesSearch) return false
+      }
 
-    return true
-  })
+      return true
+    })
+  }, [users, searchQuery, roleFilter, statusFilter])
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize))
+
+  useEffect(() => {
+    setCurrentPage(prev => Math.min(prev, totalPages))
+  }, [totalPages])
+
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return filteredUsers.slice(start, start + pageSize)
+  }, [filteredUsers, currentPage])
 
   // Animation variants
   const containerVariants = {
@@ -369,35 +428,10 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4">
         <div>
-          <h3 className="text-base font-bold text-foreground font-sans uppercase tracking-wider">User Directory</h3>
+          <h3 className="text-base font-bold text-foreground font-sans uppercase tracking-wider">User Management</h3>
           <p className="text-[11px] text-muted font-mono uppercase tracking-widest mt-1">
             Managing administrator permissions and console access keys
           </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            className={`h-8 gap-1.5 font-mono text-[9px] uppercase tracking-wider transition-all ${isFilterOpen ? 'bg-secondary/15 text-secondary border-secondary shadow-[0_0_10px_rgba(0,224,255,0.2)]' : ''
-              }`}
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-          >
-            <SlidersHorizontal className="h-3 w-3" />
-            Filters
-          </Button>
-
-          <Button
-            variant="primary"
-            size="sm"
-            className="h-8 gap-1.5 font-mono text-[9px] uppercase tracking-wider"
-            onClick={() => {
-              setUserToEdit(null)
-              setIsAddEditOpen(true)
-            }}
-          >
-            <UserPlus className="h-3.5 w-3.5" />
-            Add User
-          </Button>
         </div>
       </div>
 
@@ -410,239 +444,308 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
         </div>
       )}
 
-      {/* Expandable Filter Grid */}
-      {isFilterOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-xl border border-border bg-background/40 grid grid-cols-1 sm:grid-cols-3 gap-4"
-        >
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[9px] text-muted font-mono uppercase tracking-widest font-bold">Search Directory</label>
-            <div className="relative flex items-center">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted pointer-events-none" />
-              <Input
-                placeholder="Name, email, username..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 pl-9 text-xs font-sans bg-card/40 border-border focus:border-primary transition-all rounded-lg"
-              />
-            </div>
-          </div>
+      {/* Control Bar: Search, Filters & Create Action */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-1">
+        {/* Search Input */}
+        <div className="relative w-full md:w-80">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted pointer-events-none" />
+          <Input
+            placeholder="Search by Name, Email, or Username..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-9 text-xs font-sans bg-surface/40 border-border/60"
+          />
+        </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[9px] text-muted font-mono uppercase tracking-widest font-bold">Role</label>
+        {/* Filters & Create Action */}
+        <div className="flex items-center gap-3 w-full md:w-auto flex-wrap justify-between md:justify-end">
+          <div className="flex items-center gap-1.5 bg-surface/40 border border-border/60 rounded-lg px-2.5 py-1 text-xs font-mono">
+            <Filter className="h-3.5 w-3.5 text-muted" />
+            <span className="text-muted text-[10px] uppercase">Role:</span>
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value as any)}
-              className="h-8 w-full rounded-lg border border-border bg-background px-3 py-1 text-xs font-mono text-foreground focus-visible:outline-none focus-visible:border-primary transition-all cursor-pointer"
+              className="bg-transparent text-foreground outline-none cursor-pointer text-xs"
             >
-              <option value="all">ALL ROLES</option>
-              <option value="admin">ADMIN</option>
-              <option value="user">USER</option>
+              <option value="all" className="bg-background text-foreground">All Roles</option>
+              <option value="admin" className="bg-background text-foreground">Admin</option>
+              <option value="user" className="bg-background text-foreground">User</option>
             </select>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[9px] text-muted font-mono uppercase tracking-widest font-bold">Status</label>
+          <div className="flex items-center gap-1.5 bg-surface/40 border border-border/60 rounded-lg px-2.5 py-1 text-xs font-mono">
+            <span className="text-muted text-[10px] uppercase">Status:</span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="h-8 w-full rounded-lg border border-border bg-background px-3 py-1 text-xs font-mono text-foreground focus-visible:outline-none focus-visible:border-primary transition-all cursor-pointer"
+              className="bg-transparent text-foreground outline-none cursor-pointer text-xs"
             >
-              <option value="all">ALL STATUSES</option>
-              <option value="active">ACTIVE</option>
-              <option value="inactive">INACTIVE</option>
+              <option value="all" className="bg-background text-foreground">All Statuses</option>
+              <option value="active" className="bg-background text-foreground">Active</option>
+              <option value="inactive" className="bg-background text-foreground">Inactive</option>
             </select>
+          </div>
+
+          <Button
+            variant="primary"
+            glow
+            onClick={openCreateUser}
+            className="gap-2 text-xs font-mono shrink-0 h-9"
+          >
+            <UserPlus className="h-4 w-4" /> Add User
+          </Button>
+        </div>
+      </div>
+
+      {/* Bulk Action Strip if Selection > 0 */}
+      {selectedIds.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-3 bg-primary/15 border border-primary/40 rounded-xl flex items-center justify-between gap-4"
+        >
+          <span className="text-xs font-mono text-primary font-bold">
+            {selectedIds.length} user{selectedIds.length > 1 ? 's' : ''} selected
+          </span>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="primary" glow onClick={() => { bulkActivate(selectedIds); setSelectedIds([]); }} className="text-xs font-mono h-8">Activate</Button>
+            <Button size="sm" variant="outline" onClick={() => { bulkDeactivate(selectedIds); setSelectedIds([]); }} className="text-xs font-mono h-8">Deactivate</Button>
+            <Button size="sm" variant="ghost" onClick={() => { bulkDelete(selectedIds); }} className="text-xs font-mono h-8 text-muted hover:text-red-400">Delete</Button>
           </div>
         </motion.div>
       )}
 
-      {/* Main Content Layout Split */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Users List Table Card: 8 Columns */}
-        <motion.div variants={cardVariants} className="lg:col-span-7 xl:col-span-8">
-          <Card className="h-full flex flex-col justify-between">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent border-b border-border/40">
-                    <TableHead className="font-mono text-[10px] uppercase tracking-wider">Name</TableHead>
-                    <TableHead className="font-mono text-[10px] uppercase tracking-wider">Username</TableHead>
-                    <TableHead className="font-mono text-[10px] uppercase tracking-wider">Email</TableHead>
-                    <TableHead className="font-mono text-[10px] uppercase tracking-wider">Role</TableHead>
-                    <TableHead className="font-mono text-[10px] uppercase tracking-wider">Status</TableHead>
-                    <TableHead className="font-mono text-[10px] uppercase tracking-wider">Last Login</TableHead>
-                    <TableHead className="font-mono text-[10px] uppercase tracking-wider text-right">Actions</TableHead>
+      {/* Main Content Layout */}
+      <div className="grid grid-cols-1 gap-6">
+        <motion.div variants={cardVariants} className="col-span-full">
+          <div className="border border-border/60 rounded-xl overflow-hidden bg-surface/20">
+            <Table>
+              <TableHeader className="bg-surface/60">
+                <TableRow>
+                  <TableHead className="text-xs font-mono">Name</TableHead>
+                  <TableHead className="text-xs font-mono">Username</TableHead>
+                  <TableHead className="text-xs font-mono">Email</TableHead>
+                  <TableHead className="text-xs font-mono">Role</TableHead>
+                  <TableHead className="text-xs font-mono">Status</TableHead>
+                  <TableHead className="text-xs font-mono">Last Login</TableHead>
+                  <TableHead className="text-xs font-mono text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-10 text-muted font-mono text-xs">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <motion.div
+                          className="h-5 w-5 rounded-full border-2 border-border border-t-primary"
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                        />
+                        Accessing Firebase User Collection...
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-48 text-center text-xs font-mono text-muted">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <motion.div
-                            className="h-5 w-5 rounded-full border-2 border-border border-t-primary"
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
-                          />
-                          Accessing Firebase User Collection...
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredUsers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="h-48 text-center text-xs font-mono text-muted">
-                        <div className="flex flex-col items-center justify-center gap-1">
-                          <ShieldAlert className="h-6 w-6 text-muted-text/50" />
-                          <span>No matches found. Check active filters.</span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredUsers.map((u) => {
-                      const isActive = selectedUser?.id === u.id
-                      const status = (u as any).status || 'active'
-                      return (
-                        <TableRow
-                          key={u.id}
-                          onClick={() => setSelectedUser(u)}
-                          className={`hover:bg-primary/5 cursor-pointer transition-colors duration-150 border-b border-border/50 ${isActive ? 'bg-primary/10' : ''
-                            }`}
-                        >
-                          {/* Name */}
-                          <TableCell className="py-2.5">
-                            <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden text-primary font-bold text-[10px]">
-                                {u.avatar ? (
-                                  <img src={u.avatar} alt={u.name} className="h-full w-full object-cover" />
-                                ) : (
-                                  <span>
-                                    {u.name
-                                      ? u.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-                                      : 'U'}
-                                  </span>
-                                )}
-                              </div>
-                              <span className="font-semibold text-foreground text-xs truncate max-w-[120px] block">{u.name}</span>
-                            </div>
-                          </TableCell>
+                ) : filteredUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-10 text-muted font-mono text-xs">
+                      <div className="flex flex-col items-center justify-center gap-1">
+                        <ShieldAlert className="h-6 w-6 text-muted-text/50" />
+                        <span>No matches found. Check active filters.</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedUsers.map((u) => {
+                    const isSelected = selectedIds.includes(u.id)
+                    const status = (u as any).status || 'active'
+                    return (
+                      <TableRow
+                        key={u.id}
+                        onClick={() => openDetailsForUser(u)}
+                        className={`cursor-pointer transition-colors border-b border-border/55 ${isSelected ? 'bg-primary/5' : ''}`}
+                      >
 
-                          {/* User Name */}
-                          <TableCell className="py-2.5">
-                            <span className="text-xs font-mono text-muted truncate max-w-[100px] block">
-                              {u.username ? `@${u.username}` : '—'}
+                        {/* Name */}
+                        <TableCell className="py-2.5">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden text-primary font-bold text-[10px]">
+                              {u.avatar ? (
+                                <img src={u.avatar} alt={u.name} className="h-full w-full object-cover" />
+                              ) : (
+                                <span>
+                                  {u.name
+                                    ? u.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                                    : 'U'}
+                                </span>
+                              )}
+                            </div>
+                            <span className="font-medium text-xs text-foreground line-clamp-1">{u.name}</span>
+                          </div>
+                        </TableCell>
+
+                        {/* User Name */}
+                        <TableCell className="py-2.5">
+                          <span className="font-mono text-xs text-muted">
+                            {u.username ? `@${u.username}` : '—'}
+                          </span>
+                        </TableCell>
+
+                        {/* Email */}
+                        <TableCell className="py-2.5">
+                          <span className="font-mono text-xs text-muted">{u.email}</span>
+                        </TableCell>
+
+                        {/* Role */}
+                        <TableCell className="py-2.5">
+                          {u.role ? (
+                            <Badge variant="outline" className="text-[8px] uppercase font-mono tracking-wider">
+                              {u.role}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-muted font-mono">—</span>
+                          )}
+                        </TableCell>
+
+                        {/* Status */}
+                        <TableCell className="py-2.5">
+                          <div className="flex items-center gap-1.5 font-mono text-[11px] uppercase">
+                            <span className={`h-1.5 w-1.5 rounded-full ${status === 'active' ? 'bg-emerald-500 shadow-glow' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
+                            <span className={status === 'active' ? 'text-emerald-400' : 'text-red-400'}>
+                              {status}
                             </span>
-                          </TableCell>
+                          </div>
+                        </TableCell>
 
-                          {/* Email */}
-                          <TableCell className="py-2.5">
-                            <span className="text-xs font-mono text-muted-text/90 max-w-[150px] truncate block">{u.email}</span>
-                          </TableCell>
+                        {/* Last Login */}
+                        <TableCell className="py-2.5">
+                          <span className="font-mono text-xs text-muted whitespace-nowrap">
+                            {formatLastLoginTable(u)}
+                          </span>
+                        </TableCell>
 
-                          {/* Role */}
-                          <TableCell className="py-2.5">
-                            {u.role ? (
-                              <Badge variant="outline" className="text-[8px] uppercase font-mono tracking-wider">
-                                {u.role}
-                              </Badge>
-                            ) : (
-                              <span className="text-xs text-muted font-mono">—</span>
-                            )}
-                          </TableCell>
-
-                          {/* Status */}
-                          <TableCell className="py-2.5">
-                            <div className="flex items-center gap-1.5 text-[9px] font-mono uppercase font-semibold">
-                              <span className={`h-1.5 w-1.5 rounded-full ${status === 'active' ? 'bg-emerald-500 shadow-glow' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'}`} />
-                              <span className={status === 'active' ? 'text-emerald-400' : 'text-red-400 font-bold'}>
-                                {status}
-                              </span>
-                            </div>
-                          </TableCell>
-
-                          {/* Last Login */}
-                          <TableCell className="py-2.5">
-                            <span className="text-xs font-mono text-muted/80 whitespace-nowrap">
-                              {formatLastLoginTable(u)}
-                            </span>
-                          </TableCell>
-
-                          {/* Actions */}
-                          <TableCell className="text-right py-2.5" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-end">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-muted hover:text-foreground hover:bg-surface/25 rounded-lg transition-colors"
-                                  >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setUserToEdit(u)
-                                      setIsAddEditOpen(true)
-                                    }}
-                                  >
-                                    <Edit3 className="h-3.5 w-3.5 text-muted" />
-                                    Edit User
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    className="text-red-400 focus:bg-red-950/20 focus:text-red-300"
-                                    onClick={() => handleDeleteUser(u.id, u.username)}
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5 text-red-400" />
-                                    Delete User
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                        {/* Actions */}
+                        <TableCell className="text-right py-2.5" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                                <DropdownMenuItem
+                                  onClick={() => openDetailsForUser(u)}
+                                  className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-primary/15 hover:text-primary cursor-pointer rounded-md p-2"
+                                >
+                                  <Eye className="h-3.5 w-3.5 text-primary" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => openEditForUser(u)}
+                                  className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2"
+                                >
+                                  <Edit3 className="h-3.5 w-3.5 text-muted" />
+                                  Edit User
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-red-400 focus:bg-red-950/20 focus:text-red-300 flex items-center gap-2 text-xs font-mono cursor-pointer rounded-md p-2"
+                                  onClick={() => handleDeleteUser(u.id, u.username)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                                  Delete User
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
+                )}
+              </TableBody>
+            </Table>
 
             {/* Database indicator in footer */}
-            <div className="p-3 border-t border-border/40 bg-surface/10 flex items-center justify-end text-[8px] font-mono text-muted uppercase tracking-widest">
-              <span>Total Registry: {users.length} Users</span>
+            <div className="p-4 border-t border-border/50 bg-surface/30 flex items-center justify-between text-xs font-mono">
+              <span className="text-muted">
+                Showing {filteredUsers.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}
+                {' '}to {Math.min(currentPage * pageSize, filteredUsers.length)} of {filteredUsers.length} Users
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 text-xs font-mono"
+                  onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-foreground font-bold">
+                  {currentPage} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 text-xs font-mono"
+                  onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </Card>
-        </motion.div>
-
-        {/* Selected User Details Sidebar: 4 Columns */}
-        <motion.div variants={cardVariants} className="lg:col-span-5 xl:col-span-4">
-          {selectedUser ? (
-            <UserDetails
-              user={selectedUser}
-              onToggleStatus={handleToggleStatus}
-              onEdit={(user) => {
-                setUserToEdit(user)
-                setIsAddEditOpen(true)
-              }}
-            />
-          ) : (
-            <Card className="h-full flex items-center justify-center p-6 text-center text-xs font-mono text-muted border-dashed border-2">
-              Please select a profile.
-            </Card>
-          )}
+          </div>
         </motion.div>
       </div>
 
+      {/* User Details Sheet */}
+      <Sheet
+        open={isDetailsOpen}
+        onOpenChange={(open) => {
+          setIsDetailsOpen(open)
+          if (!open) setViewUser(null)
+        }}
+      >
+        <SheetContent side="right" hideClose className="w-full sm:max-w-2xl bg-background border-l border-border p-0 overflow-y-auto">
+          {viewUser && (
+            <UserDetails
+              user={viewUser}
+              onToggleStatus={handleToggleStatus}
+              onEdit={(user) => {
+                openEditForUser(user)
+              }}
+              onClose={() => {
+                setIsDetailsOpen(false)
+                setViewUser(null)
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+
       {/* Slideout Sheet for Add/Edit Form */}
-      <Sheet open={isAddEditOpen} onOpenChange={setIsAddEditOpen}>
+      <Sheet
+        open={isAddEditOpen}
+        onOpenChange={(open) => {
+          setIsAddEditOpen(open)
+          if (!open) {
+            setUserToEdit(null)
+          }
+        }}
+      >
         {isAddEditOpen && (
           <AddEditUser
             userToEdit={userToEdit}
             onSave={handleSaveUser}
-            onClose={() => setIsAddEditOpen(false)}
+            onClose={() => {
+              setIsAddEditOpen(false)
+              setUserToEdit(null);
+            }}
           />
         )}
       </Sheet>

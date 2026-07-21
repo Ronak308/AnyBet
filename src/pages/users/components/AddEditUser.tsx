@@ -127,7 +127,7 @@ export const AddEditUser: React.FC<AddEditUserProps> = ({
     }
 
     return (
-        <SheetContent side="right" className="p-6 bg-card/95 backdrop-blur-md text-foreground border-l border-border max-w-xl w-full h-full flex flex-col justify-between select-none">
+        <SheetContent side="right" hideClose className="p-6 bg-card/95 backdrop-blur-md text-foreground border-l border-border max-w-2xl w-full h-full flex flex-col justify-between select-none">
             <div className="flex-1 flex flex-col overflow-y-auto">
                 <div className="border-b border-border/40 pb-4 mb-6">
                     <div className="flex items-center justify-between">
