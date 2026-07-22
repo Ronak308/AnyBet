@@ -575,11 +575,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setUserLastClaimTimestamp(now)
     localStorage.setItem(STORAGE_CLAIM_TIMESTAMP, now.toString())
 
-    creditCoins(userId, grantAmount, 'Reward', 'Claimed Daily Login Reward (+100 BET)')
+    creditCoins(userId, grantAmount, 'Reward', 'Claimed Daily Login Reward (+100 Coins)')
 
     return {
       success: true,
-      message: `Successfully claimed +${grantAmount} BET Coins!`,
+      message: `Successfully claimed +${grantAmount} Coins!`,
       coinsGranted: grantAmount
     }
   }, [dailyRewardConfig, userLastClaimTimestamp, creditCoins])
@@ -652,7 +652,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     creditCoins(uWallet.userId, rewardAmt, 'Reward', `Promo code ${code} redeemed successfully`)
     return {
       success: true,
-      message: `Promo code ${code} redeemed! Credited +${rewardAmt} BET to @${uWallet.username}`,
+      message: `Promo code ${code} redeemed! Credited +${rewardAmt} Coins to @${uWallet.username}`,
       coinsGranted: rewardAmt
     }
   }, [wallets, creditCoins])

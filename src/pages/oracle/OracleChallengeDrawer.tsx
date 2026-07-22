@@ -238,15 +238,15 @@ export const OracleChallengeDrawer: React.FC<OracleChallengeDrawerProps> = ({ it
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="p-3 bg-surface/40 border border-border/40 rounded-xl">
                       <span className="text-[10px] font-mono text-muted uppercase">Total Stake</span>
-                      <p className="text-base font-bold font-mono text-primary mt-1">{item.stakeAmount} BET</p>
+                      <p className="text-base font-bold font-mono text-primary mt-1">{item.stakeAmount} Coins</p>
                     </div>
                     <div className="p-3 bg-surface/40 border border-border/40 rounded-xl">
                       <span className="text-[10px] font-mono text-muted uppercase">Prize Pool</span>
-                      <p className="text-base font-bold font-mono text-emerald-400 mt-1">{item.prizePool.toLocaleString()} BET</p>
+                      <p className="text-base font-bold font-mono text-emerald-400 mt-1">{item.prizePool.toLocaleString()} Coins</p>
                     </div>
                     <div className="p-3 bg-surface/40 border border-border/40 rounded-xl">
                       <span className="text-[10px] font-mono text-muted uppercase">Escrow Locked</span>
-                      <p className="text-base font-bold font-mono text-purple-400 mt-1">{item.escrowAmount.toLocaleString()} BET</p>
+                      <p className="text-base font-bold font-mono text-purple-400 mt-1">{item.escrowAmount.toLocaleString()} Coins</p>
                     </div>
                     <div className="p-3 bg-surface/40 border border-border/40 rounded-xl">
                       <span className="text-[10px] font-mono text-muted uppercase">Created Time</span>
@@ -388,16 +388,16 @@ export const OracleChallengeDrawer: React.FC<OracleChallengeDrawerProps> = ({ it
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-4 bg-surface/40 border border-border/50 rounded-xl flex flex-col justify-between">
-                      <span className="text-xs font-mono text-muted">Total BET Collected</span>
-                      <p className="text-xl font-bold font-mono text-foreground mt-2">{item.financials.totalCollected.toLocaleString()} BET</p>
+                      <span className="text-xs font-mono text-muted">Total Coins Collected</span>
+                      <p className="text-xl font-bold font-mono text-foreground mt-2">{item.financials.totalCollected.toLocaleString()} Coins</p>
                     </div>
                     <div className="p-4 bg-surface/40 border border-border/50 rounded-xl flex flex-col justify-between">
                       <span className="text-xs font-mono text-muted">Platform Fee (5%)</span>
-                      <p className="text-xl font-bold font-mono text-emerald-400 mt-2">{item.financials.platformFee.toLocaleString()} BET</p>
+                      <p className="text-xl font-bold font-mono text-emerald-400 mt-2">{item.financials.platformFee.toLocaleString()} Coins</p>
                     </div>
                     <div className="p-4 bg-surface/40 border border-border/50 rounded-xl flex flex-col justify-between">
                       <span className="text-xs font-mono text-muted">Net Winner Payout</span>
-                      <p className="text-xl font-bold font-mono text-purple-400 mt-2">{item.financials.winnerPayout.toLocaleString()} BET</p>
+                      <p className="text-xl font-bold font-mono text-purple-400 mt-2">{item.financials.winnerPayout.toLocaleString()} Coins</p>
                     </div>
                   </div>
 
@@ -405,7 +405,7 @@ export const OracleChallengeDrawer: React.FC<OracleChallengeDrawerProps> = ({ it
                     <h4 className="text-xs font-mono uppercase text-muted tracking-wider font-bold">Escrow Lock Protocol</h4>
                     <div className="flex items-center justify-between text-xs font-mono py-1 border-b border-border/30">
                       <span className="text-muted">Currently Locked Escrow</span>
-                      <span className="text-foreground font-bold">{item.financials.escrowBalance.toLocaleString()} BET</span>
+                      <span className="text-foreground font-bold">{item.financials.escrowBalance.toLocaleString()} Coins</span>
                     </div>
                   </div>
                 </div>

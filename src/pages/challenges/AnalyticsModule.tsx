@@ -132,14 +132,14 @@ export const AnalyticsModule: React.FC = () => {
         <Card className="bg-surface/30 border-border/50">
           <CardContent className="p-3">
             <span className="text-[9px] font-mono text-muted uppercase">Prize Volume</span>
-            <p className="text-xl font-bold font-mono text-purple-400 mt-1">{(totalVolume / 1000).toFixed(1)}k BET</p>
+            <p className="text-xl font-bold font-mono text-purple-400 mt-1">{(totalVolume / 1000).toFixed(1)}k Coins</p>
           </CardContent>
         </Card>
 
         <Card className="bg-surface/30 border-border/50">
           <CardContent className="p-3">
             <span className="text-[9px] font-mono text-muted uppercase">Platform Revenue (5%)</span>
-            <p className="text-xl font-bold font-mono text-amber-400 mt-1">{totalFees.toLocaleString()} BET</p>
+            <p className="text-xl font-bold font-mono text-amber-400 mt-1">{totalFees.toLocaleString()} Coins</p>
           </CardContent>
         </Card>
       </div>
@@ -153,7 +153,7 @@ export const AnalyticsModule: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="text-sm font-bold font-sans text-foreground">Challenge Creation & Volume Trend</h4>
-                <p className="text-[11px] font-mono text-muted mt-0.5">Daily wagers published & total BET volume</p>
+                <p className="text-[11px] font-mono text-muted mt-0.5">Daily wagers published & total coin volume</p>
               </div>
               <Badge variant="outline" className="font-mono text-[10px] border-primary/30 text-primary">REAL-TIME</Badge>
             </div>

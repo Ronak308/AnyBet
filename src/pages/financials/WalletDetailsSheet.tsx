@@ -59,15 +59,15 @@ export const WalletDetailsSheet: React.FC<WalletDetailsSheetProps> = ({ wallet, 
           <div className="grid grid-cols-3 gap-3">
             <div className="p-3 bg-surface/40 border border-border/50 rounded-xl">
               <span className="text-[10px] font-mono text-muted uppercase block">Total Balance</span>
-              <span className="text-lg font-bold font-mono text-primary mt-0.5 block">{wallet.totalBalance.toLocaleString()} BET</span>
+              <span className="text-lg font-bold font-mono text-primary mt-0.5 block">{wallet.totalBalance.toLocaleString()} Coins</span>
             </div>
             <div className="p-3 bg-surface/40 border border-border/50 rounded-xl">
               <span className="text-[10px] font-mono text-muted uppercase block">Locked Stakes</span>
-              <span className="text-lg font-bold font-mono text-amber-400 mt-0.5 block">{wallet.lockedBalance.toLocaleString()} BET</span>
+              <span className="text-lg font-bold font-mono text-amber-400 mt-0.5 block">{wallet.lockedBalance.toLocaleString()} Coins</span>
             </div>
             <div className="p-3 bg-surface/40 border border-border/50 rounded-xl">
               <span className="text-[10px] font-mono text-muted uppercase block">Available Balance</span>
-              <span className="text-lg font-bold font-mono text-emerald-400 mt-0.5 block">{(wallet.totalBalance - wallet.lockedBalance).toLocaleString()} BET</span>
+              <span className="text-lg font-bold font-mono text-emerald-400 mt-0.5 block">{(wallet.totalBalance - wallet.lockedBalance).toLocaleString()} Coins</span>
             </div>
           </div>
 
@@ -100,7 +100,7 @@ export const WalletDetailsSheet: React.FC<WalletDetailsSheetProps> = ({ wallet, 
                         <TableCell className="font-mono text-xs font-bold text-primary">{tx.txHash}</TableCell>
                         <TableCell className="font-mono text-xs">{tx.type}</TableCell>
                         <TableCell className={`font-mono text-xs font-bold ${tx.type === 'Withdrawal' || tx.type === 'Bet Stake' ? 'text-amber-400' : 'text-emerald-400'}`}>
-                          {tx.type === 'Withdrawal' || tx.type === 'Bet Stake' ? '-' : '+'}{tx.amount.toLocaleString()} BET
+                          {tx.type === 'Withdrawal' || tx.type === 'Bet Stake' ? '-' : '+'}{tx.amount.toLocaleString()} Coins
                         </TableCell>
                         <TableCell className="font-mono text-[10px] text-muted">{new Date(tx.timestamp).toLocaleString()}</TableCell>
                       </TableRow>

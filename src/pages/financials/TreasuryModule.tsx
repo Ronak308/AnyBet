@@ -127,7 +127,7 @@ export const TreasuryModule: React.FC = () => {
           <CardContent className="p-4 flex items-center justify-between h-full">
             <div>
               <span className="text-[10px] font-mono text-muted uppercase">Platform Treasury Vault</span>
-              <p className="text-2xl font-bold font-mono text-emerald-400 mt-1">{(treasury.totalCollectedFees ?? 48500).toLocaleString()} BET</p>
+              <p className="text-2xl font-bold font-mono text-emerald-400 mt-1">{(treasury.totalCollectedFees ?? 48500).toLocaleString()} Coins</p>
             </div>
             <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
               <Building2 className="h-5 w-5" />
@@ -151,7 +151,7 @@ export const TreasuryModule: React.FC = () => {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <span className="text-[10px] font-mono text-muted uppercase">Liquidity Reserve</span>
-              <p className="text-2xl font-bold font-mono text-amber-400 mt-1">{(treasury.reserveFundBalance ?? 500000).toLocaleString()} BET</p>
+              <p className="text-2xl font-bold font-mono text-amber-400 mt-1">{(treasury.reserveFundBalance ?? 500000).toLocaleString()} Coins</p>
             </div>
             <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400">
               <ShieldCheck className="h-5 w-5" />
@@ -362,7 +362,7 @@ export const TreasuryModule: React.FC = () => {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-xs font-bold text-amber-400">{req.amount.toLocaleString()} BET</TableCell>
+                    <TableCell className="font-mono text-xs font-bold text-amber-400">{req.amount.toLocaleString()} Coins</TableCell>
                     <TableCell className="font-mono text-xs text-muted">{new Date(req.requestedAt).toLocaleString()}</TableCell>
                     <TableCell>
                       {req.status === 'Approved' ? (
@@ -449,7 +449,7 @@ export const TreasuryModule: React.FC = () => {
                   <div className="p-4 bg-surface/20 border border-border/50 rounded-xl space-y-3 font-mono text-xs">
                     <div className="flex justify-between">
                       <span className="text-muted">Requested Amount:</span>
-                      <span className="text-foreground font-bold">{selectedRequest.amount.toLocaleString()} BET</span>
+                      <span className="text-foreground font-bold">{selectedRequest.amount.toLocaleString()} Coins</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted">Fiat Value (1-to-1):</span>

@@ -178,11 +178,11 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="p-3 bg-surface/40 border border-border/40 rounded-xl">
                       <span className="text-[10px] font-mono text-muted uppercase">Stake Amount</span>
-                      <p className="text-base font-bold font-mono text-primary mt-1">{challenge.stakeAmount} BET</p>
+                      <p className="text-base font-bold font-mono text-primary mt-1">{challenge.stakeAmount} Coins</p>
                     </div>
                     <div className="p-3 bg-surface/40 border border-border/40 rounded-xl">
                       <span className="text-[10px] font-mono text-muted uppercase">Total Prize Pool</span>
-                      <p className="text-base font-bold font-mono text-emerald-400 mt-1">{challenge.prizePool.toLocaleString()} BET</p>
+                      <p className="text-base font-bold font-mono text-emerald-400 mt-1">{challenge.prizePool.toLocaleString()} Coins</p>
                     </div>
                     <div className="p-3 bg-surface/40 border border-border/40 rounded-xl">
                       <span className="text-[10px] font-mono text-muted uppercase">Start Date</span>
@@ -238,7 +238,7 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
                             <TableRow key={p.id}>
                               <TableCell className="font-mono text-xs font-bold text-foreground">{p.username}</TableCell>
                               <TableCell className="font-mono text-xs text-muted">{p.joinedAt}</TableCell>
-                              <TableCell className="font-mono text-xs text-primary">{p.stakeAmount} BET</TableCell>
+                              <TableCell className="font-mono text-xs text-primary">{p.stakeAmount} Coins</TableCell>
                               <TableCell>
                                 <div className="w-24 bg-surface rounded-full h-2 overflow-hidden border border-border/50">
                                   <div className="bg-primary h-full rounded-full" style={{ width: `${p.progressPercent}%` }} />
@@ -266,10 +266,10 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-4 bg-surface/40 border border-border/50 rounded-xl flex flex-col justify-between">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-mono text-muted">Total BET Collected</span>
+                        <span className="text-xs font-mono text-muted">Total Coins Collected</span>
                         <Coins className="h-4 w-4 text-primary" />
                       </div>
-                      <p className="text-xl font-bold font-mono text-foreground mt-2">{(challenge.financials?.totalCollected || 0).toLocaleString()} BET</p>
+                      <p className="text-xl font-bold font-mono text-foreground mt-2">{(challenge.financials?.totalCollected || 0).toLocaleString()} Coins</p>
                     </div>
 
                     <div className="p-4 bg-surface/40 border border-border/50 rounded-xl flex flex-col justify-between">
@@ -277,7 +277,7 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
                         <span className="text-xs font-mono text-muted">Platform Fee (5%)</span>
                         <TrendingUp className="h-4 w-4 text-emerald-400" />
                       </div>
-                      <p className="text-xl font-bold font-mono text-emerald-400 mt-2">{(challenge.financials?.platformFee || 0).toLocaleString()} BET</p>
+                      <p className="text-xl font-bold font-mono text-emerald-400 mt-2">{(challenge.financials?.platformFee || 0).toLocaleString()} Coins</p>
                     </div>
 
                     <div className="p-4 bg-surface/40 border border-border/50 rounded-xl flex flex-col justify-between">
@@ -285,7 +285,7 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
                         <span className="text-xs font-mono text-muted">Net Winner Payout</span>
                         <Award className="h-4 w-4 text-purple-400" />
                       </div>
-                      <p className="text-xl font-bold font-mono text-purple-400 mt-2">{(challenge.financials?.winnerPayout || 0).toLocaleString()} BET</p>
+                      <p className="text-xl font-bold font-mono text-purple-400 mt-2">{(challenge.financials?.winnerPayout || 0).toLocaleString()} Coins</p>
                     </div>
                   </div>
 
@@ -293,11 +293,11 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
                     <h4 className="text-xs font-mono uppercase text-muted tracking-wider">Escrow Lock & Release Protocol</h4>
                     <div className="flex items-center justify-between text-xs font-mono py-1 border-b border-border/30">
                       <span className="text-muted">Currently Locked Escrow Balance</span>
-                      <span className="text-foreground font-bold">{(challenge.financials?.lockedCoins || 0).toLocaleString()} BET</span>
+                      <span className="text-foreground font-bold">{(challenge.financials?.lockedCoins || 0).toLocaleString()} Coins</span>
                     </div>
                     <div className="flex items-center justify-between text-xs font-mono py-1 border-b border-border/30">
                       <span className="text-muted">Refund Reserve Allocated</span>
-                      <span className="text-foreground font-bold">{(challenge.financials?.refundAmount || 0).toLocaleString()} BET</span>
+                      <span className="text-foreground font-bold">{(challenge.financials?.refundAmount || 0).toLocaleString()} Coins</span>
                     </div>
                   </div>
                 </div>

@@ -95,7 +95,7 @@ export const RewardsModule: React.FC = () => {
     }
 
     updateDailyRewardConfig({ dailyCoins: coins, cooldownHours: cooldown })
-    showNotice(`Daily Reward Config updated: +${coins} BET every ${cooldown} hours.`, 'success')
+    showNotice(`Daily Reward Config updated: +${coins} Coins every ${cooldown} hours.`, 'success')
   }
 
   const handleOpenCampModal = (camp?: BonusCampaign) => {
@@ -175,7 +175,7 @@ export const RewardsModule: React.FC = () => {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <span className="text-[10px] font-mono text-muted uppercase">Total Rewards Distributed</span>
-              <p className="text-2xl font-bold font-mono text-emerald-400 mt-1">{totalRewardsDistributed.toLocaleString()} BET</p>
+              <p className="text-2xl font-bold font-mono text-emerald-400 mt-1">{totalRewardsDistributed.toLocaleString()} Coins</p>
             </div>
             <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
               <Gift className="h-5 w-5" />
@@ -187,7 +187,7 @@ export const RewardsModule: React.FC = () => {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <span className="text-[10px] font-mono text-muted uppercase">Daily Login Reward</span>
-              <p className="text-2xl font-bold font-mono text-primary mt-1">+{dailyRewardConfig.dailyCoins} BET</p>
+              <p className="text-2xl font-bold font-mono text-primary mt-1">+{dailyRewardConfig.dailyCoins} Coins</p>
             </div>
             <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl text-primary">
               <Coins className="h-5 w-5" />
@@ -222,7 +222,7 @@ export const RewardsModule: React.FC = () => {
             <form onSubmit={handleSaveDailyConfig} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Daily Coins ($BET)</label>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Daily Coins</label>
                   <Input
                     type="number"
                     value={dailyCoinsInput}
@@ -270,7 +270,7 @@ export const RewardsModule: React.FC = () => {
                       <p className="text-[10px] text-muted font-mono mt-0.5">{tx.description || 'Claimed login bonus'}</p>
                     </div>
                     <div className="text-right">
-                      <span className="text-xs font-mono font-bold text-emerald-400">+{tx.amount} BET</span>
+                      <span className="text-xs font-mono font-bold text-emerald-400">+{tx.amount} Coins</span>
                       <p className="text-[9px] text-muted font-mono mt-0.5">{new Date(tx.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
                     </div>
                   </div>
@@ -300,7 +300,7 @@ export const RewardsModule: React.FC = () => {
                 <TableRow key={rule.id}>
                   <TableCell className="font-bold text-xs text-foreground">{rule.name || rule.event}</TableCell>
                   <TableCell className="font-mono text-xs text-muted">{rule.trigger || rule.event}</TableCell>
-                  <TableCell className="font-mono text-xs font-bold text-emerald-400">+{rule.coinReward || rule.rewardCoins || 100} BET</TableCell>
+                  <TableCell className="font-mono text-xs font-bold text-emerald-400">+{rule.coinReward || rule.rewardCoins || 100} Coins</TableCell>
                   <TableCell>
                     {rule.isEnabled !== false ? (
                       <Badge variant="success">ENABLED</Badge>
@@ -338,7 +338,7 @@ export const RewardsModule: React.FC = () => {
 
                 <div className="flex items-baseline gap-1 font-mono text-xs">
                   <span className="text-muted">Bonus:</span>
-                  <span className="text-emerald-400 font-bold">+{camp.bonusCoins} BET</span>
+                  <span className="text-emerald-400 font-bold">+{camp.bonusCoins} Coins</span>
                   <span className="text-muted text-[10px] ml-2">({camp.currentClaims || 0} / {camp.maxClaims || 100} claims)</span>
                 </div>
 
@@ -420,7 +420,7 @@ export const RewardsModule: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Bonus Coins ($BET)</label>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Bonus Coins</label>
                   <Input
                     type="number"
                     value={campBonus}
@@ -430,7 +430,7 @@ export const RewardsModule: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Min Stake Req ($BET)</label>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Min Stake Req (Coins)</label>
                   <Input
                     type="number"
                     value={campMinStake}

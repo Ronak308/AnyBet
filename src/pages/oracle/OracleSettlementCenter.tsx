@@ -188,8 +188,8 @@ export const OracleSettlementCenter: React.FC = () => {
                     <Badge variant="outline" className="border-primary/30 text-primary text-[10px]">{item.category}</Badge>
                   </TableCell>
                   <TableCell className="font-mono text-xs text-foreground">{item.playersCount}</TableCell>
-                  <TableCell className="font-mono text-xs text-emerald-400 font-bold">{item.prizePool.toLocaleString()} BET</TableCell>
-                  <TableCell className="font-mono text-xs text-purple-400">{item.escrowAmount.toLocaleString()} BET</TableCell>
+                  <TableCell className="font-mono text-xs text-emerald-400 font-bold">{item.prizePool.toLocaleString()} Coins</TableCell>
+                  <TableCell className="font-mono text-xs text-purple-400">{item.escrowAmount.toLocaleString()} Coins</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1.5 font-mono text-xs">
                       <span className={`font-bold ${item.aiConfidence >= 95 ? 'text-emerald-400' : item.aiConfidence >= 85 ? 'text-amber-400' : 'text-red-400'}`}>
@@ -312,7 +312,7 @@ export const OracleSettlementCenter: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-mono text-muted uppercase font-bold">Per Player Stake (BET)</label>
+                  <label className="text-xs font-mono text-muted uppercase font-bold">Per Player Stake (Coins)</label>
                   <Input 
                     type="number"
                     value={testBetStake}

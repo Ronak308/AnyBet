@@ -187,7 +187,7 @@ export const TransactionsModule: React.FC = () => {
                   </TableCell>
                   <TableCell>{getTypeBadge(tx.type)}</TableCell>
                   <TableCell className={`font-mono text-xs font-bold ${tx.type === 'Withdrawal' || tx.type === 'Bet Stake' ? 'text-amber-400' : 'text-emerald-400'}`}>
-                    {tx.type === 'Withdrawal' || tx.type === 'Bet Stake' ? '-' : '+'}{tx.amount.toLocaleString()} BET
+                    {tx.type === 'Withdrawal' || tx.type === 'Bet Stake' ? '-' : '+'}{tx.amount.toLocaleString()} Coins
                   </TableCell>
                   <TableCell>
                     {tx.status === 'Settled' ? (
@@ -284,15 +284,15 @@ export const TransactionsModule: React.FC = () => {
                     <div className="border-t border-dashed border-border/60 my-2 pt-2 space-y-1.5">
                       <div className="flex justify-between text-muted text-[11px]">
                         <span>Amount:</span>
-                        <span>{selectedTx.amount.toLocaleString()} BET</span>
+                        <span>{selectedTx.amount.toLocaleString()} Coins</span>
                       </div>
                       <div className="flex justify-between text-muted text-[11px]">
                         <span>Gas/Platform Fee:</span>
-                        <span>0 BET (Virtual)</span>
+                        <span>0 Coins (Virtual)</span>
                       </div>
                       <div className="flex justify-between text-foreground font-bold text-sm border-t border-border/40 pt-2">
                         <span>Total Credited:</span>
-                        <span className="text-emerald-400">+{selectedTx.amount.toLocaleString()} BET</span>
+                        <span className="text-emerald-400">+{selectedTx.amount.toLocaleString()} Coins</span>
                       </div>
                     </div>
                   </div>

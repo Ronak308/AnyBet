@@ -12,7 +12,11 @@ import {
   Trash2, 
   MoreVertical,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  CreditCard,
+  Smartphone,
+  CheckCircle2,
+  ShoppingCart
 } from 'lucide-react'
 import { Card, CardContent } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'
@@ -80,6 +84,59 @@ export const WalletsModule: React.FC<{
   const [pkgBonus, setPkgBonus] = useState('')
   const [pkgPrice, setPkgPrice] = useState('')
   const [pkgTag, setPkgTag] = useState('')
+
+  // Apple Pay & Google Pay Test Purchase Sheet state
+  const [payTestModal, setPayTestModal] = useState<{
+    isOpen: boolean
+    pkg: CoinPackage | null
+    selectedMethod: 'apple' | 'gpay'
+    selectedUserId: string
+    isProcessing: boolean
+    isSuccess: boolean
+  }>({
+    isOpen: false,
+    pkg: null,
+    selectedMethod: 'apple',
+    selectedUserId: '',
+    isProcessing: false,
+    isSuccess: false
+  })
+
+  const handleExecuteTestPay = async () => {
+    if (!payTestModal.pkg) return
+    const targetUserId = payTestModal.selectedUserId || wallets[0]?.userId || 'USR_01'
+    const targetWallet = wallets.find(w => w.userId === targetUserId || w.id === targetUserId)
+    const targetUsername = targetWallet ? targetWallet.username : 'User'
+
+    setPayTestModal(prev => ({ ...prev, isProcessing: true }))
+
+    // Simulate 1-tap Apple Pay / Google Pay biometric payment delay
+    await new Promise(r => setTimeout(r, 1200))
+
+    const totalCoins = payTestModal.pkg.coins + payTestModal.pkg.bonusCoins
+    const methodName = payTestModal.selectedMethod === 'apple' ? 'Apple Pay' : 'Google Pay (GPay)'
+
+    creditCoins(
+      targetUserId,
+      totalCoins,
+      'Deposit',
+      `Purchased ${payTestModal.pkg.name} (${totalCoins} BET) via ${methodName}`
+    )
+
+    setPayTestModal(prev => ({ ...prev, isProcessing: false, isSuccess: true }))
+    showNotice(`Successfully credited +${totalCoins} BET to @${targetUsername} via ${methodName}!`, 'success')
+
+    setTimeout(() => {
+      setPayTestModal({
+        isOpen: false,
+        pkg: null,
+        selectedMethod: 'apple',
+        selectedUserId: '',
+        isProcessing: false,
+        isSuccess: false
+      })
+    }, 1800)
+  }
 
   // Filtering & Pagination
   const filteredWallets = useMemo(() => {
@@ -182,7 +239,7 @@ export const WalletsModule: React.FC<{
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <span className="text-[10px] font-mono text-muted uppercase">Total System Supply</span>
-              <p className="text-2xl font-bold font-mono text-primary mt-1">{totalCoinsIssued.toLocaleString()} BET</p>
+              <p className="text-2xl font-bold font-mono text-primary mt-1">{totalCoinsIssued.toLocaleString()} Coins</p>
             </div>
             <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl text-primary">
               <Coins className="h-5 w-5" />
@@ -194,7 +251,7 @@ export const WalletsModule: React.FC<{
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <span className="text-[10px] font-mono text-muted uppercase">Coins in Circulation</span>
-              <p className="text-2xl font-bold font-mono text-emerald-400 mt-1">{coinsInCirculation.toLocaleString()} BET</p>
+              <p className="text-2xl font-bold font-mono text-emerald-400 mt-1">{coinsInCirculation.toLocaleString()} Coins</p>
             </div>
             <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
               <Unlock className="h-5 w-5" />
@@ -206,7 +263,7 @@ export const WalletsModule: React.FC<{
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <span className="text-[10px] font-mono text-muted uppercase">Locked in Escrow</span>
-              <p className="text-2xl font-bold font-mono text-amber-400 mt-1">{coinsLockedInBets.toLocaleString()} BET</p>
+              <p className="text-2xl font-bold font-mono text-amber-400 mt-1">{coinsLockedInBets.toLocaleString()} Coins</p>
             </div>
             <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400">
               <Lock className="h-5 w-5" />
@@ -240,29 +297,46 @@ export const WalletsModule: React.FC<{
                   <h4 className="font-bold text-sm text-foreground">{pkg.name}</h4>
                   <div className="flex items-baseline gap-1 mt-2">
                     <span className="text-2xl font-bold font-mono text-primary">{pkg.coins.toLocaleString()}</span>
-                    <span className="text-xs font-mono text-muted">BET</span>
+                    <span className="text-xs font-mono text-muted">Coins</span>
                     {pkg.bonusCoins > 0 && (
                       <span className="text-xs font-mono text-emerald-400 font-bold ml-1">+{pkg.bonusCoins} Bonus</span>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-border/40">
-                  <span className="text-sm font-bold font-mono text-foreground">${pkg.priceUsd.toFixed(2)}</span>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => toggleCoinPackage(pkg.id)}
-                      className={`px-2 py-0.5 text-[10px] font-mono rounded cursor-pointer border ${pkg.isEnabled ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-surface text-muted border-border'}`}
-                    >
-                      {pkg.isEnabled ? 'Enabled' : 'Disabled'}
-                    </button>
-                    <button onClick={() => handleOpenPkgModal(pkg)} className="p-1 text-muted hover:text-foreground cursor-pointer">
-                      <Edit2 className="h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => deleteCoinPackage(pkg.id)} className="p-1 text-muted hover:text-red-400 cursor-pointer">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                <div className="flex flex-col gap-2 pt-2 border-t border-border/40">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold font-mono text-foreground">${pkg.priceUsd.toFixed(2)}</span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => toggleCoinPackage(pkg.id)}
+                        className={`px-2 py-0.5 text-[10px] font-mono rounded cursor-pointer border ${pkg.isEnabled ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-surface text-muted border-border'}`}
+                      >
+                        {pkg.isEnabled ? 'Enabled' : 'Disabled'}
+                      </button>
+                      <button onClick={() => handleOpenPkgModal(pkg)} className="p-1 text-muted hover:text-foreground cursor-pointer">
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </button>
+                      <button onClick={() => deleteCoinPackage(pkg.id)} className="p-1 text-muted hover:text-red-400 cursor-pointer">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPayTestModal({
+                      isOpen: true,
+                      pkg,
+                      selectedMethod: 'apple',
+                      selectedUserId: wallets[0]?.userId || 'USR_01',
+                      isProcessing: false,
+                      isSuccess: false
+                    })}
+                    className="w-full text-[11px] font-mono gap-1 border-primary/30 text-primary hover:bg-primary/10 h-7"
+                  >
+                    <ShoppingCart className="h-3 w-3" /> Test Pay (Apple / GPay)
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -326,9 +400,9 @@ export const WalletsModule: React.FC<{
                         <span className="font-mono text-[10px] text-muted">{w.userId}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-xs font-bold text-primary">{w.totalBalance.toLocaleString()} BET</TableCell>
-                    <TableCell className="font-mono text-xs text-amber-400">{w.lockedBalance.toLocaleString()} BET</TableCell>
-                    <TableCell className="font-mono text-xs font-bold text-emerald-400">{(w.totalBalance - w.lockedBalance).toLocaleString()} BET</TableCell>
+                    <TableCell className="font-mono text-xs font-bold text-primary">{w.totalBalance.toLocaleString()} Coins</TableCell>
+                    <TableCell className="font-mono text-xs text-amber-400">{w.lockedBalance.toLocaleString()} Coins</TableCell>
+                    <TableCell className="font-mono text-xs font-bold text-emerald-400">{(w.totalBalance - w.lockedBalance).toLocaleString()} Coins</TableCell>
                     <TableCell>
                       {w.status === 'Active' ? (
                         <Badge variant="success">ACTIVE</Badge>
@@ -406,7 +480,7 @@ export const WalletsModule: React.FC<{
 
             <form onSubmit={handleExecuteCoinAdjustment} className="space-y-4">
               <div>
-                <label className="text-[10px] font-mono uppercase text-muted block mb-1">Coin Amount ($BET)</label>
+                <label className="text-[10px] font-mono uppercase text-muted block mb-1">Coin Amount (Coins)</label>
                 <Input
                   type="number"
                   placeholder="e.g. 500"
@@ -463,7 +537,7 @@ export const WalletsModule: React.FC<{
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Base Coins ($BET)</label>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Base Coins</label>
                   <Input
                     type="number"
                     value={pkgCoins}
@@ -472,7 +546,7 @@ export const WalletsModule: React.FC<{
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Bonus Coins ($BET)</label>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Bonus Coins</label>
                   <Input
                     type="number"
                     value={pkgBonus}
@@ -514,6 +588,117 @@ export const WalletsModule: React.FC<{
               </div>
             </form>
           </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* APPLE PAY & GOOGLE PAY TEST CHECKOUT SHEET */}
+      <Sheet open={payTestModal.isOpen} onOpenChange={open => !open && setPayTestModal(prev => ({ ...prev, isOpen: false }))}>
+        <SheetContent side="right" className="w-full sm:max-w-md bg-background border-l border-border p-6 overflow-y-auto font-sans">
+          {payTestModal.pkg && (
+            <div className="flex flex-col gap-6">
+              <div className="border-b border-border/40 pb-4 pr-8">
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge variant="pro" className="font-mono text-[10px]">IN-APP CHECKOUT TEST</Badge>
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Buy Coin Package</h3>
+                <p className="text-xs text-muted">Test 1-tap mobile payment processing with Apple Pay & Google Pay.</p>
+              </div>
+
+              {/* Package Summary Card */}
+              <div className="bg-surface/30 border border-border/60 rounded-xl p-4 flex justify-between items-center">
+                <div>
+                  <h4 className="font-bold text-sm text-foreground">{payTestModal.pkg.name}</h4>
+                  <div className="text-xs font-mono text-muted mt-0.5">
+                    <span className="text-primary font-bold text-base">{payTestModal.pkg.coins}</span> BET Coins
+                    {payTestModal.pkg.bonusCoins > 0 && <span className="text-emerald-400 font-bold ml-1">+{payTestModal.pkg.bonusCoins} Bonus</span>}
+                  </div>
+                </div>
+                <div className="text-right font-mono font-bold text-lg text-foreground">
+                  ${payTestModal.pkg.priceUsd.toFixed(2)}
+                </div>
+              </div>
+
+              {/* Select Target User */}
+              <div>
+                <label className="text-[10px] font-mono uppercase text-muted block mb-1">Credit Coins To User Wallet</label>
+                <select
+                  value={payTestModal.selectedUserId}
+                  onChange={e => setPayTestModal(prev => ({ ...prev, selectedUserId: e.target.value }))}
+                  className="w-full bg-surface/50 border border-border/60 rounded-lg p-2.5 text-xs font-mono text-foreground outline-none cursor-pointer"
+                >
+                  {wallets.map(w => (
+                    <option key={w.id} value={w.userId} className="bg-background text-foreground">
+                      @{w.username} ({w.totalBalance} BET Coins)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Payment Method Selector Tabs */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-mono uppercase text-muted block">Select Payment Gateway</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPayTestModal(prev => ({ ...prev, selectedMethod: 'apple' }))}
+                    className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all ${
+                      payTestModal.selectedMethod === 'apple'
+                        ? 'bg-primary/10 border-primary text-foreground shadow-[0_0_15px_rgba(128,38,255,0.2)]'
+                        : 'bg-surface/20 border-border/60 text-muted hover:text-foreground'
+                    }`}
+                  >
+                    <Smartphone className="h-5 w-5 text-white" />
+                    <span className="text-xs font-bold font-mono">Apple Pay</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPayTestModal(prev => ({ ...prev, selectedMethod: 'gpay' }))}
+                    className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all ${
+                      payTestModal.selectedMethod === 'gpay'
+                        ? 'bg-emerald-500/10 border-emerald-500 text-foreground shadow-[0_0_15px_rgba(16,185,129,0.2)]'
+                        : 'bg-surface/20 border-border/60 text-muted hover:text-foreground'
+                    }`}
+                  >
+                    <CreditCard className="h-5 w-5 text-emerald-400" />
+                    <span className="text-xs font-bold font-mono">Google Pay (GPay)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              {payTestModal.isSuccess ? (
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 flex items-center gap-3 text-emerald-400 font-mono text-xs">
+                  <CheckCircle2 className="h-6 w-6 shrink-0" />
+                  <div>
+                    <div className="font-bold text-sm">Payment Successful!</div>
+                    <div>+{payTestModal.pkg.coins + payTestModal.pkg.bonusCoins} BET Coins credited to wallet.</div>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  onClick={handleExecuteTestPay}
+                  disabled={payTestModal.isProcessing}
+                  className={`w-full py-6 text-sm font-bold font-mono gap-2 rounded-xl transition-all cursor-pointer ${
+                    payTestModal.selectedMethod === 'apple'
+                      ? 'bg-white text-black hover:bg-neutral-200'
+                      : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                  }`}
+                >
+                  {payTestModal.isProcessing ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                      Authenticating Biometrics...
+                    </div>
+                  ) : (
+                    <>
+                      {payTestModal.selectedMethod === 'apple' ? ' Pay' : 'G Pay'} ${payTestModal.pkg.priceUsd.toFixed(2)}
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          )}
         </SheetContent>
       </Sheet>
     </div>

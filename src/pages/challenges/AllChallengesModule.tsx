@@ -445,8 +445,8 @@ export const AllChallengesModule: React.FC = () => {
                     <TableCell className="font-mono text-xs text-muted">{c.type}</TableCell>
                     <TableCell className="font-mono text-xs text-foreground/90">{c.creatorName}</TableCell>
                     <TableCell className="font-mono text-xs text-muted">{(c.participantsCount || 0)} users</TableCell>
-                    <TableCell className="font-mono text-xs text-primary">{(c.stakeAmount || 0)} BET</TableCell>
-                    <TableCell className="font-mono text-xs font-bold text-emerald-400">{(c.prizePool || 0).toLocaleString()} BET</TableCell>
+                    <TableCell className="font-mono text-xs text-primary">{(c.stakeAmount || 0)} Coins</TableCell>
+                    <TableCell className="font-mono text-xs font-bold text-emerald-400">{(c.prizePool || 0).toLocaleString()} Coins</TableCell>
                     <TableCell>{getStatusBadge(c.status)}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -854,7 +854,7 @@ export const AllChallengesModule: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] font-mono uppercase text-muted block mb-1">Per Player Stake ($BET) *</label>
+                    <label className="text-[10px] font-mono uppercase text-muted block mb-1">Per Player Stake (Coins) *</label>
                     <Input
                       type="number"
                       value={newStake}
@@ -885,15 +885,15 @@ export const AllChallengesModule: React.FC = () => {
                       <span className="text-[10px] text-primary uppercase font-bold block">Financial Calculations</span>
                       <div className="flex items-center justify-between text-xs py-1 border-b border-border/30">
                         <span className="text-muted">Total Prize Pool</span>
-                        <span className="font-bold text-emerald-400">{totalPool.toLocaleString()} BET</span>
+                        <span className="font-bold text-emerald-400">{totalPool.toLocaleString()} Coins</span>
                       </div>
                       <div className="flex items-center justify-between text-xs py-1 border-b border-border/30">
                         <span className="text-muted">Platform Treasury Fee ({feePercent}%)</span>
-                        <span className="text-muted">{feeAmt.toLocaleString()} BET</span>
+                        <span className="text-muted">{feeAmt.toLocaleString()} Coins</span>
                       </div>
                       <div className="flex items-center justify-between text-xs py-1">
                         <span className="text-muted">Net Winner Payout</span>
-                        <span className="font-bold text-primary">{netPayout.toLocaleString()} BET</span>
+                        <span className="font-bold text-primary">{netPayout.toLocaleString()} Coins</span>
                       </div>
                     </div>
                   );
@@ -928,7 +928,7 @@ export const AllChallengesModule: React.FC = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted">Prize Pool:</span>
-                    <span className="font-bold text-emerald-400 font-mono">{(Number(newStake) * Number(newMaxParticipants)).toLocaleString()} BET</span>
+                    <span className="font-bold text-emerald-400 font-mono">{(Number(newStake) * Number(newMaxParticipants)).toLocaleString()} Coins</span>
                   </div>
                   <div className="border-t border-border/30 pt-2 space-y-1">
                     <span className="text-[10px] text-muted uppercase font-bold block">Configured Rules ({newRules.split('\n').filter(r => r.trim() !== '').length}):</span>

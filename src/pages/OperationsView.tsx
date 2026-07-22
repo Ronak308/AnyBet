@@ -34,10 +34,10 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
   const [chartType, setChartType] = useState<'area' | 'bar'>('area')
   const [isCalibrating, setIsCalibrating] = useState(false)
   const [streamingFeed, setStreamingFeed] = useState([
-    { id: '#20459-B', market: 'UCL: Real Madrid vs Man City', outcome: 'Draw (3-3)', type: 'AI Oracle', value: '12,450 BET', time: 'Just now', source: 'oracle' },
-    { id: '#20458-X', market: 'BTC Closes Above 100k (24h)', outcome: 'True', type: 'API Feed', value: '8,120 BET', time: '2m ago', source: 'api' },
-    { id: '#20457-A', market: 'Formula 1: Monaco GP Winner', outcome: 'Verstappen', type: 'AI Oracle', value: '45,000 BET', time: '5m ago', source: 'oracle' },
-    { id: '#20456-D', market: 'Oscars: Best Picture 2024', outcome: 'Oppenheimer', type: 'API Feed', value: '2,900 BET', time: '12m ago', source: 'api' },
+    { id: '#20459-B', market: 'UCL: Real Madrid vs Man City', outcome: 'Draw (3-3)', type: 'AI Oracle', value: '12,450 Coins', time: 'Just now', source: 'oracle' },
+    { id: '#20458-X', market: 'BTC Closes Above 100k (24h)', outcome: 'True', type: 'API Feed', value: '8,120 Coins', time: '2m ago', source: 'api' },
+    { id: '#20457-A', market: 'Formula 1: Monaco GP Winner', outcome: 'Verstappen', type: 'AI Oracle', value: '45,000 Coins', time: '5m ago', source: 'oracle' },
+    { id: '#20456-D', market: 'Oscars: Best Picture 2024', outcome: 'Oppenheimer', type: 'API Feed', value: '2,900 Coins', time: '12m ago', source: 'api' },
   ])
 
   // Mock charts data
@@ -88,7 +88,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
       ]
       const outcomes = ['True', 'False', 'Awaiting API', 'Settled (AI)', 'Override Pending']
       const sources = ['oracle', 'api']
-      const values = ['4,200 BET', '1,850 BET', '22,400 BET', '9,800 BET', '32,150 BET']
+      const values = ['4,200 Coins', '1,850 Coins', '22,400 Coins', '9,800 Coins', '32,150 Coins']
       
       const newId = `#20${Math.floor(Math.random() * 900) + 100}-${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`
       const newMarket = markets[Math.floor(Math.random() * markets.length)]
@@ -132,7 +132,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
   // KPI metadata
   const kpis = [
     { title: 'Active Challenges', value: '2,450', change: '+12%', isPositive: true, subtext: 'Daily operations', icon: Zap, color: 'text-primary border-primary/20 bg-primary/5', tab: 'challenges' },
-    { title: 'Coins Locked', value: '4.2M BET', change: '+5.2%', isPositive: true, subtext: 'Staked in challenges', icon: Wallet, color: 'text-secondary border-secondary/20 bg-secondary/5', tab: 'financials' },
+    { title: 'Coins Locked', value: '4.2M Coins', change: '+5.2%', isPositive: true, subtext: 'Staked in challenges', icon: Wallet, color: 'text-secondary border-secondary/20 bg-secondary/5', tab: 'financials' },
     { title: 'AI Settled Efficiency', value: '98.4%', change: 'Precision', isPositive: true, subtext: 'Arbitration rate', icon: Cpu, color: 'text-[#8026FF] border-[#8026FF]/20 bg-[#8026FF]/5', tab: 'ai-oracle' },
     { title: 'Active Users', value: '12k', change: '+1.8%', isPositive: true, subtext: 'Hourly interaction', icon: Users, color: 'text-secondary border-secondary/20 bg-secondary/5', tab: 'reputation' }
   ]

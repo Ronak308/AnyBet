@@ -79,7 +79,7 @@ export const LiveSettlementModule: React.FC = () => {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <span className="text-[10px] font-mono text-muted uppercase">Live Prize Pools</span>
-              <p className="text-2xl font-bold font-mono text-purple-400 mt-1">{totalLivePrizePool.toLocaleString()} BET</p>
+              <p className="text-2xl font-bold font-mono text-purple-400 mt-1">{totalLivePrizePool.toLocaleString()} Coins</p>
             </div>
             <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-400">
               <Coins className="h-5 w-5" />
@@ -90,8 +90,8 @@ export const LiveSettlementModule: React.FC = () => {
         <Card className="bg-surface/30 border-border/60">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-mono text-muted uppercase">Escrow Balance (Locked BET)</span>
-              <p className="text-2xl font-bold font-mono text-cyan-400 mt-1">{totalLockedCoins.toLocaleString()} BET</p>
+              <span className="text-[10px] font-mono text-muted uppercase">Escrow Balance (Locked Coins)</span>
+              <p className="text-2xl font-bold font-mono text-cyan-400 mt-1">{totalLockedCoins.toLocaleString()} Coins</p>
             </div>
             <div className="p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-cyan-400">
               <Lock className="h-5 w-5" />
@@ -138,7 +138,7 @@ export const LiveSettlementModule: React.FC = () => {
 
                   <div className="flex items-center justify-between pt-2 border-t border-border/30 text-[10px] font-mono">
                     <span className="text-muted">{c.participantsCount} participants</span>
-                    <span className="text-purple-400 font-bold">{c.prizePool.toLocaleString()} BET</span>
+                    <span className="text-purple-400 font-bold">{c.prizePool.toLocaleString()} Coins</span>
                   </div>
                 </CardContent>
               </Card>
@@ -194,7 +194,7 @@ export const LiveSettlementModule: React.FC = () => {
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-xs font-bold text-emerald-400">
-                    {c.prizePool.toLocaleString()} BET
+                    {c.prizePool.toLocaleString()} Coins
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
@@ -252,7 +252,7 @@ export const LiveSettlementModule: React.FC = () => {
               <span className="font-bold text-foreground">{settleModalChallenge.title}</span>
               <div className="flex items-center justify-between text-[11px] font-mono text-muted pt-1">
                 <span>Net Winner Payout:</span>
-                <span className="text-emerald-400 font-bold">{(settleModalChallenge.financials?.winnerPayout || 0).toLocaleString()} BET</span>
+                <span className="text-emerald-400 font-bold">{(settleModalChallenge.financials?.winnerPayout || 0).toLocaleString()} Coins</span>
               </div>
             </div>
 
