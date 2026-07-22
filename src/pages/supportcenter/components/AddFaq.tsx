@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { X, HelpCircle } from 'lucide-react'
 import type { FAQItem } from '../FAQManager'
 
@@ -22,28 +21,58 @@ export const AddFaq: React.FC<AddFaqProps> = ({
   const [newCategory, setNewCategory] = useState<FAQItem['category']>(faqToEdit?.category ?? 'General')
   const [newQuestion, setNewQuestion] = useState(faqToEdit?.question ?? '')
   const [newAnswer, setNewAnswer] = useState(faqToEdit?.answer ?? '')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   React.useEffect(() => {
     if (faqToEdit) {
       setNewCategory(faqToEdit.category)
       setNewQuestion(faqToEdit.question)
       setNewAnswer(faqToEdit.answer)
-      return
+    } else {
+      setNewCategory('General')
+      setNewQuestion('')
+      setNewAnswer('')
     }
-
-    setNewCategory('General')
-    setNewQuestion('')
-    setNewAnswer('')
+    setFieldErrors({})
   }, [faqToEdit])
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newQuestion.trim() || !newAnswer.trim()) return
+    setFieldErrors({})
+
+    const finalQuestion = newQuestion.trim()
+    const finalAnswer = newAnswer.trim()
+    const errors: Record<string, string> = {}
+
+    if (!finalQuestion) {
+      errors.question = 'Question is required.'
+    } else if (finalQuestion.length < 10) {
+      errors.question = 'Question must be at least 10 characters.'
+    } else if (finalQuestion.length > 120) {
+      errors.question = 'Question must not exceed 120 characters.'
+    } else if (!/[a-zA-Z0-9]/.test(finalQuestion)) {
+      errors.question = 'Question must contain letters or numbers.'
+    } else if (!/^[a-zA-Z0-9\s\-\?\.,'"`!#@%&*()_/+]+$/.test(finalQuestion)) {
+      errors.question = 'Question can only contain letters, numbers, spaces, and basic punctuation.'
+    }
+
+    if (!finalAnswer) {
+      errors.answer = 'Answer is required.'
+    } else if (finalAnswer.length < 2) {
+      errors.answer = 'Answer must be at least 2 characters.'
+    } else if (finalAnswer.length > 1000) {
+      errors.answer = 'Answer must not exceed 1000 characters.'
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      return
+    }
 
     if (isEditing && faqToEdit && handleEditFaq) {
-      handleEditFaq(faqToEdit.id, newCategory, newQuestion, newAnswer)
+      handleEditFaq(faqToEdit.id, newCategory, finalQuestion, finalAnswer)
     } else {
-      handleAddFaq(newCategory, newQuestion, newAnswer)
+      handleAddFaq(newCategory, finalQuestion, finalAnswer)
     }
 
     setNewCategory('General')
@@ -81,14 +110,17 @@ export const AddFaq: React.FC<AddFaqProps> = ({
         <form id="add-faq-form" onSubmit={onSubmit} className="flex flex-col gap-4 overflow-y-auto pr-1 flex-1 scrollbar-thin">
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-mono uppercase text-muted tracking-wider font-bold">Question <span className="text-red-400 ml-0.5">*</span></label>
-            <Input
-              type="text"
+            <textarea
               placeholder="e.g. How can I withdraw coins back to cash?"
               value={newQuestion}
               onChange={e => setNewQuestion(e.target.value)}
-              className="h-9 text-xs bg-card border border-border focus-visible:ring-primary/30"
-              required
+              rows={3}
+              className="p-3 rounded-lg text-xs bg-card border border-border text-foreground focus:outline-none focus:border-primary/50 placeholder-muted/50 font-sans resize-none"
+              maxLength={120}
             />
+            {fieldErrors.question && (
+              <span className="text-[10px] text-red-500 dark:text-red-400 font-mono mt-0.5">{fieldErrors.question}</span>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -99,8 +131,11 @@ export const AddFaq: React.FC<AddFaqProps> = ({
               onChange={e => setNewAnswer(e.target.value)}
               rows={6}
               className="p-3 rounded-lg text-xs bg-card border border-border text-foreground focus:outline-none focus:border-primary/50 placeholder-muted/50 font-sans resize-none"
-              required
+              maxLength={1000}
             />
+            {fieldErrors.answer && (
+              <span className="text-[10px] text-red-500 dark:text-red-400 font-mono mt-0.5">{fieldErrors.answer}</span>
+            )}
           </div>
         </form>
       </div>

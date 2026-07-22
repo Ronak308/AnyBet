@@ -1,12 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Trash2, MoreHorizontal, Edit3, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Trash2, MoreHorizontal, Edit3, Search, ChevronLeft, ChevronRight, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { AddFaq } from './components/AddFaq'
+import { ConfirmationModal } from '@/components/ui/confirmation-modal'
+import { FaqDetails } from './components/FaqDetails'
 
 export interface FAQItem {
   id: string
@@ -33,6 +35,8 @@ export const FAQManager: React.FC<FAQManagerProps> = ({
   const [searchQuery, setSearchQuery] = useState('')
   const [isAddingFaq, setIsAddingFaq] = useState(false)
   const [faqToEdit, setFaqToEdit] = useState<FAQItem | null>(null)
+  const [faqToDelete, setFaqToDelete] = useState<FAQItem | null>(null)
+  const [selectedFaq, setSelectedFaq] = useState<FAQItem | null>(null)
 
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 10
@@ -99,6 +103,23 @@ export const FAQManager: React.FC<FAQManagerProps> = ({
         </SheetContent>
       </Sheet>
 
+      <Sheet open={selectedFaq !== null} onOpenChange={(open) => { if (!open) setSelectedFaq(null) }}>
+        <SheetContent side="right" hideClose className="w-full sm:max-w-2xl bg-background border-l border-border p-0 overflow-hidden">
+          {selectedFaq && (
+            <FaqDetails
+              faq={selectedFaq}
+              onClose={() => setSelectedFaq(null)}
+              onEdit={() => {
+                const faq = selectedFaq
+                setSelectedFaq(null)
+                setFaqToEdit(faq)
+                setIsAddingFaq(true)
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+
       {/* FAQs Table */}
       <div className="flex flex-col w-full">
         <div className="border border-muted/30 rounded-xl overflow-hidden bg-surface/30 w-full overflow-x-auto">
@@ -131,47 +152,63 @@ export const FAQManager: React.FC<FAQManagerProps> = ({
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedFaqs.map(f => (
-                  <TableRow key={f.id} className="border-b border-muted/20 hover:bg-surface/40">
-                    <TableCell className="py-3 pl-4 align-top text-xs font-bold text-foreground max-w-[320px]">
-                      <span className="block truncate">{f.question}</span>
-                    </TableCell>
-                    <TableCell className="py-3 align-top text-xs text-muted max-w-[520px]">
-                      <p className="line-clamp-2 whitespace-pre-line">{f.answer}</p>
-                    </TableCell>
-                    <TableCell className="py-3 pr-4 align-top text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer flex items-center justify-center"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
-                            <DropdownMenuItem
-                              className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2"
-                              onClick={() => openEditSheet(f)}
-                            >
-                              <Edit3 className="h-3.5 w-3.5 text-muted" />
-                              Edit FAQ
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-red-400 focus:bg-red-950/20 focus:text-red-300 flex items-center gap-2 text-xs font-mono cursor-pointer rounded-md p-2"
-                              onClick={() => handleDeleteFaq(f.id)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 text-red-400" />
-                              Delete FAQ
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                paginatedFaqs.map(f => {
+                  const isSelected = selectedFaq?.id === f.id
+                  return (
+                    <TableRow
+                      key={f.id}
+                      onClick={() => setSelectedFaq(f)}
+                      className={`cursor-pointer border-b border-muted/20 hover:bg-surface/40 transition-colors ${
+                        isSelected ? 'bg-primary/5' : ''
+                      }`}
+                    >
+                      <TableCell className="py-3 pl-4 align-top text-xs font-bold text-foreground max-w-[320px]">
+                        <span className="block truncate">{f.question}</span>
+                      </TableCell>
+                      <TableCell className="py-3 align-top text-xs text-muted max-w-[520px]">
+                        <p className="line-clamp-2 whitespace-pre-line">{f.answer}</p>
+                      </TableCell>
+                      <TableCell className="py-3 pr-4 align-top text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer flex items-center justify-center"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                              <DropdownMenuItem
+                                className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2"
+                                onClick={() => setSelectedFaq(f)}
+                              >
+                                <FileText className="h-3.5 w-3.5 text-muted" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2"
+                                onClick={() => openEditSheet(f)}
+                              >
+                                <Edit3 className="h-3.5 w-3.5 text-muted" />
+                                Edit FAQ
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-red-400 focus:bg-red-950/20 focus:text-red-300 flex items-center gap-2 text-xs font-mono cursor-pointer rounded-md p-2"
+                                onClick={() => setFaqToDelete(f)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                                Delete FAQ
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               )}
             </TableBody>
           </Table>
@@ -208,6 +245,27 @@ export const FAQManager: React.FC<FAQManagerProps> = ({
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={faqToDelete !== null}
+        onClose={() => setFaqToDelete(null)}
+        onConfirm={() => {
+          if (faqToDelete) {
+            handleDeleteFaq(faqToDelete.id)
+            setFaqToDelete(null)
+          }
+        }}
+        title="Delete FAQ Article"
+        description={
+          <p>
+            Are you sure you want to delete this FAQ article?
+            This action cannot be undone.
+          </p>
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   )
 }

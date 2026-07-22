@@ -38,6 +38,7 @@ export const AddCategory: React.FC<AddCategoryProps> = ({
   const [newCatDesc, setNewCatDesc] = useState('')
   const [newCatSla, setNewCatSla] = useState('4 Hours')
   const [newCatPriority, setNewCatPriority] = useState('High')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (categoryToEdit) {
@@ -51,6 +52,7 @@ export const AddCategory: React.FC<AddCategoryProps> = ({
       setNewCatSla('4 Hours')
       setNewCatPriority('High')
     }
+    setFieldErrors({})
   }, [categoryToEdit])
 
   const handleSlaChange = (value: string) => {
@@ -60,11 +62,39 @@ export const AddCategory: React.FC<AddCategoryProps> = ({
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newCatName.trim() || !newCatDesc.trim()) return
+    setFieldErrors({})
+
+    const finalName = newCatName.trim()
+    const finalDesc = newCatDesc.trim()
+    const errors: Record<string, string> = {}
+
+    if (!finalName) {
+      errors.name = 'Category Name is required.'
+    } else if (finalName.length < 2) {
+      errors.name = 'Category Name must be at least 2 characters.'
+    } else if (finalName.length > 50) {
+      errors.name = 'Category Name must not exceed 50 characters.'
+    } else if (!/^[a-zA-Z0-9\s\-&_]+$/.test(finalName)) {
+      errors.name = 'Category Name can only contain letters, numbers, spaces, ampersands, hyphens, and underscores.'
+    }
+
+    if (!finalDesc) {
+      errors.description = 'Description is required.'
+    } else if (finalDesc.length < 10) {
+      errors.description = 'Description must be at least 10 characters.'
+    } else if (finalDesc.length > 500) {
+      errors.description = 'Description must not exceed 500 characters.'
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      return
+    }
+
     if (categoryToEdit && handleEditCategory) {
-      handleEditCategory(categoryToEdit.id, newCatName, newCatDesc, newCatSla, newCatPriority)
+      handleEditCategory(categoryToEdit.id, finalName, finalDesc, newCatSla, newCatPriority)
     } else {
-      handleAddCategory(newCatName, newCatDesc, newCatSla, newCatPriority)
+      handleAddCategory(finalName, finalDesc, newCatSla, newCatPriority)
     }
     setNewCatName('')
     setNewCatDesc('')
@@ -110,8 +140,11 @@ export const AddCategory: React.FC<AddCategoryProps> = ({
               value={newCatName}
               onChange={e => setNewCatName(e.target.value)}
               className="h-9 text-xs bg-card border border-border focus-visible:ring-primary/30"
-              required
+              maxLength={50}
             />
+            {fieldErrors.name && (
+              <span className="text-[10px] text-red-500 dark:text-red-400 font-mono mt-0.5">{fieldErrors.name}</span>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -138,8 +171,11 @@ export const AddCategory: React.FC<AddCategoryProps> = ({
               onChange={e => setNewCatDesc(e.target.value)}
               rows={4}
               className="p-3 rounded-lg text-xs bg-card border border-border text-foreground focus:outline-none focus:border-primary/50 placeholder-muted/50 font-sans resize-none"
-              required
+              maxLength={500}
             />
+            {fieldErrors.description && (
+              <span className="text-[10px] text-red-500 dark:text-red-400 font-mono mt-0.5">{fieldErrors.description}</span>
+            )}
           </div>
         </form>
       </div>
