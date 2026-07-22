@@ -82,7 +82,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => getStoredUser())
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   // Rehydrate session / subscribe to auth state changes
   useEffect(() => {
@@ -136,11 +136,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setIsLoading(false)
           }
         } else {
-          // If no firebase user but cached user exists, keep cached user
-          const cached = getStoredUser()
-          if (!cached) {
-            setUser(null)
-          }
+          localStorage.removeItem(STORAGE_USER_KEY)
+          setUser(null)
           setIsLoading(false)
         }
       })
@@ -343,12 +340,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   const logout = useCallback(() => {
+    localStorage.removeItem(STORAGE_USER_KEY)
+    setUser(null)
     if (USE_FIREBASE) {
       signOut(auth).catch(err => console.error('Firebase Signout Error:', err))
-      setUser(null)
-    } else {
-      localStorage.removeItem(STORAGE_USER_KEY)
-      setUser(null)
     }
   }, [])
 

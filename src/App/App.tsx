@@ -124,8 +124,10 @@ function AuthGate() {
         </>
       ) : (
         <>
+          <Route path="/login" element={<Navigate to="/operations" replace />} />
           <Route path="/" element={<DashboardLayout />}>
             <Route index element={<Navigate to="/operations" replace />} />
+            <Route path="login" element={<Navigate to="/operations" replace />} />
             <Route path="operations" element={<OperationsRoute />} />
             <Route path="challenges" element={<ChallengesRoute />} />
             <Route path="challenges-all" element={<ChallengesRoute />} />
