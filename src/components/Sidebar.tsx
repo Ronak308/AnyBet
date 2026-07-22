@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   BarChart3,
   Trophy,
+  Award,
   Settings,
   HelpCircle,
   MessageSquare,
@@ -71,6 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'challenges', label: 'Challenges', icon: Sword, isDropdown: true },
+    { id: 'leaderboards', label: 'Leaderboards', icon: Award },
     { id: 'reputation', label: 'Reputation', icon: Trophy },
     { id: 'financials', label: 'Financials', icon: Coins, isDropdown: true },
     { id: 'ai-oracle', label: 'AI Oracle', icon: Cpu, isDropdown: true },
@@ -108,7 +110,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <motion.div
-      animate={{ width: isCollapsed ? 76 : 260 }}
+      animate={{ width: isCollapsed ? 76 : 275 }}
       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
       className={cn("h-screen sticky top-0 bg-background border-r border-border flex flex-col py-6 px-4 shrink-0 overflow-hidden select-none", className)}
     >
@@ -123,9 +125,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
                 transition={{ duration: 0.2 }}
-                className="flex flex-col gap-1"
+                className="w-full flex items-center justify-center overflow-hidden py-1"
               >
-                <Logo collapsed={false} size="md" />
+                <Logo collapsed={false} className="w-full" />
               </motion.div>
             ) : (
               <motion.div

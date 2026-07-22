@@ -9,6 +9,7 @@ import {
 } from 'react-router-dom'
 import { OperationsView } from '@/pages/dashbaord/DashbordPage'
 import { ChallengesView } from '@/pages/ChallengesView'
+import { LeaderboardsView } from '@/pages/LeaderboardsView'
 import { ReputationView } from '@/pages/ReputationView'
 import { FinancialsView } from '@/pages/FinancialsView'
 import { OracleConfigView } from '@/pages/OracleConfigView'
@@ -40,6 +41,10 @@ function ChallengesRoute() {
   const location = useLocation()
   const currentTab = location.pathname.startsWith('/') ? location.pathname.slice(1) : location.pathname
   return <ChallengesView activeTab={currentTab} navigate={(tab) => navigate('/' + tab)} />
+}
+
+function LeaderboardsRoute() {
+  return <LeaderboardsView />
 }
 
 function ReputationRoute() {
@@ -135,6 +140,7 @@ function AuthGate() {
             <Route path="challenges-live" element={<ChallengesRoute />} />
             <Route path="challenges-disputes" element={<ChallengesRoute />} />
             <Route path="challenges-analytics" element={<ChallengesRoute />} />
+            <Route path="leaderboards" element={<LeaderboardsRoute />} />
             <Route path="reputation" element={<ReputationRoute />} />
             <Route path="financials" element={<FinancialsRoute />} />
             <Route path="financials-wallet" element={<FinancialsRoute />} />
