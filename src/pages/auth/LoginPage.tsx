@@ -183,13 +183,41 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup: _onSwitc
 
 
 
-            {/* Demo hint */}
-            <div className="mt-4 p-3 bg-primary/5 border border-primary/15 rounded-lg flex items-start gap-2.5">
-              <Zap className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-              <p className="text-[10px] font-mono text-muted leading-relaxed">
-                <span className="text-primary font-semibold">New here?</span>{' '}
-                Create an account to access the AnyBet Ops dashboard. All credentials and user data are securely managed via Firebase.
-              </p>
+            {/* Demo Credentials Card */}
+            <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-3">
+              <div className="flex items-center gap-2">
+                <Zap className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-[10px] font-mono text-primary uppercase tracking-widest font-bold">Demo Access Credentials</span>
+              </div>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setEmail('admin@anybet.com')}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-background border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-3 w-3 text-muted" />
+                    <span className="text-[10px] text-muted font-mono uppercase tracking-wider">Email</span>
+                  </div>
+                  <span className="text-xs font-mono text-foreground font-semibold group-hover:text-primary transition-colors">
+                    admin@anybet.com
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPassword('Test@123')}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-background border border-border rounded-lg hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-3 w-3 text-muted" />
+                    <span className="text-[10px] text-muted font-mono uppercase tracking-wider">Password</span>
+                  </div>
+                  <span className="text-xs font-mono text-foreground font-semibold group-hover:text-primary transition-colors">
+                    Test@123
+                  </span>
+                </button>
+              </div>
+              <p className="text-[9px] font-mono text-muted text-center">Click any field above to auto-fill credentials</p>
             </div>
           </div>
         </motion.div>

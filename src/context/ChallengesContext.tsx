@@ -538,7 +538,7 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         status: 'Waiting'
       },
       timeline: [
-        { id: `t-${Date.now()}`, stage: 'Challenge Created', description: `Created with ${stake} BET stake`, timestamp: new Date().toLocaleString(), completed: true },
+        { id: `t-${Date.now()}`, stage: 'Challenge Created', description: `Created with ${stake} Coins stake`, timestamp: new Date().toLocaleString(), completed: true },
         { id: `t-${Date.now()+1}`, stage: 'Pending Review', description: 'Submitted for operator review', timestamp: new Date().toLocaleString(), completed: true }
       ]
     }
@@ -726,7 +726,7 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           timeline: [
             ...c.timeline,
             { id: `t-${Date.now()}`, stage: 'Settlement Processed', description: `Winner declared: ${winnerName}`, timestamp: new Date().toLocaleString(), completed: true },
-            { id: `t-${Date.now()+1}`, stage: 'Rewards Distributed', description: `${payoutAmount} BET Coins credited to winner wallet`, timestamp: new Date().toLocaleString(), completed: true },
+            { id: `t-${Date.now()+1}`, stage: 'Rewards Distributed', description: `${payoutAmount} Coins credited to winner wallet`, timestamp: new Date().toLocaleString(), completed: true },
             { id: `t-${Date.now()+2}`, stage: 'Archived', description: 'Challenge closed & archived', timestamp: new Date().toLocaleString(), completed: true }
           ]
         }
@@ -739,7 +739,7 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       updateChallengeInFirestore(challengeId, updatedChallenge)
     }
 
-    showToastNotice(`Challenge ${challengeId} settled! ${payoutAmount} BET Coins paid to ${winnerName}`, 'success')
+    showToastNotice(`Challenge ${challengeId} settled! ${payoutAmount} Coins paid to ${winnerName}`, 'success')
   }
 
   const resolveDispute = (disputeId: string, action: 'approve_claim' | 'reject_claim' | 'refund' | 'reopen', winnerId?: string, notes?: string) => {
@@ -930,7 +930,7 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       doc.setFontSize(10)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(0, 224, 255)
-      doc.text(`${totalVolume.toLocaleString()} BET`, card3X + 4, cardY + 15)
+      doc.text(`${totalVolume.toLocaleString()} Coins`, card3X + 4, cardY + 15)
 
       // Box 4 - Platform Fees
       const card4X = card3X + cardWidth + cardGap
@@ -943,7 +943,7 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       doc.setFontSize(10)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(0, 224, 255)
-      doc.text(`${totalFees.toLocaleString()} BET`, card4X + 4, cardY + 15)
+      doc.text(`${totalFees.toLocaleString()} Coins`, card4X + 4, cardY + 15)
 
       // Inventory Title
       doc.setFontSize(11)
@@ -982,10 +982,10 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         doc.setTextColor(148, 163, 184)
         doc.text(c.category, 115, y)
-        doc.text(`${c.stakeAmount} BET`, 148, y)
+        doc.text(`${c.stakeAmount} Coins`, 148, y)
 
         doc.setTextColor(16, 185, 129)
-        doc.text(`${c.prizePool.toLocaleString()} BET`, 172, y)
+        doc.text(`${c.prizePool.toLocaleString()} Coins`, 172, y)
 
         y += 9
       })

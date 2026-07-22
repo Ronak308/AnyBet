@@ -179,14 +179,14 @@ export const WalletsModule: React.FC<{
 
     if (coinActionModal.mode === 'add') {
       creditCoins(coinActionModal.wallet.userId, amt, 'Deposit', reason)
-      showNotice(`Successfully credited +${amt.toLocaleString()} BET to ${coinActionModal.wallet.username}`, 'success')
+      showNotice(`Successfully credited +${amt.toLocaleString()} Coins to ${coinActionModal.wallet.username}`, 'success')
     } else {
       const ok = debitCoins(coinActionModal.wallet.userId, amt, 'Withdrawal', reason)
       if (!ok) {
         showNotice(`Failed: ${coinActionModal.wallet.username} has insufficient balance or wallet is frozen.`, 'warning')
         return
       }
-      showNotice(`Deducted -${amt.toLocaleString()} BET from ${coinActionModal.wallet.username}`, 'success')
+      showNotice(`Deducted -${amt.toLocaleString()} Coins from ${coinActionModal.wallet.username}`, 'success')
     }
 
     setCoinActionModal({ isOpen: false, mode: 'add', wallet: null })
@@ -256,7 +256,7 @@ export const WalletsModule: React.FC<{
     if (!targetWallet) return
     const totalCoins = pkg.coins + pkg.bonusCoins
     creditCoins(targetWallet.userId, totalCoins, 'Deposit', `Purchased ${pkg.name} via Apple Pay`)
-    showNotice(`Test Purchase: Credited +${totalCoins} BET to @${targetWallet.username} via Apple Pay!`, 'success')
+    showNotice(`Test Purchase: Credited +${totalCoins} Coins to @${targetWallet.username} via Apple Pay!`, 'success')
   }
 
   return (
@@ -342,7 +342,7 @@ export const WalletsModule: React.FC<{
                 </div>
                 <div className="mt-4">
                   <div className="text-3xl font-extrabold text-white tracking-tight">
-                    {dynamicMetrics.totalLiquid.toLocaleString()} BET
+                    {dynamicMetrics.totalLiquid.toLocaleString()} Coins
                   </div>
                   <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
                     <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400 inline" />
@@ -350,7 +350,7 @@ export const WalletsModule: React.FC<{
                   </p>
                 </div>
                 <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-                  <span>Avg User Balance: <strong className="text-slate-200">{dynamicMetrics.avgUserBalance.toLocaleString()} BET</strong></span>
+                  <span>Avg User Balance: <strong className="text-slate-200">{dynamicMetrics.avgUserBalance.toLocaleString()} Coins</strong></span>
                   <span>Withdrawal Ready: <strong className="text-emerald-400">Instant</strong></span>
                 </div>
               </CardContent>
@@ -376,7 +376,7 @@ export const WalletsModule: React.FC<{
                 </div>
                 <div className="mt-4">
                   <div className="text-3xl font-extrabold text-white tracking-tight">
-                    {dynamicMetrics.totalEscrow.toLocaleString()} BET
+                    {dynamicMetrics.totalEscrow.toLocaleString()} Coins
                   </div>
                   <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-amber-400 inline" />
@@ -410,7 +410,7 @@ export const WalletsModule: React.FC<{
                 </div>
                 <div className="mt-4">
                   <div className="text-3xl font-extrabold text-white tracking-tight">
-                    {dynamicMetrics.lifetimeRevenue.toLocaleString()} BET
+                    {dynamicMetrics.lifetimeRevenue.toLocaleString()} Coins
                   </div>
                   <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
                     <ArrowUpRight className="w-3.5 h-3.5 text-cyan-400 inline" />
@@ -432,23 +432,23 @@ export const WalletsModule: React.FC<{
                 <Activity className="w-4 h-4 text-emerald-400" />
                 Global Platform Liquidity Allocation Bar
               </span>
-              <span className="text-slate-400">Total System Assets: <strong className="text-white font-bold">{dynamicMetrics.totalSystem.toLocaleString()} BET</strong></span>
+              <span className="text-slate-400">Total System Assets: <strong className="text-white font-bold">{dynamicMetrics.totalSystem.toLocaleString()} Coins</strong></span>
             </div>
 
             <div className="w-full h-3.5 bg-slate-950 rounded-full overflow-hidden flex p-0.5 gap-1 border border-slate-800">
               <div style={{ width: `${dynamicMetrics.liquidPct}%` }} className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-l-full relative group transition-all duration-500">
                 <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-emerald-400 text-[10px] px-2 py-0.5 rounded border border-emerald-500/30 whitespace-nowrap shadow-lg">
-                  Tier 1: {dynamicMetrics.totalLiquid.toLocaleString()} BET ({dynamicMetrics.liquidPct}%)
+                  Tier 1: {dynamicMetrics.totalLiquid.toLocaleString()} Coins ({dynamicMetrics.liquidPct}%)
                 </div>
               </div>
               <div style={{ width: `${dynamicMetrics.escrowPct}%` }} className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 relative group transition-all duration-500">
                 <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-amber-400 text-[10px] px-2 py-0.5 rounded border border-amber-500/30 whitespace-nowrap shadow-lg">
-                  Tier 2: {dynamicMetrics.totalEscrow.toLocaleString()} BET ({dynamicMetrics.escrowPct}%)
+                  Tier 2: {dynamicMetrics.totalEscrow.toLocaleString()} Coins ({dynamicMetrics.escrowPct}%)
                 </div>
               </div>
               <div style={{ width: `${dynamicMetrics.profitPct}%` }} className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-r-full relative group transition-all duration-500">
                 <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-cyan-400 text-[10px] px-2 py-0.5 rounded border border-cyan-500/30 whitespace-nowrap shadow-lg">
-                  Tier 3: {dynamicMetrics.lifetimeRevenue.toLocaleString()} BET ({dynamicMetrics.profitPct}%)
+                  Tier 3: {dynamicMetrics.lifetimeRevenue.toLocaleString()} Coins ({dynamicMetrics.profitPct}%)
                 </div>
               </div>
             </div>
@@ -456,15 +456,15 @@ export const WalletsModule: React.FC<{
             <div className="flex items-center justify-around mt-3 text-xs text-slate-400">
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                <span>Liquid User Balances ({dynamicMetrics.totalLiquid.toLocaleString()} BET)</span>
+                <span>Liquid User Balances ({dynamicMetrics.totalLiquid.toLocaleString()} Coins)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                <span>Escrow Challenge Vault ({dynamicMetrics.totalEscrow.toLocaleString()} BET)</span>
+                <span>Escrow Challenge Vault ({dynamicMetrics.totalEscrow.toLocaleString()} Coins)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
-                <span>Lifetime AnyBet Profit ({dynamicMetrics.lifetimeRevenue.toLocaleString()} BET)</span>
+                <span>Lifetime AnyBet Profit ({dynamicMetrics.lifetimeRevenue.toLocaleString()} Coins)</span>
               </div>
             </div>
           </Card>
@@ -662,17 +662,17 @@ export const WalletsModule: React.FC<{
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="font-bold text-white text-sm">{w.totalBalance.toLocaleString()} BET</div>
+                          <div className="font-bold text-white text-sm">{w.totalBalance.toLocaleString()} Coins</div>
                           <div className="text-[11px] text-slate-400">≈ ${(w.totalBalance * 1).toLocaleString()}</div>
                         </TableCell>
                         <TableCell>
                           <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 font-mono text-xs">
-                            🔒 {w.lockedBalance.toLocaleString()} BET
+                            🔒 {w.lockedBalance.toLocaleString()} Coins
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-mono text-xs">
-                            💧 {available.toLocaleString()} BET
+                            💧 {available.toLocaleString()} Coins
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -834,7 +834,7 @@ export const WalletsModule: React.FC<{
 
                       <TableCell>
                         <div className="font-bold text-white text-sm">${w.amount.toLocaleString()}</div>
-                        <div className="text-[11px] text-slate-400">{w.amount.toLocaleString()} BET Coins</div>
+                        <div className="text-[11px] text-slate-400">{w.amount.toLocaleString()} Coins</div>
                       </TableCell>
 
                       <TableCell>
@@ -959,7 +959,7 @@ export const WalletsModule: React.FC<{
                 <div className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">{pkg.name}</div>
                 <div className="mt-2 flex items-baseline gap-1">
                   <span className="text-3xl font-extrabold text-white">{pkg.coins}</span>
-                  <span className="text-xs font-bold text-slate-400">BET Coins</span>
+                  <span className="text-xs font-bold text-slate-400">Coins</span>
                 </div>
                 {pkg.bonusCoins > 0 && (
                   <div className="text-xs text-emerald-400 font-medium mt-0.5">
@@ -1019,21 +1019,21 @@ export const WalletsModule: React.FC<{
               <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
                 <div className="flex justify-between items-center text-xs text-slate-400">
                   <span>Current Liquid Balance:</span>
-                  <span className="text-emerald-400 font-bold">{(coinActionModal.wallet.totalBalance - coinActionModal.wallet.lockedBalance).toLocaleString()} BET</span>
+                  <span className="text-emerald-400 font-bold">{(coinActionModal.wallet.totalBalance - coinActionModal.wallet.lockedBalance).toLocaleString()} Coins</span>
                 </div>
                 <div className="flex justify-between items-center text-xs text-slate-400">
                   <span>Locked in Escrow:</span>
-                  <span className="text-amber-400 font-bold">{coinActionModal.wallet.lockedBalance.toLocaleString()} BET</span>
+                  <span className="text-amber-400 font-bold">{coinActionModal.wallet.lockedBalance.toLocaleString()} Coins</span>
                 </div>
                 <div className="flex justify-between items-center text-xs text-slate-400 pt-1 border-t border-slate-800">
                   <span className="font-semibold text-slate-200">Total User Balance:</span>
-                  <span className="text-slate-100 font-bold">{coinActionModal.wallet.totalBalance.toLocaleString()} BET</span>
+                  <span className="text-slate-100 font-bold">{coinActionModal.wallet.totalBalance.toLocaleString()} Coins</span>
                 </div>
               </div>
 
               <form onSubmit={handleExecuteCoinAdjustment} className="space-y-4 pt-2">
                 <div>
-                  <label className="text-xs font-semibold text-slate-300">Coin Amount (BET)</label>
+                  <label className="text-xs font-semibold text-slate-300">Coin Amount</label>
                   <Input
                     type="number"
                     placeholder="e.g. 500"
@@ -1099,7 +1099,7 @@ export const WalletsModule: React.FC<{
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-300">Base Coins (BET)</label>
+                <label className="text-xs font-semibold text-slate-300">Base Coins</label>
                 <Input
                   type="number"
                   placeholder="100"
@@ -1109,7 +1109,7 @@ export const WalletsModule: React.FC<{
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-300">Bonus Coins (BET)</label>
+                <label className="text-xs font-semibold text-slate-300">Bonus Coins</label>
                 <Input
                   type="number"
                   placeholder="12"
@@ -1155,7 +1155,7 @@ export const WalletsModule: React.FC<{
                 )}
               </div>
               <div className="text-lg font-bold text-emerald-400">
-                {((parseInt(pkgCoins, 10) || 0) + (parseInt(pkgBonus, 10) || 0)).toLocaleString()} BET
+                {((parseInt(pkgCoins, 10) || 0) + (parseInt(pkgBonus, 10) || 0)).toLocaleString()} Coins
                 <span className="text-xs font-normal text-slate-400 ml-2">for ${parseFloat(pkgPrice || '0').toFixed(2)}</span>
               </div>
             </div>

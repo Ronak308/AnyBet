@@ -8,31 +8,33 @@ import {
   ArrowLeft 
 } from 'lucide-react'
 import { WalletsModule } from './financials/WalletsModule'
+import { PaymentsModule } from './financials/PaymentsModule'
 import { TransactionsModule } from './financials/TransactionsModule'
 import { RewardsModule } from './financials/RewardsModule'
 import { TreasuryModule } from './financials/TreasuryModule'
 import { WalletDetailsSheet } from './financials/WalletDetailsSheet'
 import type { UserWallet } from '../context/WalletContext'
+import { CreditCard } from 'lucide-react'
 
 export const FinancialsView: React.FC<{ activeTab?: string; navigate: (tab: string) => void }> = ({ activeTab, navigate }) => {
   // Compute active sub-tab from activeTab prop or default to wallet
   const currentSubTab = useMemo(() => {
     if (activeTab && activeTab.startsWith('financials-')) {
       const sub = activeTab.replace('financials-', '')
-      if (['wallet', 'transactions', 'rewards', 'treasury'].includes(sub)) {
-        return sub as 'wallet' | 'transactions' | 'rewards' | 'treasury'
+      if (['wallet', 'payments', 'transactions', 'rewards', 'treasury'].includes(sub)) {
+        return sub as 'wallet' | 'payments' | 'transactions' | 'rewards' | 'treasury'
       }
     }
     return 'wallet'
   }, [activeTab])
 
-  const [activeSubTab, setActiveSubTab] = useState<'wallet' | 'transactions' | 'rewards' | 'treasury'>(currentSubTab)
+  const [activeSubTab, setActiveSubTab] = useState<'wallet' | 'payments' | 'transactions' | 'rewards' | 'treasury'>(currentSubTab)
   const [inspectedWallet, setInspectedWallet] = useState<UserWallet | null>(null)
 
   React.useEffect(() => {
     if (activeTab && activeTab.startsWith('financials-')) {
       const sub = activeTab.replace('financials-', '')
-      if (['wallet', 'transactions', 'rewards', 'treasury'].includes(sub)) {
+      if (['wallet', 'payments', 'transactions', 'rewards', 'treasury'].includes(sub)) {
         setActiveSubTab(sub as any)
       }
     }
@@ -40,6 +42,12 @@ export const FinancialsView: React.FC<{ activeTab?: string; navigate: (tab: stri
 
   const activeHeaderInfo = useMemo(() => {
     switch (activeSubTab) {
+      case 'payments':
+        return {
+          title: 'Payment Management',
+          description: 'Gateway telemetry, deposit monitoring, biometric withdrawal queue, and fraud prevention.',
+          icon: CreditCard
+        }
       case 'transactions':
         return {
           title: 'Transactions Audit Ledger',
@@ -71,6 +79,8 @@ export const FinancialsView: React.FC<{ activeTab?: string; navigate: (tab: stri
 
   const renderActiveModule = () => {
     switch (activeSubTab) {
+      case 'payments':
+        return <PaymentsModule />
       case 'transactions':
         return <TransactionsModule />
       case 'rewards':

@@ -440,7 +440,7 @@ export const OracleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     { id: 'act-1', timestamp: '11:32:10', message: 'Gemini analyzed Challenge #AB-9942 (BTC $100k) — Confidence: 98.4%', type: 'success', challengeId: 'AB-9942', provider: 'Google AI' },
     { id: 'act-2', timestamp: '11:30:45', message: 'Sports API synchronized 18 live games in 124ms', type: 'info', provider: 'Sportradar' },
     { id: 'act-3', timestamp: '11:28:12', message: 'Anomaly Flag: GPS gap detected on Marathon #AB-9821 (+12.4s)', type: 'warning', challengeId: 'AB-9821' },
-    { id: 'act-4', timestamp: '11:25:00', message: 'Settlement completed for NBA Finals #AB-7761 — 781,850 BET credited', type: 'success', challengeId: 'AB-7761' }
+    { id: 'act-4', timestamp: '11:25:00', message: 'Settlement completed for NBA Finals #AB-7761 — 781,850 Coins credited', type: 'success', challengeId: 'AB-7761' }
   ])
 
   // Custom Toast Event Dispatcher
@@ -547,7 +547,7 @@ export const OracleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         winnerPayout: Math.round(pot * 0.95)
       },
       timeline: [
-        { id: `t-${Date.now()}`, stage: 'Test Challenge Created', description: `Created with ${stake} BET stake`, timestamp: new Date().toLocaleString(), completed: true },
+        { id: `t-${Date.now()}`, stage: 'Test Challenge Created', description: `Created with ${stake} Coins stake`, timestamp: new Date().toLocaleString(), completed: true },
         { id: `t-${Date.now()+1}`, stage: 'Pending AI Evaluation', description: 'Queued for Gemini AI evaluation', timestamp: new Date().toLocaleString(), completed: true }
       ]
     }
@@ -644,7 +644,7 @@ export const OracleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return q
     }))
 
-    showToast(`Settlement approved for ${challengeId}! ${payout.toLocaleString()} BET paid to ${winner}`, 'success')
+    showToast(`Settlement approved for ${challengeId}! ${payout.toLocaleString()} Coins paid to ${winner}`, 'success')
   }
 
   const rejectSettlement = (challengeId: string, reason?: string) => {

@@ -286,7 +286,7 @@ export const OracleChallengeDrawer: React.FC<OracleChallengeDrawerProps> = ({ it
                               <TableRow key={p.id}>
                                 <TableCell className="font-mono text-xs font-bold text-foreground">{p.username}</TableCell>
                                 <TableCell className="font-mono text-xs text-muted">{p.joinedAt}</TableCell>
-                                <TableCell className="font-mono text-xs text-primary">{p.stakeAmount} BET</TableCell>
+                                <TableCell className="font-mono text-xs text-primary">{p.stakeAmount} Coins</TableCell>
                                 <TableCell>
                                   {p.result === 'Winner' ? <Badge variant="success">WINNER</Badge> : <Badge variant="outline">{p.result || 'Active'}</Badge>}
                                 </TableCell>

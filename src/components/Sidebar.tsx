@@ -22,7 +22,8 @@ import {
   Settings,
   HelpCircle,
   MessageSquare,
-  LogOut
+  LogOut,
+  CreditCard
 } from 'lucide-react'
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
@@ -90,6 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const financialSubItems = [
     { id: 'financials-wallet', label: 'Wallet', icon: Wallet },
+    { id: 'financials-payments', label: 'Payment Management', icon: CreditCard },
     { id: 'financials-transactions', label: 'Transactions', icon: History },
     { id: 'financials-rewards', label: 'Rewards', icon: Gift },
     { id: 'financials-treasury', label: 'Treasury', icon: PieChart },

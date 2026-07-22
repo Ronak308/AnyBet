@@ -116,7 +116,7 @@ export const AllChallengesModule: React.FC = () => {
     const stake = Number(newStake)
     const maxP = Number(newMaxParticipants)
     if (isNaN(stake) || stake <= 0) {
-      setStepError('Stake Amount must be a positive number greater than 0 BET!')
+      setStepError('Stake Amount must be a positive number greater than 0 Coins!')
       return false
     }
     if (isNaN(maxP) || maxP < 1) {
@@ -125,7 +125,7 @@ export const AllChallengesModule: React.FC = () => {
     }
     // EDGE CASE 3: Insufficient Wallet Balance Check
     if (userBalance < stake) {
-      setStepError(`Insufficient wallet balance! You only have ${userBalance} BET. You need at least ${stake} BET to lock the stake.`)
+      setStepError(`Insufficient wallet balance! You only have ${userBalance} Coins. You need at least ${stake} Coins to lock the stake.`)
       return false
     }
     setWizardStep(4)

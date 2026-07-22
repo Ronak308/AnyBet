@@ -124,6 +124,7 @@ function AuthGate() {
         <>
           <Route path="/" element={<Navigate to="/operations" replace />} />
           <Route element={<DashboardLayout />}>
+            <Route path="dashboard" element={<OperationsRoute />} />
             <Route path="operations" element={<OperationsRoute />} />
             <Route path="challenges" element={<ChallengesRoute />} />
             <Route path="challenges-all" element={<ChallengesRoute />} />
@@ -135,6 +136,7 @@ function AuthGate() {
             <Route path="reputation" element={<ReputationRoute />} />
             <Route path="financials" element={<FinancialsRoute />} />
             <Route path="financials-wallet" element={<FinancialsRoute />} />
+            <Route path="financials-payments" element={<FinancialsRoute />} />
             <Route path="financials-transactions" element={<FinancialsRoute />} />
             <Route path="financials-rewards" element={<FinancialsRoute />} />
             <Route path="financials-treasury" element={<FinancialsRoute />} />

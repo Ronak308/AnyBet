@@ -23,7 +23,7 @@ export interface UserWallet {
   userId: string
   username: string
   avatar?: string
-  totalBalance: number // In $BET Coins
+  totalBalance: number // In Coins
   lockedBalance: number // Locked in active bets
   status: WalletStatus
   createdAt: string
@@ -677,7 +677,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }))
 
     if (!allowed) {
-      return { success: false, message: 'Insufficient $BET Coin balance for withdrawal request.' }
+      return { success: false, message: 'Insufficient Coin balance for withdrawal request.' }
     }
 
     const req: WithdrawalRequest = {
