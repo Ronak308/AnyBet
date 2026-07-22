@@ -7,8 +7,8 @@ import type { SupportCategory } from '../SupportCategories'
 
 interface AddCategoryProps {
   categoryToEdit?: SupportCategory | null
-  handleAddCategory: (name: string, description: string, sla: string, routing: string) => void
-  handleEditCategory?: (id: string, name: string, description: string, sla: string, routing: string) => void
+  handleAddCategory: (name: string, description: string, sla: string, priority: string) => void
+  handleEditCategory?: (id: string, name: string, description: string, sla: string, priority: string) => void
   onClose: () => void
 }
 
@@ -18,33 +18,58 @@ export const AddCategory: React.FC<AddCategoryProps> = ({
   handleEditCategory,
   onClose
 }) => {
+  const getPriorityFromSla = (sla: string): string => {
+    switch (sla) {
+      case '1 Hour':
+      case '2 Hours':
+      case '4 Hours':
+        return 'High'
+      case '8 Hours':
+      case '12 Hours':
+        return 'Medium'
+      case '24 Hours':
+        return 'Low'
+      default:
+        return 'Medium'
+    }
+  }
+
   const [newCatName, setNewCatName] = useState('')
   const [newCatDesc, setNewCatDesc] = useState('')
   const [newCatSla, setNewCatSla] = useState('4 Hours')
+  const [newCatPriority, setNewCatPriority] = useState('High')
 
   useEffect(() => {
     if (categoryToEdit) {
       setNewCatName(categoryToEdit.name)
       setNewCatDesc(categoryToEdit.description)
       setNewCatSla(categoryToEdit.sla)
+      setNewCatPriority(getPriorityFromSla(categoryToEdit.sla))
     } else {
       setNewCatName('')
       setNewCatDesc('')
       setNewCatSla('4 Hours')
+      setNewCatPriority('High')
     }
   }, [categoryToEdit])
+
+  const handleSlaChange = (value: string) => {
+    setNewCatSla(value)
+    setNewCatPriority(getPriorityFromSla(value))
+  }
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newCatName.trim() || !newCatDesc.trim()) return
     if (categoryToEdit && handleEditCategory) {
-      handleEditCategory(categoryToEdit.id, newCatName, newCatDesc, newCatSla, categoryToEdit.routing)
+      handleEditCategory(categoryToEdit.id, newCatName, newCatDesc, newCatSla, newCatPriority)
     } else {
-      handleAddCategory(newCatName, newCatDesc, newCatSla, 'General Support')
+      handleAddCategory(newCatName, newCatDesc, newCatSla, newCatPriority)
     }
     setNewCatName('')
     setNewCatDesc('')
     setNewCatSla('4 Hours')
+    setNewCatPriority('High')
     onClose()
   }
 
@@ -93,15 +118,15 @@ export const AddCategory: React.FC<AddCategoryProps> = ({
             <label className="text-[10px] font-mono uppercase text-muted tracking-wider">Target Resolution</label>
             <select
               value={newCatSla}
-              onChange={e => setNewCatSla(e.target.value)}
+              onChange={e => handleSlaChange(e.target.value)}
               className="h-9 px-3 rounded-lg text-xs font-mono bg-card border border-border text-foreground focus:outline-none focus:border-primary/50"
             >
-              <option value="1 Hour">1 Hour</option>
-              <option value="2 Hours">2 Hours</option>
-              <option value="4 Hours">4 Hours</option>
-              <option value="8 Hours">8 Hours</option>
-              <option value="12 Hours">12 Hours</option>
-              <option value="24 Hours">24 Hours</option>
+              <option value="1 Hour">1 Hour (High Priority)</option>
+              <option value="2 Hours">2 Hours (High Priority)</option>
+              <option value="4 Hours">4 Hours (High Priority)</option>
+              <option value="8 Hours">8 Hours (Medium Priority)</option>
+              <option value="12 Hours">12 Hours (Medium Priority)</option>
+              <option value="24 Hours">24 Hours (Low Priority)</option>
             </select>
           </div>
 

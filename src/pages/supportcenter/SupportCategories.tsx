@@ -14,15 +14,14 @@ export interface SupportCategory {
     name: string
     description: string
     sla: string
-    routing: string
+    priority: string
     status: 'Active' | 'Inactive'
-    iconName: 'Payment' | 'Account' | 'Bet Dispute' | 'System Bug' | 'Other'
 }
 
 interface SupportCategoriesProps {
     categories: SupportCategory[]
-    handleAddCategory: (name: string, description: string, sla: string, routing: string) => void
-    handleEditCategory: (id: string, name: string, description: string, sla: string, routing: string) => void
+    handleAddCategory: (name: string, description: string, sla: string, priority: string) => void
+    handleEditCategory: (id: string, name: string, description: string, sla: string, priority: string) => void
     handleDeleteCategory: (id: string, name: string) => void
     handleToggleCategoryStatus: (id: string) => void
     isLoading?: boolean
@@ -53,7 +52,8 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
         return (
             c.name.toLowerCase().includes(query) ||
             c.description.toLowerCase().includes(query) ||
-            c.sla.toLowerCase().includes(query)
+            c.sla.toLowerCase().includes(query) ||
+            (c.priority && c.priority.toLowerCase().includes(query))
         )
     })
 
@@ -132,6 +132,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                         <TableRow className="border-b border-muted/30 hover:bg-transparent h-14">
                             <TableHead className="text-xs font-mono h-14 pl-4">Category Name</TableHead>
                             <TableHead className="text-xs font-mono h-14">Description</TableHead>
+                            <TableHead className="text-xs font-mono h-14 text-center">Priority</TableHead>
                             <TableHead className="text-xs font-mono h-14 text-center">Target Resolution</TableHead>
                             <TableHead className="text-xs font-mono h-14 text-center">Status</TableHead>
                             <TableHead className="text-xs font-mono h-14 pr-4 text-right">Actions</TableHead>
@@ -140,7 +141,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-10 text-muted font-mono text-xs">
+                                <TableCell colSpan={6} className="text-center py-10 text-muted font-mono text-xs">
                                     <div className="flex flex-col items-center justify-center gap-2">
                                         <motion.div
                                             className="h-5 w-5 rounded-full border-2 border-border border-t-primary"
@@ -153,7 +154,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                             </TableRow>
                         ) : filteredCategories.length === 0 ? (
                             <TableRow className="border-b border-muted/20 hover:bg-transparent">
-                                <TableCell colSpan={5} className="py-10 text-center font-mono text-xs text-muted uppercase">
+                                <TableCell colSpan={6} className="py-10 text-center font-mono text-xs text-muted uppercase">
                                     No categories match search
                                 </TableCell>
                             </TableRow>
@@ -164,6 +165,15 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                                         <span className="text-xs font-bold font-sans text-foreground">{c.name}</span>
                                     </TableCell>
                                     <TableCell className="py-3 text-xs text-muted max-w-sm font-sans truncate">{c.description}</TableCell>
+                                    <TableCell className="py-3 text-center">
+                                        <span className={`inline-block px-2.5 py-0.5 text-[9px] font-mono font-extrabold uppercase rounded-md border ${
+                                            c.priority === 'High' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
+                                            c.priority === 'Medium' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' :
+                                            'bg-blue-500/10 border-blue-500/30 text-blue-400'
+                                        }`}>
+                                            {c.priority || 'Medium'}
+                                        </span>
+                                    </TableCell>
                                     <TableCell className="py-3 text-center text-xs font-mono font-bold text-primary">{c.sla}</TableCell>
                                     <TableCell className="py-3 text-center">
                                         <button

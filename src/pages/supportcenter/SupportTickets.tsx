@@ -148,36 +148,32 @@ const initialCategories: SupportCategory[] = [
     name: 'Payment',
     description: 'Issues related to coin purchases, deposits, balance credits, or payment gateways.',
     sla: '2 Hours',
-    routing: 'Billing Team',
-    status: 'Active',
-    iconName: 'Payment'
+    priority: 'High',
+    status: 'Active'
   },
   {
     id: 'cat_2',
     name: 'Account',
     description: 'Registration, profile updates, credential resets, and identity verification queries.',
     sla: '8 Hours',
-    routing: 'User Operations',
-    status: 'Active',
-    iconName: 'Account'
+    priority: 'Medium',
+    status: 'Active'
   },
   {
     id: 'cat_3',
     name: 'Bet Dispute',
     description: 'Peer-to-peer stake escrow conflicts, outcome validation, and oracle arbitration.',
     sla: '4 Hours',
-    routing: 'Disputes Arbitration',
-    status: 'Active',
-    iconName: 'Bet Dispute'
+    priority: 'High',
+    status: 'Active'
   },
   {
     id: 'cat_4',
     name: 'System Bug',
     description: 'Technical errors, latency issues, malfunction of UI elements, or reward logic failures.',
     sla: '12 Hours',
-    routing: 'Engineering Team',
-    status: 'Active',
-    iconName: 'System Bug'
+    priority: 'Medium',
+    status: 'Active'
   }
 ]
 
@@ -347,7 +343,7 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
   // Categories state
   const [categories, setCategories] = useState<SupportCategory[]>([])
 
-  const handleAddCategory = async (name: string, description: string, sla: string, routing: string) => {
+  const handleAddCategory = async (name: string, description: string, sla: string, priority: string) => {
     try {
       const docRef = doc(collection(db, 'support_categories'))
       const newCategoryItem: SupportCategory = {
@@ -355,9 +351,8 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
         name,
         description,
         sla,
-        routing,
-        status: 'Active',
-        iconName: 'Other'
+        priority,
+        status: 'Active'
       }
 
       await setDoc(docRef, newCategoryItem)
@@ -416,19 +411,19 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
     }
   }
 
-  const handleEditCategory = async (id: string, name: string, description: string, sla: string, routing: string) => {
+  const handleEditCategory = async (id: string, name: string, description: string, sla: string, priority: string) => {
     try {
       const categoryRef = doc(db, 'support_categories', id)
       await updateDoc(categoryRef, {
         name,
         description,
         sla,
-        routing
+        priority
       })
 
       setCategories(prev => prev.map(c => {
         if (c.id === id) {
-          return { ...c, name, description, sla, routing }
+          return { ...c, name, description, sla, priority }
         }
         return c
       }))
