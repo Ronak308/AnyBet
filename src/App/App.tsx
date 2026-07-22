@@ -17,6 +17,7 @@ import { UsersPage } from '@/pages/users/UsersPage'
 import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { ProfileSettings } from '@/pages/profile/ProfileSettings'
 import { SupportCenterPage } from '@/pages/supportcenter/SupportTickets'
+import { PlatformSettingsView } from '@/pages/PlatformSettingsView'
 import NotFoundPage from '@/pages/NotFoundPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
@@ -81,6 +82,10 @@ function ProfileSettingsRoute() {
   return <ProfileSettings navigate={(tab) => navigate('/' + tab)} />
 }
 
+function SettingsRoute() {
+  return <PlatformSettingsView />
+}
+
 function SupportCenterRoute() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -88,52 +93,38 @@ function SupportCenterRoute() {
   return <SupportCenterPage activeTab={currentTab} navigate={(tab) => navigate('/' + tab)} />
 }
 
-function LoginPageView() {
-  const navigate = useNavigate()
-  return (
-    <motion.div
-      key="login"
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      transition={{ duration: 0.3 }}
-    >
-      <LoginPage onSwitchToSignup={() => navigate('/signup')} />
-    </motion.div>
-  )
-}
-
-// ─── Auth Gate ─────────────────────────────────────────────────────────────
+// ─── Protected Layout & Route Gate ───────────────────────────────────────────
 
 function AuthGate() {
   const { isAuthenticated, isLoading } = useAuth()
+  const location = useLocation()
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <motion.div
-          className="w-10 h-10 rounded-full border-2 border-border border-t-primary"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
-        />
+      <div className="h-screen w-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+            className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full"
+          />
+          <span className="text-xs font-mono text-muted">Authenticating Session...</span>
+        </div>
       </div>
     )
   }
 
   return (
     <Routes>
+      <Route path="/login" element={isAuthenticated ? <Navigate to="/operations" replace /> : <LoginPage onSwitchToSignup={() => {}} />} />
+
       {!isAuthenticated ? (
-        <>
-          <Route path="/login" element={<LoginPageView />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </>
+        <Route path="*" element={<Navigate to="/login" state={{ from: location }} replace />} />
       ) : (
         <>
-          <Route path="/login" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/" element={<DashboardLayout />}>
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="login" element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<OperationsRoute />} />
+          <Route path="/" element={<Navigate to="/operations" replace />} />
+          <Route element={<DashboardLayout />}>
+            <Route path="operations" element={<OperationsRoute />} />
             <Route path="challenges" element={<ChallengesRoute />} />
             <Route path="challenges-all" element={<ChallengesRoute />} />
             <Route path="challenges-categories" element={<ChallengesRoute />} />
@@ -159,7 +150,7 @@ function AuthGate() {
             <Route path="users" element={<UsersRoute />} />
             <Route path="profile" element={<ProfileRoute />} />
             <Route path="profile-settings" element={<ProfileSettingsRoute />} />
-            <Route path="settings" element={<NotFoundPage />} />
+            <Route path="settings" element={<SettingsRoute />} />
             <Route path="support-center" element={<SupportCenterRoute />} />
             <Route path="support-tickets" element={<SupportCenterRoute />} />
             <Route path="support-disputes" element={<SupportCenterRoute />} />
@@ -177,6 +168,7 @@ function AuthGate() {
 import { WalletProvider } from '@/context/WalletContext'
 import { ChallengesProvider } from '@/context/ChallengesContext'
 import { OracleProvider } from '@/context/OracleContext'
+import { PlatformSettingsProvider } from '@/context/PlatformSettingsContext'
 
 function App() {
   return (
@@ -185,10 +177,12 @@ function App() {
         <AuthProvider>
           <ChallengesProvider>
             <OracleProvider>
-              <BrowserRouter>
-                <AuthGate />
-                <ToastContainer />
-              </BrowserRouter>
+              <PlatformSettingsProvider>
+                <BrowserRouter>
+                  <AuthGate />
+                  <ToastContainer />
+                </BrowserRouter>
+              </PlatformSettingsProvider>
             </OracleProvider>
           </ChallengesProvider>
         </AuthProvider>

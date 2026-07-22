@@ -86,13 +86,17 @@ export interface WithdrawalRequest {
   status: 'Pending' | 'Approved' | 'Rejected'
   requestedAt: string
   processedAt?: string
-  payoutMethod?: 'Crypto (USDT)' | 'Bank Wire' | 'PayPal'
+  payoutMethod?: 'Crypto (USDT)' | 'Bank Wire' | 'PayPal' | 'Plaid ACH' | 'Stripe Direct'
   payoutDetails?: string
   txHash?: string
   taxDeducted?: number
   feeDeducted?: number
   netDisbursed?: number
   adminNotes?: string
+  twoFactorAuth?: 'Biometric Passkey' | 'SMS OTP' | 'Email 2FA'
+  riskScore?: number
+  plaidAccount?: string
+  verifiedAt?: string
 }
 
 export interface TreasuryStats {
