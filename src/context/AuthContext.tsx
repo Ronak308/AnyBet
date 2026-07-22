@@ -82,7 +82,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => getStoredUser())
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   // Rehydrate session / subscribe to auth state changes
   useEffect(() => {
