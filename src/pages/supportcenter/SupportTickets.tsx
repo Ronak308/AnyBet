@@ -181,8 +181,33 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
   const [tickets, setTickets] = useState<Ticket[]>(initialTickets)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [usersMap, setUsersMap] = useState<Record<string, { name: string; avatar?: string }>>({})
   const [isLoadingCategories, setIsLoadingCategories] = useState(true)
   const [isLoadingFaqs, setIsLoadingFaqs] = useState(true)
+
+  // Fetch users to construct avatar mappings
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const usersCol = collection(db, 'users')
+        const snapshot = await getDocs(usersCol)
+        const mapping: Record<string, { name: string; avatar?: string }> = {}
+        snapshot.forEach(doc => {
+          const data = doc.data()
+          if (data.username) {
+            mapping[data.username.toLowerCase()] = {
+              name: data.name || '',
+              avatar: data.avatar || ''
+            }
+          }
+        })
+        setUsersMap(mapping)
+      } catch (err) {
+        console.error("Error fetching users for avatar mapping:", err)
+      }
+    }
+    fetchUsers()
+  }, [])
 
   // Fetch support tickets from Firestore on load
   useEffect(() => {
@@ -1129,13 +1154,15 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
               ) : (
                 paginatedTickets.map(ticket => {
                   const isSelected = selectedTicket?.id === ticket.id
+                  const mappedUser = usersMap[ticket.user.username.toLowerCase()]
+                  const displayAvatar = mappedUser?.avatar || ticket.user.avatar
                   return (
                     <TableRow
                       key={ticket.id}
                       onClick={() => setSelectedTicket(ticket)}
                       className={`cursor-pointer transition-colors border-b border-muted/20 hover:bg-surface/40 ${isSelected ? 'bg-primary/5' : ''
                         }`}
-                    >
+                      >
                       {/* Ticket ID */}
                       <TableCell className="py-3 pl-4 font-mono text-xs font-bold text-foreground">
                         {ticket.id}
@@ -1144,8 +1171,20 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
                       {/* User */}
                       <TableCell className="py-3">
                         <div className="flex items-center gap-2">
-                          <div className="h-7 w-7 rounded-lg bg-surface border border-muted/45 flex items-center justify-center text-xs font-bold text-primary font-sans shrink-0">
-                            {ticket.user.avatar}
+                          <div className="h-7 w-7 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center text-xs font-bold text-primary font-sans shrink-0 overflow-hidden">
+                            {displayAvatar ? (
+                              displayAvatar.startsWith('http') || displayAvatar.startsWith('/') ? (
+                                <img src={displayAvatar} alt={ticket.user.name} className="h-full w-full object-cover" />
+                              ) : (
+                                <span>{displayAvatar}</span>
+                              )
+                            ) : (
+                              <span>
+                                {ticket.user.name
+                                  ? ticket.user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                                  : 'U'}
+                              </span>
+                            )}
                           </div>
                           <div>
                             <span className="text-xs font-bold text-foreground block font-sans leading-none">{ticket.user.name}</span>

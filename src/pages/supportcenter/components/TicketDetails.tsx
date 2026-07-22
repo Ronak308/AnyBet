@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import type { Ticket } from '../SupportTickets'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { X, Send, CreditCard, UserCheck, ShieldAlert, Bug, Layers, Laptop, Shield, User } from 'lucide-react'
+import { X, Send, CreditCard, UserCheck, ShieldAlert, Bug, Layers, User } from 'lucide-react'
+import { db } from '@/firebase/firebase'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 
 interface TicketDetailsProps {
   ticket: Ticket
@@ -28,6 +30,34 @@ export const TicketDetails: React.FC<TicketDetailsProps> = ({
   handleSelectCanned,
   onClose
 }) => {
+  const [userAvatar, setUserAvatar] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchUserAvatar = async () => {
+      if (!ticket?.user?.username) return
+      try {
+        const usersCol = collection(db, 'users')
+        const q = query(usersCol, where('username', '==', ticket.user.username))
+        const snapshot = await getDocs(q)
+        if (!snapshot.empty) {
+          const userData = snapshot.docs[0].data()
+          if (userData.avatar) {
+            setUserAvatar(userData.avatar)
+          } else {
+            setUserAvatar(null)
+          }
+        } else {
+          setUserAvatar(null)
+        }
+      } catch (err) {
+        console.error("Error fetching user avatar from firestore:", err)
+        setUserAvatar(null)
+      }
+    }
+
+    fetchUserAvatar()
+  }, [ticket?.user?.username])
+
   const getCategoryIcon = (category: Ticket['category']) => {
     switch (category) {
       case 'Payment':
@@ -80,7 +110,7 @@ export const TicketDetails: React.FC<TicketDetailsProps> = ({
                 <h2 className="text-base font-bold text-foreground font-sans uppercase tracking-wider">
                   Ticket Details
                 </h2>
-                <span className="font-mono text-xs font-bold text-muted">#{ticket.id}</span>
+                <span className="font-mono text-xs font-bold text-muted">{ticket.id}</span>
               </div>
               <p className="text-[10px] text-muted font-mono uppercase tracking-widest mt-1">
                 Conversation History & Technical Logs
@@ -131,8 +161,12 @@ export const TicketDetails: React.FC<TicketDetailsProps> = ({
           <span className="text-[10px] font-mono text-muted uppercase tracking-widest">User Log Details</span>
           <div className="flex items-center gap-2.5 pb-2.5 border-b border-border/40">
             <div className="h-8 w-8 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden text-primary font-bold text-[10px]">
-              {ticket.user.avatar ? (
-                <span className="text-xs">{ticket.user.avatar}</span>
+              {userAvatar ? (
+                userAvatar.startsWith('http') || userAvatar.startsWith('/') ? (
+                  <img src={userAvatar} alt={ticket.user.name} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-xs">{userAvatar}</span>
+                )
               ) : (
                 <User className="h-3.5 w-3.5" />
               )}
@@ -143,32 +177,18 @@ export const TicketDetails: React.FC<TicketDetailsProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            <div className="flex justify-between items-center">
-              <span className="text-muted flex items-center gap-1.5 font-mono text-[10px]">
-                <Laptop className="h-3.5 w-3.5 text-muted/70" /> BROWSER
-              </span>
-              <span className="text-foreground font-sans text-[11px] truncate max-w-[130px]" title={ticket.user.browser}>
-                {ticket.user.browser}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted flex items-center gap-1.5 font-mono text-[10px]">
-                <Shield className="h-3.5 w-3.5 text-muted/70" /> USER IP
-              </span>
-              <span className="text-foreground font-mono text-[11px]">{ticket.user.ip}</span>
-            </div>
+          <div className="grid grid-cols-2 gap-4 pt-1">
             <div className="flex justify-between items-center">
               <span className="text-muted flex items-center gap-1.5 font-mono text-[10px]">
                 <CreditCard className="h-3.5 w-3.5 text-muted/70" /> WALLET
               </span>
-              <span className="text-foreground font-mono text-[11px]">{ticket.user.walletBalance.toLocaleString()} Coins</span>
+              <span className="text-foreground font-mono text-[11px] font-bold">{ticket.user.walletBalance.toLocaleString()} Coins</span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center border-l border-border/40 pl-4">
               <span className="text-muted flex items-center gap-1.5 font-mono text-[10px]">
                 <Layers className="h-3.5 w-3.5 text-muted/70" /> ACTIVE BETS
               </span>
-              <span className="text-foreground font-mono text-[11px]">{ticket.user.activeBets}</span>
+              <span className="text-foreground font-mono text-[11px] font-bold">{ticket.user.activeBets}</span>
             </div>
           </div>
         </div>
