@@ -102,7 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const supportSubItems = [
     { id: 'support-tickets', label: 'Support Tickets', icon: MessageSquare },
-    { id: 'support-categories', label: 'Support Categories', icon: Layers },
+    { id: 'support-categories', label: 'Categories', icon: Layers },
     { id: 'support-faq', label: 'FAQ Manager', icon: HelpCircle },
   ]
 

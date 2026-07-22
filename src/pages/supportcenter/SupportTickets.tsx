@@ -745,13 +745,13 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
         }
       case 'support-faq':
         return {
-          title: 'FAQ Manager Console',
+          title: 'FAQ Manager',
           desc: 'Create, update, and categorize public guides and automated help articles',
           icon: <HelpCircle className="h-6 w-6 text-primary" />
         }
       case 'support-categories':
         return {
-          title: 'Support Categories Console',
+          title: 'Support Categories',
           desc: 'Manage support ticketing classifications, response SLAs, and routing rules',
           icon: <Layers className="h-6 w-6 text-primary" />
         }
