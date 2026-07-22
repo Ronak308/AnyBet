@@ -1,27 +1,27 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  Zap, 
-  Wallet, 
-  Cpu, 
-  Users, 
+import {
+  Zap,
+  Wallet,
+  Cpu,
+  Users,
   RefreshCw,
   ExternalLink,
   Compass
 } from 'lucide-react'
-import { Card, CardContent } from '../components/ui/card'
-import { Badge } from '../components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
-import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs'
-import { 
-  AreaChart, 
-  Area, 
+import { Card, CardContent } from '../../components/ui/card'
+import { Badge } from '../../components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
+import { Tabs, TabsList, TabsTrigger } from '../../components/ui/tabs'
+import {
+  AreaChart,
+  Area,
   BarChart,
   Bar,
-  XAxis, 
-  YAxis, 
-  Tooltip as ChartTooltip, 
-  ResponsiveContainer 
+  XAxis,
+  YAxis,
+  Tooltip as ChartTooltip,
+  ResponsiveContainer
 } from 'recharts'
 
 interface OperationsViewProps {
@@ -34,10 +34,10 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
   const [chartType, setChartType] = useState<'area' | 'bar'>('area')
   const [isCalibrating, setIsCalibrating] = useState(false)
   const [streamingFeed, setStreamingFeed] = useState([
-    { id: '#20459-B', market: 'UCL: Real Madrid vs Man City', outcome: 'Draw (3-3)', type: 'AI Oracle', value: '12,450 Coins', time: 'Just now', source: 'oracle' },
-    { id: '#20458-X', market: 'BTC Closes Above 100k (24h)', outcome: 'True', type: 'API Feed', value: '8,120 Coins', time: '2m ago', source: 'api' },
-    { id: '#20457-A', market: 'Formula 1: Monaco GP Winner', outcome: 'Verstappen', type: 'AI Oracle', value: '45,000 Coins', time: '5m ago', source: 'oracle' },
-    { id: '#20456-D', market: 'Oscars: Best Picture 2024', outcome: 'Oppenheimer', type: 'API Feed', value: '2,900 Coins', time: '12m ago', source: 'api' },
+    { id: '#20459-B', market: 'UCL: Real Madrid vs Man City', outcome: 'Draw (3-3)', type: 'AI Oracle', value: '12,450 BET', time: 'Just now', source: 'oracle' },
+    { id: '#20458-X', market: 'BTC Closes Above 100k (24h)', outcome: 'True', type: 'API Feed', value: '8,120 BET', time: '2m ago', source: 'api' },
+    { id: '#20457-A', market: 'Formula 1: Monaco GP Winner', outcome: 'Verstappen', type: 'AI Oracle', value: '45,000 BET', time: '5m ago', source: 'oracle' },
+    { id: '#20456-D', market: 'Oscars: Best Picture 2024', outcome: 'Oppenheimer', type: 'API Feed', value: '2,900 BET', time: '12m ago', source: 'api' },
   ])
 
   // Mock charts data
@@ -88,14 +88,14 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
       ]
       const outcomes = ['True', 'False', 'Awaiting API', 'Settled (AI)', 'Override Pending']
       const sources = ['oracle', 'api']
-      const values = ['4,200 Coins', '1,850 Coins', '22,400 Coins', '9,800 Coins', '32,150 Coins']
-      
+      const values = ['4,200 BET', '1,850 BET', '22,400 BET', '9,800 BET', '32,150 BET']
+
       const newId = `#20${Math.floor(Math.random() * 900) + 100}-${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`
       const newMarket = markets[Math.floor(Math.random() * markets.length)]
       const newOutcome = outcomes[Math.floor(Math.random() * outcomes.length)]
       const newSource = sources[Math.floor(Math.random() * sources.length)]
       const newValue = values[Math.floor(Math.random() * values.length)]
-      
+
       setStreamingFeed(prev => [
         {
           id: newId,
@@ -132,7 +132,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
   // KPI metadata
   const kpis = [
     { title: 'Active Challenges', value: '2,450', change: '+12%', isPositive: true, subtext: 'Daily operations', icon: Zap, color: 'text-primary border-primary/20 bg-primary/5', tab: 'challenges' },
-    { title: 'Coins Locked', value: '4.2M Coins', change: '+5.2%', isPositive: true, subtext: 'Staked in challenges', icon: Wallet, color: 'text-secondary border-secondary/20 bg-secondary/5', tab: 'financials' },
+    { title: 'Coins Locked', value: '4.2M BET', change: '+5.2%', isPositive: true, subtext: 'Staked in challenges', icon: Wallet, color: 'text-secondary border-secondary/20 bg-secondary/5', tab: 'financials' },
     { title: 'AI Settled Efficiency', value: '98.4%', change: 'Precision', isPositive: true, subtext: 'Arbitration rate', icon: Cpu, color: 'text-[#8026FF] border-[#8026FF]/20 bg-[#8026FF]/5', tab: 'ai-oracle' },
     { title: 'Active Users', value: '12k', change: '+1.8%', isPositive: true, subtext: 'Hourly interaction', icon: Users, color: 'text-secondary border-secondary/20 bg-secondary/5', tab: 'reputation' }
   ]
@@ -204,7 +204,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
                   <h3 className="text-base font-bold text-foreground font-sans uppercase tracking-wider">Platform Growth</h3>
                   <p className="text-[11px] text-muted font-mono uppercase tracking-widest mt-1">Daily transaction volume & engagement</p>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   {/* Area/Bar Toggle */}
                   <Tabs value={chartType} onValueChange={(val) => setChartType(val as 'area' | 'bar')}>
@@ -232,55 +232,55 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
                     <AreaChart data={chartData[chartRange]} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                       <defs>
                         <linearGradient id="purpleGlow" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#8026FF" stopOpacity={0.4}/>
-                          <stop offset="95%" stopColor="#8026FF" stopOpacity={0.0}/>
+                          <stop offset="5%" stopColor="#8026FF" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="#8026FF" stopOpacity={0.0} />
                         </linearGradient>
                         <linearGradient id="cyanGlow" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#00E0FF" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#00E0FF" stopOpacity={0.0}/>
+                          <stop offset="5%" stopColor="#00E0FF" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#00E0FF" stopOpacity={0.0} />
                         </linearGradient>
                       </defs>
-                      <XAxis 
-                        dataKey="name" 
-                        stroke="#A8A8B5" 
-                        fontSize={9} 
-                        tickLine={false} 
-                        axisLine={false} 
+                      <XAxis
+                        dataKey="name"
+                        stroke="#A8A8B5"
+                        fontSize={9}
+                        tickLine={false}
+                        axisLine={false}
                       />
-                      <YAxis 
-                        stroke="#A8A8B5" 
-                        fontSize={9} 
-                        tickLine={false} 
-                        axisLine={false} 
+                      <YAxis
+                        stroke="#A8A8B5"
+                        fontSize={9}
+                        tickLine={false}
+                        axisLine={false}
                       />
-                      <ChartTooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#1B1B23', 
-                          borderColor: '#2A2A36', 
+                      <ChartTooltip
+                        contentStyle={{
+                          backgroundColor: '#1B1B23',
+                          borderColor: '#2A2A36',
                           borderRadius: '8px',
                           color: '#F3F0FF',
                           fontFamily: 'JetBrains Mono'
                         }}
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="volume" 
-                        stroke="#8026FF" 
+                      <Area
+                        type="monotone"
+                        dataKey="volume"
+                        stroke="#8026FF"
                         strokeWidth={2}
-                        fillOpacity={1} 
-                        fill="url(#purpleGlow)" 
+                        fillOpacity={1}
+                        fill="url(#purpleGlow)"
                         name="TVL Volume"
                         dot={false}
                         activeDot={{ r: 4 }}
                         isAnimationActive={false}
                       />
-                      <Area 
-                        type="monotone" 
-                        dataKey="transactions" 
-                        stroke="#00E0FF" 
+                      <Area
+                        type="monotone"
+                        dataKey="transactions"
+                        stroke="#00E0FF"
                         strokeWidth={2}
-                        fillOpacity={1} 
-                        fill="url(#cyanGlow)" 
+                        fillOpacity={1}
+                        fill="url(#cyanGlow)"
                         name="Transactions"
                         dot={false}
                         activeDot={{ r: 4 }}
@@ -289,39 +289,39 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
                     </AreaChart>
                   ) : (
                     <BarChart data={chartData[chartRange]} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                      <XAxis 
-                        dataKey="name" 
-                        stroke="#A8A8B5" 
-                        fontSize={9} 
-                        tickLine={false} 
-                        axisLine={false} 
+                      <XAxis
+                        dataKey="name"
+                        stroke="#A8A8B5"
+                        fontSize={9}
+                        tickLine={false}
+                        axisLine={false}
                       />
-                      <YAxis 
-                        stroke="#A8A8B5" 
-                        fontSize={9} 
-                        tickLine={false} 
-                        axisLine={false} 
+                      <YAxis
+                        stroke="#A8A8B5"
+                        fontSize={9}
+                        tickLine={false}
+                        axisLine={false}
                       />
-                      <ChartTooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#1B1B23', 
-                          borderColor: '#2A2A36', 
+                      <ChartTooltip
+                        contentStyle={{
+                          backgroundColor: '#1B1B23',
+                          borderColor: '#2A2A36',
                           borderRadius: '8px',
                           color: '#F3F0FF',
                           fontFamily: 'JetBrains Mono'
                         }}
                       />
-                      <Bar 
-                        dataKey="volume" 
-                        fill="#8026FF" 
+                      <Bar
+                        dataKey="volume"
+                        fill="#8026FF"
                         radius={[4, 4, 0, 0]}
                         maxBarSize={40}
                         name="TVL Volume"
                         isAnimationActive={false}
                       />
-                      <Bar 
-                        dataKey="transactions" 
-                        fill="#00E0FF" 
+                      <Bar
+                        dataKey="transactions"
+                        fill="#00E0FF"
                         radius={[4, 4, 0, 0]}
                         maxBarSize={40}
                         name="Transactions"
@@ -383,7 +383,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
                         <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary/60 border border-primary/20"></span>
                       )}
                     </span>
-                    
+
                     {/* Tooltip on Node */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-50 bg-[#1B1B23] border border-border text-[8px] font-mono rounded px-1.5 py-0.5 whitespace-nowrap text-foreground">
                       NODE_{node.id}: {node.status.toUpperCase()}
@@ -409,7 +409,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
               </div>
             </div>
 
-            <button 
+            <button
               onClick={() => {
                 if (isCalibrating) return
                 setIsCalibrating(true)
@@ -423,11 +423,10 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
                 }, 2500)
               }}
               disabled={isCalibrating}
-              className={`mt-6 w-full border text-[10px] font-mono py-2 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                isCalibrating
-                  ? 'border-secondary/40 text-secondary bg-secondary/5 cursor-not-allowed'
-                  : 'border-primary/20 hover:border-primary/50 text-primary hover:text-primary-hover bg-primary/5'
-              }`}
+              className={`mt-6 w-full border text-[10px] font-mono py-2 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${isCalibrating
+                ? 'border-secondary/40 text-secondary bg-secondary/5 cursor-not-allowed'
+                : 'border-primary/20 hover:border-primary/50 text-primary hover:text-primary-hover bg-primary/5'
+                }`}
             >
               <RefreshCw className={`h-3 w-3 ${isCalibrating ? 'animate-spin' : ''}`} />
               {isCalibrating ? 'CALIBRATING...' : 'RUN CALIBRATION SUITE'}
@@ -447,7 +446,7 @@ export const OperationsView: React.FC<OperationsViewProps> = ({ onNavigateToChal
               </h3>
               <Badge variant="primary" className="animate-pulse bg-primary/20 text-primary text-[9px]">STREAMING</Badge>
             </div>
-            <button 
+            <button
               onClick={onNavigateToChallenges}
               className="text-xs text-muted hover:text-foreground flex items-center gap-1 cursor-pointer font-mono text-[9px] uppercase tracking-wider"
             >

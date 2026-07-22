@@ -49,12 +49,12 @@ export function DashboardLayout() {
   ]
 
   // Determine active tab string from url pathname
-  const activeTab = location.pathname.split('/')[1] || 'operations'
+  const activeTab = location.pathname.split('/')[1] || 'dashboard'
   const setActiveTab = (tab: string) => navigate('/' + tab)
 
   // Mobile Bottom Navigation tabs list
   const mobileTabs = [
-    { id: 'operations', label: 'Ops', icon: LayoutDashboard },
+    { id: 'dashboard', label: 'Ops', icon: LayoutDashboard },
     { id: 'challenges-all', label: 'Bets', icon: Sword },
     { id: 'reputation', label: 'Rep', icon: Users },
     { id: 'financials', label: 'Finance', icon: Coins },

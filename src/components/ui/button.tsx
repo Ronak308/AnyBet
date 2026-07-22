@@ -20,8 +20,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       outline: "bg-transparent border border-border text-foreground hover:bg-surface hover:border-muted/30",
       ghost: "bg-transparent text-foreground hover:bg-surface/60",
       danger: "bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500/30 hover:border-red-500/50",
-      nav: "bg-transparent text-muted hover:text-foreground hover:bg-surface/30 justify-start w-full gap-3",
-      "nav-active": "bg-primary/10 text-foreground justify-start w-full gap-3"
+      nav: "bg-transparent text-nav-text hover:bg-surface/40 justify-start w-full gap-3",
+      "nav-active": "bg-primary/10 text-primary justify-start w-full gap-3"
     }
     
     const sizes = {

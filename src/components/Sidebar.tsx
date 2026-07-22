@@ -68,7 +68,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, [activeTab])
 
   const menuItems = [
-    { id: 'operations', label: 'Operations', icon: LayoutDashboard },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'challenges', label: 'Challenges', icon: Sword, isDropdown: true },
     { id: 'reputation', label: 'Reputation', icon: Trophy },
@@ -143,7 +143,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Menu Navigation */}
-        <nav className="flex flex-col gap-1.5 overflow-y-auto flex-1 pr-1 scrollbar-thin">
+        <nav className="flex flex-col gap-1 overflow-y-auto flex-1 pr-1 scrollbar-none">
           {menuItems.map((item) => {
             const Icon = item.icon
             const isChallengesGroup = item.id === 'challenges'
@@ -184,20 +184,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         }
                       }
                     }}
-                    className={`flex items-center justify-between ${isCollapsed ? 'justify-center px-0' : 'px-4'} h-11 w-full transition-all duration-200`}
+                    className={cn(
+                      "flex items-center justify-between h-[38px] w-full transition-all duration-200 group",
+                      isCollapsed ? "justify-center px-0" : "px-4"
+                    )}
                     glow={isActive}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-primary' : 'text-muted'}`} />
+                      <Icon className="h-4 w-4 shrink-0" />
                       {!isCollapsed && (
-                        <span className="font-medium text-sm font-sans">
+                        <span className="font-semibold text-[13px] font-sans">
                           {item.label}
                         </span>
                       )}
                     </div>
 
                     {!isCollapsed && (
-                      <div className="text-muted hover:text-foreground">
+                      <div className="opacity-60 group-hover:opacity-100 transition-opacity duration-200">
                         {challengesOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                       </div>
                     )}
@@ -211,7 +214,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="flex flex-col gap-1 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
+                        className="flex flex-col gap-0.5 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
                       >
                         {challengeSubItems.map((sub) => {
                           const SubIcon = sub.icon
@@ -221,12 +224,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <button
                               key={sub.id}
                               onClick={() => setActiveTab(sub.id)}
-                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono tracking-wider transition-all duration-200 cursor-pointer w-full text-left ${isSubActive
-                                ? 'bg-primary/15 text-primary font-bold border border-primary/30'
-                                : 'text-muted hover:text-foreground hover:bg-surface/60'
-                                }`}
+                              className={cn(
+                                "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-sans transition-all duration-200 cursor-pointer w-full text-left border border-transparent group",
+                                isSubActive
+                                  ? "bg-primary/15 text-primary font-semibold border-primary/30"
+                                  : "text-nav-text hover:bg-surface/50"
+                              )}
                             >
-                              <SubIcon className={`h-3.5 w-3.5 ${isSubActive ? 'text-primary' : 'text-muted'}`} />
+                              <SubIcon className="h-4 w-4 shrink-0" />
                               <span>{sub.label}</span>
                             </button>
                           )
@@ -256,20 +261,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         }
                       }
                     }}
-                    className={`flex items-center justify-between ${isCollapsed ? 'justify-center px-0' : 'px-4'} h-11 w-full transition-all duration-200`}
+                    className={cn(
+                      "flex items-center justify-between h-[38px] w-full transition-all duration-200 group",
+                      isCollapsed ? "justify-center px-0" : "px-4"
+                    )}
                     glow={isActive}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-primary' : 'text-muted'}`} />
+                      <Icon className="h-4 w-4 shrink-0" />
                       {!isCollapsed && (
-                        <span className="font-medium text-sm font-sans">
+                        <span className="font-semibold text-[13px] font-sans">
                           {item.label}
                         </span>
                       )}
                     </div>
 
                     {!isCollapsed && (
-                      <div className="text-muted hover:text-foreground">
+                      <div className="opacity-60 group-hover:opacity-100 transition-opacity duration-200">
                         {financialsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                       </div>
                     )}
@@ -283,7 +291,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="flex flex-col gap-1 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
+                        className="flex flex-col gap-0.5 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
                       >
                         {financialSubItems.map((sub) => {
                           const SubIcon = sub.icon
@@ -293,12 +301,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <button
                               key={sub.id}
                               onClick={() => setActiveTab(sub.id)}
-                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono tracking-wider transition-all duration-200 cursor-pointer w-full text-left ${isSubActive
-                                ? 'bg-primary/15 text-primary font-bold border border-primary/30'
-                                : 'text-muted hover:text-foreground hover:bg-surface/60'
-                                }`}
+                              className={cn(
+                                "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-sans transition-all duration-200 cursor-pointer w-full text-left border border-transparent group",
+                                isSubActive
+                                  ? "bg-primary/15 text-primary font-semibold border-primary/30"
+                                  : "text-nav-text hover:bg-surface/50"
+                              )}
                             >
-                              <SubIcon className={`h-3.5 w-3.5 ${isSubActive ? 'text-primary' : 'text-muted'}`} />
+                              <SubIcon className="h-4 w-4 shrink-0" />
                               <span>{sub.label}</span>
                             </button>
                           )
@@ -328,20 +338,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         }
                       }
                     }}
-                    className={`flex items-center justify-between ${isCollapsed ? 'justify-center px-0' : 'px-4'} h-11 w-full transition-all duration-200`}
+                    className={cn(
+                      "flex items-center justify-between h-[38px] w-full transition-all duration-200 group",
+                      isCollapsed ? "justify-center px-0" : "px-4"
+                    )}
                     glow={isActive}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-primary' : 'text-muted'}`} />
+                      <Icon className="h-4 w-4 shrink-0" />
                       {!isCollapsed && (
-                        <span className="font-medium text-sm font-sans">
+                        <span className="font-semibold text-[13px] font-sans">
                           {item.label}
                         </span>
                       )}
                     </div>
 
                     {!isCollapsed && (
-                      <div className="text-muted hover:text-foreground">
+                      <div className="opacity-60 group-hover:opacity-100 transition-opacity duration-200">
                         {oracleOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                       </div>
                     )}
@@ -355,7 +368,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="flex flex-col gap-1 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
+                        className="flex flex-col gap-0.5 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
                       >
                         {oracleSubItems.map((sub) => {
                           const SubIcon = sub.icon
@@ -365,12 +378,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <button
                               key={sub.id}
                               onClick={() => setActiveTab(sub.id)}
-                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono tracking-wider transition-all duration-200 cursor-pointer w-full text-left ${isSubActive
-                                ? 'bg-primary/15 text-primary font-bold border border-primary/30'
-                                : 'text-muted hover:text-foreground hover:bg-surface/60'
-                                }`}
+                              className={cn(
+                                "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-sans transition-all duration-200 cursor-pointer w-full text-left border border-transparent group",
+                                isSubActive
+                                  ? "bg-primary/15 text-primary font-semibold border-primary/30"
+                                  : "text-nav-text hover:bg-surface/50"
+                              )}
                             >
-                              <SubIcon className={`h-3.5 w-3.5 ${isSubActive ? 'text-primary' : 'text-muted'}`} />
+                              <SubIcon className="h-4 w-4 shrink-0" />
                               <span>{sub.label}</span>
                             </button>
                           )
@@ -400,20 +415,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         }
                       }
                     }}
-                    className={`flex items-center justify-between ${isCollapsed ? 'justify-center px-0' : 'px-4'} h-11 w-full transition-all duration-200`}
+                    className={cn(
+                      "flex items-center justify-between h-[38px] w-full transition-all duration-200 group",
+                      isCollapsed ? "justify-center px-0" : "px-4"
+                    )}
                     glow={isActive}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-primary' : 'text-muted'}`} />
+                      <Icon className="h-4 w-4 shrink-0" />
                       {!isCollapsed && (
-                        <span className="font-medium text-sm font-sans">
+                        <span className="font-semibold text-[13px] font-sans">
                           {item.label}
                         </span>
                       )}
                     </div>
 
                     {!isCollapsed && (
-                      <div className="text-muted hover:text-foreground">
+                      <div className="opacity-60 group-hover:opacity-100 transition-opacity duration-200">
                         {supportOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                       </div>
                     )}
@@ -427,7 +445,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="flex flex-col gap-1 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
+                        className="flex flex-col gap-0.5 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
                       >
                         {supportSubItems.map((sub) => {
                           const SubIcon = sub.icon
@@ -437,12 +455,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <button
                               key={sub.id}
                               onClick={() => setActiveTab(sub.id)}
-                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-mono tracking-wider transition-all duration-200 cursor-pointer w-full text-left ${isSubActive
-                                ? 'bg-primary/15 text-primary font-bold border border-primary/30'
-                                : 'text-muted hover:text-foreground hover:bg-surface/60'
-                                }`}
+                              className={cn(
+                                "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-sans transition-all duration-200 cursor-pointer w-full text-left border border-transparent group",
+                                isSubActive
+                                  ? "bg-primary/15 text-primary font-semibold border-primary/30"
+                                  : "text-nav-text hover:bg-surface/50"
+                              )}
                             >
-                              <SubIcon className={`h-3.5 w-3.5 ${isSubActive ? 'text-primary' : 'text-muted'}`} />
+                              <SubIcon className="h-4 w-4 shrink-0" />
                               <span>{sub.label}</span>
                             </button>
                           )
@@ -459,15 +479,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 key={item.id}
                 variant={isActive ? "nav-active" : "nav"}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex items-center ${isCollapsed ? 'justify-center px-0' : 'px-4'} h-10 w-full transition-all duration-200`}
+                className={cn(
+                  "flex items-center h-9 w-full transition-all duration-200 group",
+                  isCollapsed ? "justify-center px-0" : "px-4"
+                )}
                 glow={isActive}
               >
-                <Icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-primary' : 'text-muted'}`} />
+                <Icon className="h-4 w-4 shrink-0" />
                 {!isCollapsed && (
                   <motion.span
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="font-medium text-sm font-sans"
+                    className="font-semibold text-[13px] font-sans"
                   >
                     {item.label}
                   </motion.span>
@@ -479,21 +502,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Sign Out Button */}
-      <div className="mt-auto pt-4 border-t border-border/50">
+      <div className="mt-auto pt-4 border-t border-border">
         <Button
           variant="ghost"
           onClick={() => setLogoutConfirmOpen(true)}
           className={cn(
-            "flex items-center text-muted hover:text-red-500 hover:bg-red-500/10 dark:hover:text-red-400 dark:hover:bg-red-950/20 transition-all duration-200 h-10 w-full",
+            "flex items-center text-muted hover:text-red-500 hover:bg-red-500/10 dark:hover:text-red-400 dark:hover:bg-red-950/20 transition-all duration-200 h-8 w-full",
             isCollapsed ? "justify-center px-0" : "px-4 gap-3"
           )}
         >
-          <LogOut className="h-5 w-5 shrink-0" />
+          <LogOut className="h-4 w-4 shrink-0" />
           {!isCollapsed && (
             <motion.span
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="font-medium text-sm font-sans"
+              className="font-medium text-[13px] font-sans"
             >
               Sign Out
             </motion.span>

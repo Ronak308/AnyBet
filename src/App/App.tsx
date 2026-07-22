@@ -7,7 +7,7 @@ import {
   useNavigate,
   useLocation
 } from 'react-router-dom'
-import { OperationsView } from '@/pages/OperationsView'
+import { OperationsView } from '@/pages/dashbaord/DashbordPage'
 import { ChallengesView } from '@/pages/ChallengesView'
 import { ReputationView } from '@/pages/ReputationView'
 import { FinancialsView } from '@/pages/FinancialsView'
@@ -124,11 +124,11 @@ function AuthGate() {
         </>
       ) : (
         <>
-          <Route path="/login" element={<Navigate to="/operations" replace />} />
+          <Route path="/login" element={<Navigate to="/dashboard" replace />} />
           <Route path="/" element={<DashboardLayout />}>
-            <Route index element={<Navigate to="/operations" replace />} />
-            <Route path="login" element={<Navigate to="/operations" replace />} />
-            <Route path="operations" element={<OperationsRoute />} />
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="login" element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<OperationsRoute />} />
             <Route path="challenges" element={<ChallengesRoute />} />
             <Route path="challenges-all" element={<ChallengesRoute />} />
             <Route path="challenges-categories" element={<ChallengesRoute />} />

@@ -108,10 +108,10 @@ export const ChallengesView: React.FC<ChallengesViewProps> = ({ activeTab, navig
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <button
-              onClick={() => navigate('operations')}
+              onClick={() => navigate('dashboard')}
               className="text-[10px] font-mono text-muted hover:text-primary transition-colors uppercase tracking-wider flex items-center gap-1 cursor-pointer"
             >
-              <ArrowLeft className="h-3 w-3" /> Back to Operations
+              <ArrowLeft className="h-3 w-3" /> Back to Dashboard
             </button>
           </div>
           <div className="flex items-center gap-3">
