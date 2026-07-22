@@ -231,8 +231,12 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
         name: userData.name.trim(),
         email: userData.email.trim().toLowerCase(),
         username: userData.username.trim(),
+        mobileNumber: userData.mobileNumber || '',
+        dob: userData.dob || '',
         role: normalizeRole(userData.role),
         status: userData.status || 'active',
+        kycStatus: userData.kycStatus || 'Not Submitted',
+        avatar: userData.avatar || '',
         createdAt: createdAtVal
       }
 
@@ -578,19 +582,20 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
             <Table>
               <TableHeader className="bg-surface/75 border-b border-muted/30">
                 <TableRow className="border-b border-muted/30 hover:bg-transparent h-14">
-                  <TableHead className="text-xs font-mono h-14">Name</TableHead>
-                  <TableHead className="text-xs font-mono h-14">Username</TableHead>
-                  <TableHead className="text-xs font-mono h-14">Email</TableHead>
-                  <TableHead className="text-xs font-mono h-14">Role</TableHead>
-                  <TableHead className="text-xs font-mono h-14">Status</TableHead>
-                  <TableHead className="text-xs font-mono h-14">Last Login</TableHead>
-                  <TableHead className="text-xs font-mono h-14 text-right">Actions</TableHead>
+                  <TableHead className="text-xs font-mono h-14 w-12 pr-0">Avatar</TableHead>
+                  <TableHead className="text-xs font-mono h-14 pl-6">Full Name</TableHead>
+                  <TableHead className="text-xs font-mono h-14 w-56">Username</TableHead>
+                  <TableHead className="text-xs font-mono h-14 w-44">Role</TableHead>
+                  <TableHead className="text-xs font-mono h-14 w-48">KYC Status</TableHead>
+                  <TableHead className="text-xs font-mono h-14 w-44">Status</TableHead>
+                  <TableHead className="text-xs font-mono h-14 w-64">Last Login</TableHead>
+                  <TableHead className="text-xs font-mono h-14 w-20 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-10 text-muted font-mono text-xs">
+                    <TableCell colSpan={8} className="text-center py-10 text-muted font-mono text-xs">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <motion.div
                           className="h-5 w-5 rounded-full border-2 border-border border-t-primary"
@@ -603,7 +608,7 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
                   </TableRow>
                 ) : filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-10 text-muted font-mono text-xs">
+                    <TableCell colSpan={8} className="text-center py-10 text-muted font-mono text-xs">
                       <div className="flex flex-col items-center justify-center gap-1">
                         <ShieldAlert className="h-6 w-6 text-muted-text/50" />
                         <span>No matches found. Check active filters.</span>
@@ -621,38 +626,38 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
                         className={`cursor-pointer transition-colors border-b border-muted/20 hover:bg-surface/40 ${isSelected ? 'bg-primary/5' : ''}`}
                       >
 
-                        {/* Name */}
-                        <TableCell className="py-2.5">
-                          <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden text-primary font-bold text-[10px]">
-                              {u.avatar ? (
-                                <img src={u.avatar} alt={u.name} className="h-full w-full object-cover" />
-                              ) : (
-                                <span>
-                                  {u.name
-                                    ? u.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-                                    : 'U'}
-                                </span>
-                              )}
-                            </div>
+                        {/* Avatar */}
+                        <TableCell className="py-2.5 w-12 pr-0">
+                          <div className="h-8 w-8 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden text-primary font-bold text-[10px]">
+                            {u.avatar ? (
+                              <img src={u.avatar} alt={u.name} className="h-full w-full object-cover" />
+                            ) : (
+                              <span>
+                                {u.name
+                                  ? u.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                                  : 'U'}
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+
+                        {/* Full Name */}
+                        <TableCell className="py-2.5 pl-6">
+                          <div className="flex flex-col">
                             <span className="font-medium text-xs text-foreground line-clamp-1">{u.name}</span>
+                            <span className="text-[10px] text-muted font-mono">{u.email}</span>
                           </div>
                         </TableCell>
 
                         {/* User Name */}
-                        <TableCell className="py-2.5">
+                        <TableCell className="py-2.5 w-56">
                           <span className="font-mono text-xs text-muted">
                             {u.username ? `@${u.username}` : '—'}
                           </span>
                         </TableCell>
 
-                        {/* Email */}
-                        <TableCell className="py-2.5">
-                          <span className="font-mono text-xs text-muted">{u.email}</span>
-                        </TableCell>
-
                         {/* Role */}
-                        <TableCell className="py-2.5">
+                        <TableCell className="py-2.5 w-44">
                           {u.role ? (
                             <span className="text-xs font-sans text-foreground capitalize">
                               {u.role}
@@ -662,8 +667,41 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
                           )}
                         </TableCell>
 
+                        {/* KYC Status */}
+                        <TableCell className="py-2.5 w-48">
+                          {(() => {
+                            const kyc = u.kycStatus || 'Not Submitted'
+                            if (kyc === 'Verified') {
+                              return (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                  Verified
+                                </span>
+                              )
+                            }
+                            if (kyc === 'Pending') {
+                              return (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse">
+                                  Pending
+                                </span>
+                              )
+                            }
+                            if (kyc === 'Rejected') {
+                              return (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
+                                  Rejected
+                                </span>
+                              )
+                            }
+                            return (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-muted/10 text-muted border border-muted/20">
+                                Not Submitted
+                              </span>
+                            )
+                          })()}
+                        </TableCell>
+
                         {/* Status */}
-                        <TableCell className="py-2.5">
+                        <TableCell className="py-2.5 w-44">
                           {status === 'active' ? (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -678,14 +716,14 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
                         </TableCell>
 
                         {/* Last Login */}
-                        <TableCell className="py-2.5">
+                        <TableCell className="py-2.5 w-64">
                           <span className="font-mono text-xs text-muted whitespace-nowrap">
                             {formatLastLoginTable(u)}
                           </span>
                         </TableCell>
 
                         {/* Actions */}
-                        <TableCell className="text-right py-2.5" onClick={(e) => e.stopPropagation()}>
+                        <TableCell className="text-right py-2.5 w-20" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>

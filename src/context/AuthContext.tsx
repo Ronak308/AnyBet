@@ -22,6 +22,9 @@ export interface User {
   joinedAt: string
   createdAt?: any
   status?: string
+  mobileNumber?: string
+  dob?: string
+  kycStatus?: string
 }
 
 interface AuthContextValue {

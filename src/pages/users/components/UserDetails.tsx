@@ -4,7 +4,7 @@ import { Card } from '../../../components/ui/card'
 import { Button } from '../../../components/ui/button'
 import { Badge } from '../../../components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table'
-import { Ban, Calendar, Activity, Mail, X } from 'lucide-react'
+import { Ban, Calendar, Activity, Mail, X, Phone, Fingerprint } from 'lucide-react'
 
 interface UserDetailsProps {
   user: User
@@ -98,44 +98,73 @@ export const UserDetails: React.FC<UserDetailsProps> = ({
   const joinedDate = formatUserDate(user)
 
   return (
-    <Card className="w-full bg-[#120F1D] border-border/60 text-foreground p-6 shadow-2xl relative overflow-hidden font-sans">
+    <Card className="w-full h-full bg-[#120F1D] border-border/60 text-foreground p-6 shadow-2xl relative overflow-hidden font-sans flex flex-col justify-between select-none">
+      <div className="flex-grow overflow-y-auto pr-1 pb-4">
       
       {/* Header bar */}
       <div className="flex items-center justify-between border-b border-border/40 pb-4 mb-4">
-        <div className="flex items-center gap-2">
-          <Badge variant="pro" className="font-mono text-[10px]">USER DEEP SPEC AUDIT</Badge>
-          <Badge variant="outline" className="text-[10px] text-emerald-400 border-emerald-500/30">VERIFIED PLAYER</Badge>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold text-foreground font-sans uppercase tracking-wider">
+              User Details
+            </h2>
+          </div>
+          <p className="text-[10px] text-muted font-mono uppercase tracking-widest">
+            Viewing profile for @{user.username}
+          </p>
         </div>
         {onClose && (
-          <button onClick={onClose} className="p-1 rounded-lg text-muted hover:text-foreground cursor-pointer">
+          <button onClick={onClose} className="p-1 rounded-lg text-muted hover:text-foreground hover:bg-border/30 transition-colors cursor-pointer shrink-0">
             <X className="h-4 w-4" />
           </button>
         )}
       </div>
 
       {/* User Avatar & Core Stats */}
-      <div className="flex items-center gap-4 bg-surface/30 p-4 rounded-2xl border border-border/40 mb-5">
-        <img
-          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`}
-          alt={user.name}
-          className="w-14 h-14 rounded-full border-2 border-primary/50 bg-black/40"
-        />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-bold text-foreground truncate">{user.name}</h3>
-            <Badge variant="outline" className="text-[9px] border-primary/30 text-primary uppercase">{user.role}</Badge>
+      <div className="flex items-center justify-between gap-5 bg-surface/30 p-5 rounded-2xl border border-border/40 mb-5">
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="w-20 h-20 rounded-full border-2 border-primary/50 bg-primary/5 flex items-center justify-center overflow-hidden shrink-0 text-primary font-bold text-xl">
+            {user.avatar ? (
+              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              <span>
+                {user.name
+                  ? user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                  : 'U'}
+              </span>
+            )}
           </div>
-          <span className="text-xs font-mono text-muted">@{user.username} • Joined {joinedDate}</span>
-          
-          <div className="flex items-center gap-4 mt-2 font-mono text-xs">
-            <div>
-              <span className="text-[9px] text-muted block uppercase">Wallet Balance</span>
-              <strong className="text-emerald-400 font-bold">{walletBalance.toLocaleString()} Coins</strong>
+          <div className="flex flex-col gap-1 min-w-0 -mt-3.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-lg font-bold text-foreground truncate leading-none">{user.name}</h3>
+              <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+                {user.role}
+              </span>
+              {status === 'active' ? (
+                <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Active
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
+                  Inactive
+                </span>
+              )}
             </div>
-            <div className="border-l border-border/40 pl-4">
-              <span className="text-[9px] text-muted block uppercase">Win Rate</span>
-              <strong className="text-cyan-400 font-bold">{winRate}% ({totalWins}W / {totalLosses}L)</strong>
-            </div>
+            <span className="text-xs font-mono text-muted">@{user.username}</span>
+          </div>
+        </div>
+
+        {/* Stats pushed to the right side */}
+        <div className="flex items-center gap-6 font-mono text-xs shrink-0 border-l border-border/30 pl-6">
+          <div className="flex flex-col gap-1">
+            <span className="text-[9px] text-muted uppercase tracking-wider">Wallet Balance</span>
+            <strong className="text-emerald-400 font-bold text-base leading-none">{walletBalance.toLocaleString()} Coins</strong>
+          </div>
+          <div className="border-l border-border/40 pl-6 flex flex-col gap-1">
+            <span className="text-[9px] text-muted uppercase tracking-wider">Win Rate</span>
+            <strong className="text-cyan-400 font-bold text-base leading-none">
+              {winRate}% <span className="text-[10px] text-muted font-normal">({totalWins}W / {totalLosses}L)</span>
+            </strong>
           </div>
         </div>
       </div>
@@ -176,14 +205,53 @@ export const UserDetails: React.FC<UserDetailsProps> = ({
               <span className="text-muted flex items-center gap-2">
                 <Mail className="h-3.5 w-3.5 text-muted/70" /> Email Address
               </span>
-              <span className="text-foreground font-bold truncate">{user.email}</span>
+              <span className="text-foreground font-bold truncate max-w-[240px]">{user.email}</span>
             </div>
+
+            <div className="flex justify-between items-center pb-2.5 border-b border-border/40">
+              <span className="text-muted flex items-center gap-2">
+                <Phone className="h-3.5 w-3.5 text-muted/70" /> Mobile Number
+              </span>
+              <span className="text-foreground font-bold">{user.mobileNumber || '—'}</span>
+            </div>
+
+            <div className="flex justify-between items-center pb-2.5 border-b border-border/40">
+              <span className="text-muted flex items-center gap-2">
+                <Calendar className="h-3.5 w-3.5 text-muted/70" /> Date of Birth
+              </span>
+              <span className="text-foreground font-bold">
+                {user.dob ? new Date(user.dob).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center pb-2.5 border-b border-border/40">
+              <span className="text-muted flex items-center gap-2">
+                <Fingerprint className="h-3.5 w-3.5 text-muted/70" /> KYC Status
+              </span>
+              <span>
+                {(() => {
+                  const kyc = user.kycStatus || 'Not Submitted'
+                  if (kyc === 'Verified') {
+                    return <span className="text-emerald-400 font-bold">{kyc}</span>
+                  }
+                  if (kyc === 'Pending') {
+                    return <span className="text-amber-400 font-bold animate-pulse">{kyc}</span>
+                  }
+                  if (kyc === 'Rejected') {
+                    return <span className="text-red-400 font-bold">{kyc}</span>
+                  }
+                  return <span className="text-muted font-bold">{kyc}</span>
+                })()}
+              </span>
+            </div>
+
             <div className="flex justify-between items-center pb-2.5 border-b border-border/40">
               <span className="text-muted flex items-center gap-2">
                 <Calendar className="h-3.5 w-3.5 text-muted/70" /> Member Since
               </span>
               <span className="text-foreground font-bold">{joinedDate}</span>
             </div>
+
             <div className="flex justify-between items-center">
               <span className="text-muted flex items-center gap-2">
                 <Activity className="h-3.5 w-3.5 text-muted/70" /> Last Authenticated
@@ -261,6 +329,7 @@ export const UserDetails: React.FC<UserDetailsProps> = ({
           </Table>
         </div>
       )}
+      </div>
 
       {/* Actions Panel */}
       <div className="mt-6 border-t border-border/40 pt-4">
