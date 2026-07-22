@@ -716,63 +716,118 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const exportPDF = () => {
     showToastNotice('Generating PDF executive report...', 'info')
-    
+
     const liveCount = challenges.filter(c => c.status === 'Live').length
-    const completedCount = challenges.filter(c => c.status === 'Completed').length
-    const disputedCount = challenges.filter(c => c.status === 'Disputed').length
     const totalVolume = challenges.reduce((sum, c) => sum + c.prizePool, 0)
-    const totalFees = challenges.reduce((sum, c) => sum + c.financials.platformFee, 0)
+    const totalFees = challenges.reduce((sum, c) => sum + (c.financials?.platformFee || 0), 0)
 
-    const reportContent = `================================================================================
-                       ANYBET OPERATOR PLATFORM
-                     EXECUTIVE ANALYTICS & AUDIT REPORT
-================================================================================
-Generated At : ${new Date().toLocaleString()}
-Report Scope : Master Challenges & Financial Audit Summary
+    const printWin = window.open('', '_blank', 'width=900,height=750')
+    if (printWin) {
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>AnyBet Executive Report - ${Date.now()}</title>
+            <style>
+              @page { size: A4; margin: 15mm; }
+              body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #090d16; color: #e2e8f0; padding: 30px; margin: 0; }
+              .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #8026FF; padding-bottom: 15px; margin-bottom: 25px; }
+              .title { font-size: 22px; font-weight: bold; color: #ffffff; letter-spacing: 0.5px; }
+              .subtitle { font-size: 11px; color: #94a3b8; margin-top: 4px; font-family: monospace; }
+              .badge { background: #8026FF22; color: #00E0FF; border: 1px solid #00E0FF44; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; font-family: monospace; }
+              .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+              .card { background: #131826; border: 1px solid #1e293b; padding: 15px; border-radius: 8px; }
+              .card-label { font-size: 10px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; }
+              .card-val { font-size: 18px; font-weight: bold; color: #00E0FF; margin-top: 5px; font-family: monospace; }
+              .section-header { font-size: 13px; font-weight: bold; color: #ffffff; margin-bottom: 12px; border-bottom: 1px solid #1e293b; padding-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+              table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 12px; }
+              th { background: #1e293b; color: #94a3b8; text-align: left; padding: 8px 12px; font-size: 10px; text-transform: uppercase; font-family: monospace; }
+              td { padding: 10px 12px; border-bottom: 1px solid #131826; }
+              tr:nth-child(even) { background: #0f1422; }
+              .footer { margin-top: 30px; font-size: 10px; color: #64748b; text-align: center; border-top: 1px solid #1e293b; padding-top: 15px; font-family: monospace; }
+              @media print {
+                body { background: #ffffff !important; color: #000000 !important; }
+                .card { background: #f8fafc !important; border: 1px solid #cbd5e1 !important; }
+                .card-val { color: #0f172a !important; }
+                th { background: #e2e8f0 !important; color: #334155 !important; }
+                td { border-bottom: 1px solid #e2e8f0 !important; }
+                .badge { background: #f1f5f9 !important; color: #0284c7 !important; border: 1px solid #0284c7 !important; }
+                tr:nth-child(even) { background: #f8fafc !important; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div>
+                <div class="title">ANYBET OPERATOR PLATFORM</div>
+                <div class="subtitle">EXECUTIVE ANALYTICS & AUDIT REPORT</div>
+              </div>
+              <div class="badge">SECURITY AUDIT REPORT</div>
+            </div>
 
---------------------------------------------------------------------------------
-1. EXECUTIVE PLATFORM METRICS
---------------------------------------------------------------------------------
-Total Wagers Created    : ${challenges.length}
-Active Live Events      : ${liveCount}
-Completed Events        : ${completedCount}
-Disputed Events         : ${disputedCount}
-Total Prize Volume      : ${totalVolume.toLocaleString()} BET Coins
-Platform Revenue (5%)   : ${totalFees.toLocaleString()} BET Coins
+            <div class="grid">
+              <div class="card">
+                <div class="card-label">Total Wagers</div>
+                <div class="card-val">${challenges.length}</div>
+              </div>
+              <div class="card">
+                <div class="card-label">Live Events</div>
+                <div class="card-val">${liveCount}</div>
+              </div>
+              <div class="card">
+                <div class="card-label">Total Volume</div>
+                <div class="card-val">${totalVolume.toLocaleString()} BET</div>
+              </div>
+              <div class="card">
+                <div class="card-label">Platform Fees</div>
+                <div class="card-val">${totalFees.toLocaleString()} BET</div>
+              </div>
+            </div>
 
---------------------------------------------------------------------------------
-2. MASTER CHALLENGES INVENTORY
---------------------------------------------------------------------------------
-${challenges.map(c => `[${c.id}] ${c.title}
-  • Category   : ${c.category} (${c.type})
-  • Creator    : ${c.creatorName} | Stake: ${c.stakeAmount} BET | Prize Pool: ${c.prizePool.toLocaleString()} BET
-  • Status     : ${c.status} | Participants: ${c.participantsCount} Users
-`).join('\n')}
+            <div class="section-header">Master Challenges Inventory</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Title</th>
+                  <th>Category</th>
+                  <th>Stake</th>
+                  <th>Prize Pool</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${challenges.map(c => `
+                  <tr>
+                    <td style="font-family: monospace; font-weight: bold;">${c.id}</td>
+                    <td>${c.title}</td>
+                    <td>${c.category}</td>
+                    <td style="font-family: monospace;">${c.stakeAmount} BET</td>
+                    <td style="font-family: monospace; color: #10B981;">${c.prizePool.toLocaleString()} BET</td>
+                    <td>${c.status}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
 
---------------------------------------------------------------------------------
-3. DISPUTE ARBITRATION AUDIT
---------------------------------------------------------------------------------
-${disputes.map(d => `[${d.id}] ${d.challengeTitle}
-  • Involved   : ${d.usersInvolved.join(' vs ')}
-  • Status     : ${d.status} | AI Rating: ${d.aiReviewResult.confidenceScore}% Confidence
-  • Reason     : ${d.disputeReason}
-`).join('\n')}
+            <div class="footer">
+              Generated on ${new Date().toLocaleString()} • AnyBet Compliance Intelligence System
+            </div>
 
-================================================================================
-               END OF ANYBET EXECUTIVE SECURITY REPORT
-================================================================================`
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                }, 300);
+              };
+            </script>
+          </body>
+        </html>
+      `)
+      printWin.document.close()
+    }
 
-    const blob = new Blob([reportContent], { type: 'application/pdf' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `AnyBet_Executive_Report_${Date.now()}.pdf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-
-    showToastNotice('PDF Report downloaded successfully!', 'success')
+    showToastNotice('Executive PDF Report generated! Select "Save as PDF" in print dialog.', 'success')
   }
 
   const value = useMemo(() => ({
