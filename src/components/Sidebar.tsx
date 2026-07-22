@@ -20,10 +20,13 @@ import {
   Trophy,
   Settings,
   HelpCircle,
-  MessageSquare
+  MessageSquare,
+  LogOut
 } from 'lucide-react'
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
+import { useAuth } from '../context/AuthContext'
+import { ConfirmationModal } from './ui/confirmation-modal'
 
 import { Logo } from './ui/Logo'
 
@@ -42,6 +45,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setIsCollapsed,
   className
 }) => {
+  const { logout } = useAuth()
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [financialsOpen, setFinancialsOpen] = useState(() => activeTab.startsWith('financials'))
   const [challengesOpen, setChallengesOpen] = useState(() => activeTab.startsWith('challenges'))
   const [oracleOpen, setOracleOpen] = useState(() => activeTab.startsWith('ai-oracle') || activeTab.startsWith('oracle'))
@@ -70,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'financials', label: 'Financials', icon: Coins, isDropdown: true },
     { id: 'ai-oracle', label: 'AI Oracle', icon: Cpu, isDropdown: true },
     { id: 'support-center', label: 'Support Center', icon: HelpCircle, isDropdown: true },
-    { id: 'profile-settings', label: 'Settings', icon: Settings },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ]
 
   const challengeSubItems = [
@@ -473,6 +478,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
+      {/* Sign Out Button */}
+      <div className="mt-auto pt-4 border-t border-border/50">
+        <Button
+          variant="ghost"
+          onClick={() => setLogoutConfirmOpen(true)}
+          className={cn(
+            "flex items-center text-muted hover:text-red-500 hover:bg-red-500/10 dark:hover:text-red-400 dark:hover:bg-red-950/20 transition-all duration-200 h-10 w-full",
+            isCollapsed ? "justify-center px-0" : "px-4 gap-3"
+          )}
+        >
+          <LogOut className="h-5 w-5 shrink-0" />
+          {!isCollapsed && (
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="font-medium text-sm font-sans"
+            >
+              Sign Out
+            </motion.span>
+          )}
+        </Button>
+      </div>
+
+      <ConfirmationModal
+        isOpen={logoutConfirmOpen}
+        onClose={() => setLogoutConfirmOpen(false)}
+        onConfirm={async () => {
+          setLogoutConfirmOpen(false)
+          logout()
+        }}
+        title="Sign Out"
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        variant="danger"
+        description="Are you sure you want to sign out of your account?"
+        icon={LogOut}
+      />
 
     </motion.div>
   )

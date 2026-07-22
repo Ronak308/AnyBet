@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import {
   HelpCircle,
   Search,
@@ -183,10 +184,14 @@ const initialCategories: SupportCategory[] = [
 export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: string) => void }> = ({ activeTab = 'support-tickets' }) => {
   const [tickets, setTickets] = useState<Ticket[]>(initialTickets)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
+  const [isLoadingFaqs, setIsLoadingFaqs] = useState(true)
 
   // Fetch support tickets from Firestore on load
   useEffect(() => {
     const fetchTickets = async () => {
+      setIsLoading(true)
       try {
         const supportCol = collection(db, 'support_tickets')
         const snapshot = await getDocs(supportCol)
@@ -222,6 +227,8 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
         }
       } catch (err) {
         console.error("Error fetching support tickets from firestore:", err)
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -231,6 +238,7 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
   // Fetch/Seed support categories from Firestore
   useEffect(() => {
     const fetchCategories = async () => {
+      setIsLoadingCategories(true)
       try {
         // Clean up old mock document IDs if present in firestore
         const oldIds = ['cat_1', 'cat_2', 'cat_3', 'cat_4']
@@ -265,6 +273,8 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
         }
       } catch (err) {
         console.error("Error fetching/seeding support categories:", err)
+      } finally {
+        setIsLoadingCategories(false)
       }
     }
 
@@ -274,6 +284,7 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
   // Fetch FAQs from Firestore
   useEffect(() => {
     const fetchFaqs = async () => {
+      setIsLoadingFaqs(true)
       try {
         const faqsCol = collection(db, 'support_faqs')
         const snapshot = await getDocs(faqsCol)
@@ -293,6 +304,8 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
         setFaqs(dbFaqs)
       } catch (err) {
         console.error("Error fetching FAQs from firestore:", err)
+      } finally {
+        setIsLoadingFaqs(false)
       }
     }
 
@@ -916,6 +929,7 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
             handleAddFaq={handleAddFaq}
             handleEditFaq={handleEditFaq}
             handleDeleteFaq={handleDeleteFaq}
+            isLoading={isLoadingFaqs}
           />
         )
       case 'support-categories':
@@ -926,6 +940,7 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
             handleEditCategory={handleEditCategory}
             handleDeleteCategory={handleDeleteCategory}
             handleToggleCategoryStatus={handleToggleCategoryStatus}
+            isLoading={isLoadingCategories}
           />
         )
       default:
@@ -1080,8 +1095,10 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
           </div>
         </div>
 
-        {/* Tickets List Table Container */}
-        <div className="border border-muted/30 rounded-xl overflow-hidden bg-surface/30 overflow-x-auto w-full">
+        {/* Table & Footer Wrapper */}
+        <div className="flex flex-col w-full">
+          {/* Tickets List Table Container */}
+          <div className="border border-muted/30 rounded-xl overflow-hidden bg-surface/30 overflow-x-auto w-full">
           <Table>
             <TableHeader className="bg-surface/75 border-b border-muted/30">
               <TableRow className="border-b border-muted/30 hover:bg-transparent h-14">
@@ -1095,113 +1112,129 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedTickets.map(ticket => {
-                const isSelected = selectedTicket?.id === ticket.id
-                return (
-                  <TableRow
-                    key={ticket.id}
-                    onClick={() => setSelectedTicket(ticket)}
-                    className={`cursor-pointer transition-colors border-b border-muted/20 hover:bg-surface/40 ${isSelected ? 'bg-primary/5' : ''
-                      }`}
-                  >
-                    {/* Ticket ID */}
-                    <TableCell className="py-3 pl-4 font-mono text-xs font-bold text-foreground">
-                      {ticket.id}
-                    </TableCell>
-
-                    {/* User */}
-                    <TableCell className="py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="h-7 w-7 rounded-lg bg-surface border border-muted/45 flex items-center justify-center text-xs font-bold text-primary font-sans shrink-0">
-                          {ticket.user.avatar}
-                        </div>
-                        <div>
-                          <span className="text-xs font-bold text-foreground block font-sans leading-none">{ticket.user.name}</span>
-                          <span className="text-[10px] text-muted font-mono block mt-0.5">@{ticket.user.username}</span>
-                        </div>
-                      </div>
-                    </TableCell>
-
-                    {/* Subject */}
-                    <TableCell className="py-3 max-w-xs">
-                      <span className="text-xs font-bold text-foreground block truncate">{ticket.subject}</span>
-                      <span className="text-[10px] text-muted font-mono block truncate mt-0.5">{ticket.date}</span>
-                    </TableCell>
-
-                    {/* Category */}
-                    <TableCell className="py-3 text-xs font-mono">
-                      <div className="flex items-center gap-1.5 text-muted/90">
-                        {getCategoryIcon(ticket.category)}
-                        <span>{ticket.category}</span>
-                      </div>
-                    </TableCell>
-
-                    {/* Priority */}
-                    <TableCell className="py-3 text-center">
-                      <span className={`inline-block px-2 py-0.5 text-[9px] font-mono font-extrabold uppercase rounded-md border ${getPriorityColor(ticket.priority)}`}>
-                        {ticket.priority}
-                      </span>
-                    </TableCell>
-
-                    {/* Status */}
-                    <TableCell className="py-3 text-center">
-                      <span className={`inline-block px-2 py-0.5 text-[9px] font-mono font-extrabold uppercase rounded-md border ${getStatusColor(ticket.status)}`}>
-                        {ticket.status}
-                      </span>
-                    </TableCell>
-
-                    {/* Actions */}
-                    <TableCell className="py-3 pr-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        onClick={() => setSelectedTicket(ticket)}
-                        variant="ghost"
-                        className="h-7 px-2.5 text-[10px] font-mono gap-1 rounded-lg"
-                      >
-                        MANAGE <ArrowRight className="h-3 w-3" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-
-              {filteredTickets.length === 0 && (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-10 text-muted font-mono text-xs">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <motion.div
+                        className="h-5 w-5 rounded-full border-2 border-border border-t-primary"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                      />
+                      Loading data...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : filteredTickets.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-10 text-xs font-mono text-muted uppercase">
                     No support tickets match filters
                   </TableCell>
                 </TableRow>
+              ) : (
+                paginatedTickets.map(ticket => {
+                  const isSelected = selectedTicket?.id === ticket.id
+                  return (
+                    <TableRow
+                      key={ticket.id}
+                      onClick={() => setSelectedTicket(ticket)}
+                      className={`cursor-pointer transition-colors border-b border-muted/20 hover:bg-surface/40 ${isSelected ? 'bg-primary/5' : ''
+                        }`}
+                    >
+                      {/* Ticket ID */}
+                      <TableCell className="py-3 pl-4 font-mono text-xs font-bold text-foreground">
+                        {ticket.id}
+                      </TableCell>
+
+                      {/* User */}
+                      <TableCell className="py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-lg bg-surface border border-muted/45 flex items-center justify-center text-xs font-bold text-primary font-sans shrink-0">
+                            {ticket.user.avatar}
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold text-foreground block font-sans leading-none">{ticket.user.name}</span>
+                            <span className="text-[10px] text-muted font-mono block mt-0.5">@{ticket.user.username}</span>
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      {/* Subject */}
+                      <TableCell className="py-3 max-w-xs">
+                        <span className="text-xs font-bold text-foreground block truncate">{ticket.subject}</span>
+                        <span className="text-[10px] text-muted font-mono block truncate mt-0.5">{ticket.date}</span>
+                      </TableCell>
+
+                      {/* Category */}
+                      <TableCell className="py-3 text-xs font-mono">
+                        <div className="flex items-center gap-1.5 text-muted/90">
+                          {getCategoryIcon(ticket.category)}
+                          <span>{ticket.category}</span>
+                        </div>
+                      </TableCell>
+
+                      {/* Priority */}
+                      <TableCell className="py-3 text-center">
+                        <span className={`inline-block px-2 py-0.5 text-[9px] font-mono font-extrabold uppercase rounded-md border ${getPriorityColor(ticket.priority)}`}>
+                          {ticket.priority}
+                        </span>
+                      </TableCell>
+
+                      {/* Status */}
+                      <TableCell className="py-3 text-center">
+                        <span className={`inline-block px-2 py-0.5 text-[9px] font-mono font-extrabold uppercase rounded-md border ${getStatusColor(ticket.status)}`}>
+                          {ticket.status}
+                        </span>
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell className="py-3 pr-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          onClick={() => setSelectedTicket(ticket)}
+                          variant="ghost"
+                          className="h-7 px-2.5 text-[10px] font-mono gap-1 rounded-lg"
+                        >
+                          MANAGE <ArrowRight className="h-3 w-3" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               )}
             </TableBody>
           </Table>
+        </div>
 
-          {/* Pagination Footer */}
-          <div className="p-4 border-t border-muted/30 bg-surface/40 flex items-center justify-between text-xs font-mono">
-            <span className="text-muted">
-              Showing {filteredTickets.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}
-              {' '}to {Math.min(currentPage * pageSize, filteredTickets.length)} of {filteredTickets.length} Tickets
+        {/* Pagination Footer */}
+        <div className="p-4 bg-card flex items-center justify-between text-xs font-mono">
+          <span className="text-muted">
+            Showing {filteredTickets.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}
+            {' '}to {Math.min(currentPage * pageSize, filteredTickets.length)} of {filteredTickets.length} Tickets
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 text-xs font-mono"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-foreground font-bold">
+              {currentPage} / {totalPages}
             </span>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 w-7 p-0 rounded-lg"
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span>Page {currentPage} of {totalPages}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 w-7 p-0 rounded-lg"
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 text-xs font-mono"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
+        </div>
         </div>
       </div>
     )
@@ -1214,7 +1247,7 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
   return (
     <div className="p-6 flex flex-col gap-6 w-full font-sans">
       {/* Header */}
-      <div>
+      <div className="border-b border-border/40 pb-4">
         <h2 className="text-xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
           {headerInfo.icon} {headerInfo.title}
         </h2>

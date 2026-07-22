@@ -16,6 +16,7 @@ import { UsersPage } from '@/pages/users/UsersPage'
 import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { ProfileSettings } from '@/pages/profile/ProfileSettings'
 import { SupportCenterPage } from '@/pages/supportcenter/SupportTickets'
+import NotFoundPage from '@/pages/NotFoundPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { ThemeProvider } from '@/context/ThemeContext'
@@ -150,13 +151,14 @@ function AuthGate() {
             <Route path="users" element={<UsersRoute />} />
             <Route path="profile" element={<ProfileRoute />} />
             <Route path="profile-settings" element={<ProfileSettingsRoute />} />
+            <Route path="settings" element={<NotFoundPage />} />
             <Route path="support-center" element={<SupportCenterRoute />} />
             <Route path="support-tickets" element={<SupportCenterRoute />} />
             <Route path="support-disputes" element={<SupportCenterRoute />} />
             <Route path="support-refunds" element={<SupportCenterRoute />} />
             <Route path="support-faq" element={<SupportCenterRoute />} />
             <Route path="support-categories" element={<SupportCenterRoute />} />
-            <Route path="*" element={<Navigate to="/operations" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
         </>
       )}

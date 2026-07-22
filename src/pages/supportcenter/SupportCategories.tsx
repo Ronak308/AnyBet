@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
-import { Plus, MoreHorizontal, Trash2, Edit3, Search } from 'lucide-react'
+import React, { useState, useMemo, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { Plus, MoreHorizontal, Trash2, Edit3, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
@@ -24,6 +25,7 @@ interface SupportCategoriesProps {
     handleEditCategory: (id: string, name: string, description: string, sla: string, routing: string) => void
     handleDeleteCategory: (id: string, name: string) => void
     handleToggleCategoryStatus: (id: string) => void
+    isLoading?: boolean
 }
 
 export const SupportCategories: React.FC<SupportCategoriesProps> = ({
@@ -31,7 +33,8 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
     handleAddCategory,
     handleEditCategory,
     handleDeleteCategory,
-    handleToggleCategoryStatus
+    handleToggleCategoryStatus,
+    isLoading = false
 }) => {
     const [searchQuery, setSearchQuery] = useState('')
     const [isAddingCat, setIsAddingCat] = useState(false)
@@ -53,6 +56,19 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
             c.sla.toLowerCase().includes(query)
         )
     })
+
+    const [currentPage, setCurrentPage] = useState(1)
+    const pageSize = 10
+
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [searchQuery])
+
+    const totalPages = Math.max(1, Math.ceil(filteredCategories.length / pageSize))
+    const paginatedCategories = useMemo(() => {
+        const start = (currentPage - 1) * pageSize
+        return filteredCategories.slice(start, start + pageSize)
+    }, [filteredCategories, currentPage])
 
     return (
         <div className="flex flex-col gap-4 w-full">
@@ -109,7 +125,8 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                 variant="danger"
             />
 
-            <div className="border border-muted/30 rounded-xl overflow-hidden bg-surface/30 w-full overflow-x-auto">
+            <div className="flex flex-col w-full">
+                <div className="border border-muted/30 rounded-xl overflow-hidden bg-surface/30 w-full overflow-x-auto">
                 <Table>
                     <TableHeader className="bg-surface/75 border-b border-muted/30">
                         <TableRow className="border-b border-muted/30 hover:bg-transparent h-14">
@@ -121,66 +138,112 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {filteredCategories.map(c => (
-                            <TableRow key={c.id} className="border-b border-muted/20 hover:bg-surface/40">
-                                <TableCell className="py-3 pl-4">
-                                    <span className="text-xs font-bold font-sans text-foreground">{c.name}</span>
-                                </TableCell>
-                                <TableCell className="py-3 text-xs text-muted max-w-sm font-sans truncate">{c.description}</TableCell>
-                                <TableCell className="py-3 text-center text-xs font-mono font-bold text-primary">{c.sla}</TableCell>
-                                <TableCell className="py-3 text-center">
-                                    <button
-                                        onClick={() => handleToggleCategoryStatus(c.id)}
-                                        className={`inline-block px-2.5 py-0.5 text-[9px] font-mono font-extrabold uppercase rounded-md border cursor-pointer transition-all ${c.status === 'Active'
-                                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-                                            : 'bg-muted/10 border-muted/30 text-muted hover:bg-muted/20'
-                                            }`}
-                                    >
-                                        {c.status}
-                                    </button>
-                                </TableCell>
-                                <TableCell className="py-3 pr-4 text-right" onClick={(e) => e.stopPropagation()}>
-                                    <div className="flex items-center justify-end">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer flex items-center justify-center"
-                                                >
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
-                                                <DropdownMenuItem
-                                                    className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2"
-                                                    onClick={() => setCategoryToEdit(c)}
-                                                >
-                                                    <Edit3 className="h-3.5 w-3.5 text-muted" />
-                                                    Edit Category
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    className="text-red-400 focus:bg-red-950/20 focus:text-red-300 flex items-center gap-2 text-xs font-mono cursor-pointer rounded-md p-2"
-                                                    onClick={() => setCategoryToDelete({ id: c.id, name: c.name })}
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5 text-red-400" />
-                                                    Delete Category
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center py-10 text-muted font-mono text-xs">
+                                    <div className="flex flex-col items-center justify-center gap-2">
+                                        <motion.div
+                                            className="h-5 w-5 rounded-full border-2 border-border border-t-primary"
+                                            animate={{ rotate: 360 }}
+                                            transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                                        />
+                                        Loading data...
                                     </div>
                                 </TableCell>
                             </TableRow>
-                        ))}
-                        {filteredCategories.length === 0 && (
+                        ) : filteredCategories.length === 0 ? (
                             <TableRow className="border-b border-muted/20 hover:bg-transparent">
                                 <TableCell colSpan={5} className="py-10 text-center font-mono text-xs text-muted uppercase">
                                     No categories match search
                                 </TableCell>
                             </TableRow>
+                        ) : (
+                            paginatedCategories.map(c => (
+                                <TableRow key={c.id} className="border-b border-muted/20 hover:bg-surface/40">
+                                    <TableCell className="py-3 pl-4">
+                                        <span className="text-xs font-bold font-sans text-foreground">{c.name}</span>
+                                    </TableCell>
+                                    <TableCell className="py-3 text-xs text-muted max-w-sm font-sans truncate">{c.description}</TableCell>
+                                    <TableCell className="py-3 text-center text-xs font-mono font-bold text-primary">{c.sla}</TableCell>
+                                    <TableCell className="py-3 text-center">
+                                        <button
+                                            onClick={() => handleToggleCategoryStatus(c.id)}
+                                            className={`inline-block px-2.5 py-0.5 text-[9px] font-mono font-extrabold uppercase rounded-md border cursor-pointer transition-all ${c.status === 'Active'
+                                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                                                : 'bg-muted/10 border-muted/30 text-muted hover:bg-muted/20'
+                                                }`}
+                                        >
+                                            {c.status}
+                                        </button>
+                                    </TableCell>
+                                    <TableCell className="py-3 pr-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex items-center justify-end">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer flex items-center justify-center"
+                                                    >
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                                                    <DropdownMenuItem
+                                                        className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2"
+                                                        onClick={() => setCategoryToEdit(c)}
+                                                    >
+                                                        <Edit3 className="h-3.5 w-3.5 text-muted" />
+                                                        Edit Category
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="text-red-400 focus:bg-red-950/20 focus:text-red-300 flex items-center gap-2 text-xs font-mono cursor-pointer rounded-md p-2"
+                                                        onClick={() => setCategoryToDelete({ id: c.id, name: c.name })}
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                                                        Delete Category
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
                         )}
                     </TableBody>
                 </Table>
+            </div>
+
+            {/* Pagination Footer */}
+            <div className="p-4 bg-card flex items-center justify-between text-xs font-mono">
+                <span className="text-muted">
+                    Showing {filteredCategories.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}
+                    {' '}to {Math.min(currentPage * pageSize, filteredCategories.length)} of {filteredCategories.length} Categories
+                </span>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 text-xs font-mono"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-foreground font-bold">
+                        {currentPage} / {totalPages}
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 text-xs font-mono"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
             </div>
         </div>
     )

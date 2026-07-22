@@ -31,7 +31,8 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  Users
 } from 'lucide-react'
 
 const normalizeRole = (role: string): string => {
@@ -458,13 +459,15 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
       animate="show"
       className="p-6 flex flex-col gap-6 w-full font-sans select-none"
     >
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4">
-        <div>
-          <h3 className="text-base font-bold text-foreground font-sans uppercase tracking-wider">User Management</h3>
-          <p className="text-[11px] text-muted font-mono uppercase tracking-widest mt-1">
-            Managing administrator permissions and console access keys
-          </p>
+        <div className="flex items-start gap-3">
+          <Users className="h-5 w-5 text-primary mt-0.5" />
+          <div>
+            <h3 className="text-base font-bold text-foreground font-sans uppercase tracking-wider">User Management</h3>
+            <p className="text-[11px] text-muted font-mono uppercase tracking-widest mt-1">
+              Managing administrator permissions and console access keys
+            </p>
+          </div>
         </div>
       </div>
 
@@ -719,36 +722,36 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
                 )}
               </TableBody>
             </Table>
+          </div>
 
-            {/* Database indicator in footer */}
-            <div className="p-4 border-t border-muted/30 bg-surface/40 flex items-center justify-between text-xs font-mono">
-              <span className="text-muted">
-                Showing {filteredUsers.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}
-                {' '}to {Math.min(currentPage * pageSize, filteredUsers.length)} of {filteredUsers.length} Users
+          {/* Database indicator in footer */}
+          <div className="p-4 bg-card flex items-center justify-between text-xs font-mono">
+            <span className="text-muted">
+              Showing {filteredUsers.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}
+              {' '}to {Math.min(currentPage * pageSize, filteredUsers.length)} of {filteredUsers.length} Users
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 text-xs font-mono"
+                onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-foreground font-bold">
+                {currentPage} / {totalPages}
               </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 text-xs font-mono"
-                  onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-foreground font-bold">
-                  {currentPage} / {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 text-xs font-mono"
-                  onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 text-xs font-mono"
+                onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </motion.div>

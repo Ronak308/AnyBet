@@ -170,14 +170,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 <div className="my-1 border-t border-border/40" />
 
-                {/* Log out */}
+                {/* Sign out */}
                 <DropdownMenuItem
                   id="navbar-logout"
                   className="flex items-center gap-2 text-[11px] font-sans text-red-400 focus:bg-red-950/20 cursor-pointer rounded-lg p-2"
                   onClick={() => setLogoutConfirmOpen(true)}
                 >
                   <LogOut className="h-3.5 w-3.5 text-red-400" />
-                  <span>Log out</span>
+                  <span>Sign Out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
