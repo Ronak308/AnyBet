@@ -714,120 +714,170 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     showToastNotice('CSV export generated & downloaded successfully', 'success')
   }
 
-  const exportPDF = () => {
+  const exportPDF = async () => {
     showToastNotice('Generating PDF executive report...', 'info')
 
-    const liveCount = challenges.filter(c => c.status === 'Live').length
-    const totalVolume = challenges.reduce((sum, c) => sum + c.prizePool, 0)
-    const totalFees = challenges.reduce((sum, c) => sum + (c.financials?.platformFee || 0), 0)
+    try {
+      const loadJsPDF = (): Promise<any> => {
+        return new Promise((resolve, reject) => {
+          if ((window as any).jspdf) {
+            resolve((window as any).jspdf)
+            return
+          }
+          const script = document.createElement('script')
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+          script.onload = () => resolve((window as any).jspdf)
+          script.onerror = () => reject(new Error('Failed to load PDF library script.'))
+          document.head.appendChild(script)
+        })
+      }
 
-    const printWin = window.open('', '_blank', 'width=900,height=750')
-    if (printWin) {
-      printWin.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>AnyBet Executive Report - ${Date.now()}</title>
-            <style>
-              @page { size: A4; margin: 15mm; }
-              body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #090d16; color: #e2e8f0; padding: 30px; margin: 0; }
-              .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #8026FF; padding-bottom: 15px; margin-bottom: 25px; }
-              .title { font-size: 22px; font-weight: bold; color: #ffffff; letter-spacing: 0.5px; }
-              .subtitle { font-size: 11px; color: #94a3b8; margin-top: 4px; font-family: monospace; }
-              .badge { background: #8026FF22; color: #00E0FF; border: 1px solid #00E0FF44; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; font-family: monospace; }
-              .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
-              .card { background: #131826; border: 1px solid #1e293b; padding: 15px; border-radius: 8px; }
-              .card-label { font-size: 10px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; }
-              .card-val { font-size: 18px; font-weight: bold; color: #00E0FF; margin-top: 5px; font-family: monospace; }
-              .section-header { font-size: 13px; font-weight: bold; color: #ffffff; margin-bottom: 12px; border-bottom: 1px solid #1e293b; padding-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-              table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 12px; }
-              th { background: #1e293b; color: #94a3b8; text-align: left; padding: 8px 12px; font-size: 10px; text-transform: uppercase; font-family: monospace; }
-              td { padding: 10px 12px; border-bottom: 1px solid #131826; }
-              tr:nth-child(even) { background: #0f1422; }
-              .footer { margin-top: 30px; font-size: 10px; color: #64748b; text-align: center; border-top: 1px solid #1e293b; padding-top: 15px; font-family: monospace; }
-              @media print {
-                body { background: #ffffff !important; color: #000000 !important; }
-                .card { background: #f8fafc !important; border: 1px solid #cbd5e1 !important; }
-                .card-val { color: #0f172a !important; }
-                th { background: #e2e8f0 !important; color: #334155 !important; }
-                td { border-bottom: 1px solid #e2e8f0 !important; }
-                .badge { background: #f1f5f9 !important; color: #0284c7 !important; border: 1px solid #0284c7 !important; }
-                tr:nth-child(even) { background: #f8fafc !important; }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <div>
-                <div class="title">ANYBET OPERATOR PLATFORM</div>
-                <div class="subtitle">EXECUTIVE ANALYTICS & AUDIT REPORT</div>
-              </div>
-              <div class="badge">SECURITY AUDIT REPORT</div>
-            </div>
+      const { jsPDF } = await loadJsPDF()
+      const doc = new jsPDF()
 
-            <div class="grid">
-              <div class="card">
-                <div class="card-label">Total Wagers</div>
-                <div class="card-val">${challenges.length}</div>
-              </div>
-              <div class="card">
-                <div class="card-label">Live Events</div>
-                <div class="card-val">${liveCount}</div>
-              </div>
-              <div class="card">
-                <div class="card-label">Total Volume</div>
-                <div class="card-val">${totalVolume.toLocaleString()} BET</div>
-              </div>
-              <div class="card">
-                <div class="card-label">Platform Fees</div>
-                <div class="card-val">${totalFees.toLocaleString()} BET</div>
-              </div>
-            </div>
+      const liveCount = challenges.filter(c => c.status === 'Live').length
+      const totalVolume = challenges.reduce((sum, c) => sum + c.prizePool, 0)
+      const totalFees = challenges.reduce((sum, c) => sum + (c.financials?.platformFee || 0), 0)
 
-            <div class="section-header">Master Challenges Inventory</div>
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Title</th>
-                  <th>Category</th>
-                  <th>Stake</th>
-                  <th>Prize Pool</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${challenges.map(c => `
-                  <tr>
-                    <td style="font-family: monospace; font-weight: bold;">${c.id}</td>
-                    <td>${c.title}</td>
-                    <td>${c.category}</td>
-                    <td style="font-family: monospace;">${c.stakeAmount} BET</td>
-                    <td style="font-family: monospace; color: #10B981;">${c.prizePool.toLocaleString()} BET</td>
-                    <td>${c.status}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
+      // Background canvas
+      doc.setFillColor(9, 13, 22)
+      doc.rect(0, 0, 210, 297, 'F')
 
-            <div class="footer">
-              Generated on ${new Date().toLocaleString()} • AnyBet Compliance Intelligence System
-            </div>
+      // Header title
+      doc.setTextColor(255, 255, 255)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(16)
+      doc.text('ANYBET OPERATOR PLATFORM', 14, 20)
 
-            <script>
-              window.onload = function() {
-                setTimeout(function() {
-                  window.print();
-                }, 300);
-              };
-            </script>
-          </body>
-        </html>
-      `)
-      printWin.document.close()
+      doc.setFontSize(9)
+      doc.setTextColor(148, 163, 184)
+      doc.text('EXECUTIVE ANALYTICS & AUDIT REPORT', 14, 26)
+
+      // Timestamp
+      doc.setFontSize(8)
+      doc.setTextColor(0, 224, 255)
+      doc.text(`Generated At: ${new Date().toLocaleString()}`, 14, 32)
+
+      // Header purple line
+      doc.setDrawColor(128, 38, 255)
+      doc.setLineWidth(0.6)
+      doc.line(14, 36, 196, 36)
+
+      // Metrics cards (4 boxes)
+      const cardWidth = 42
+      const cardGap = 5
+      const startX = 14
+      const cardY = 42
+
+      // Box 1 - Total Wagers
+      doc.setFillColor(19, 24, 38)
+      doc.roundedRect(startX, cardY, cardWidth, 20, 2, 2, 'F')
+      doc.setFontSize(7)
+      doc.setTextColor(148, 163, 184)
+      doc.text('TOTAL WAGERS', startX + 4, cardY + 7)
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(0, 224, 255)
+      doc.text(`${challenges.length}`, startX + 4, cardY + 15)
+
+      // Box 2 - Live Events
+      const card2X = startX + cardWidth + cardGap
+      doc.setFillColor(19, 24, 38)
+      doc.roundedRect(card2X, cardY, cardWidth, 20, 2, 2, 'F')
+      doc.setFontSize(7)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(148, 163, 184)
+      doc.text('LIVE EVENTS', card2X + 4, cardY + 7)
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(0, 224, 255)
+      doc.text(`${liveCount}`, card2X + 4, cardY + 15)
+
+      // Box 3 - Total Volume
+      const card3X = card2X + cardWidth + cardGap
+      doc.setFillColor(19, 24, 38)
+      doc.roundedRect(card3X, cardY, cardWidth, 20, 2, 2, 'F')
+      doc.setFontSize(7)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(148, 163, 184)
+      doc.text('TOTAL VOLUME', card3X + 4, cardY + 7)
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(0, 224, 255)
+      doc.text(`${totalVolume.toLocaleString()} BET`, card3X + 4, cardY + 15)
+
+      // Box 4 - Platform Fees
+      const card4X = card3X + cardWidth + cardGap
+      doc.setFillColor(19, 24, 38)
+      doc.roundedRect(card4X, cardY, cardWidth, 20, 2, 2, 'F')
+      doc.setFontSize(7)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(148, 163, 184)
+      doc.text('PLATFORM FEES', card4X + 4, cardY + 7)
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(0, 224, 255)
+      doc.text(`${totalFees.toLocaleString()} BET`, card4X + 4, cardY + 15)
+
+      // Inventory Title
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(255, 255, 255)
+      doc.text('MASTER CHALLENGES INVENTORY', 14, 73)
+
+      // Table Header Row
+      doc.setFillColor(30, 41, 59)
+      doc.rect(14, 77, 182, 7, 'F')
+      doc.setFontSize(8)
+      doc.setTextColor(148, 163, 184)
+      doc.text('ID', 18, 82)
+      doc.text('TITLE', 42, 82)
+      doc.text('CATEGORY', 115, 82)
+      doc.text('STAKE', 148, 82)
+      doc.text('PRIZE POOL', 172, 82)
+
+      // Table Data Rows
+      let y = 91
+      challenges.slice(0, 18).forEach((c, idx) => {
+        if (idx % 2 === 1) {
+          doc.setFillColor(15, 20, 32)
+          doc.rect(14, y - 5, 182, 8, 'F')
+        }
+
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(148, 163, 184)
+        doc.text(c.id, 18, y)
+
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(255, 255, 255)
+        const truncTitle = c.title.length > 35 ? c.title.substring(0, 35) + '...' : c.title
+        doc.text(truncTitle, 42, y)
+
+        doc.setTextColor(148, 163, 184)
+        doc.text(c.category, 115, y)
+        doc.text(`${c.stakeAmount} BET`, 148, y)
+
+        doc.setTextColor(16, 185, 129)
+        doc.text(`${c.prizePool.toLocaleString()} BET`, 172, y)
+
+        y += 9
+      })
+
+      // Footer
+      doc.setFontSize(7)
+      doc.setTextColor(100, 116, 139)
+      doc.text('AnyBet Compliance Intelligence System • Confidential Executive Audit Report', 14, 285)
+
+      // Direct file download trigger
+      const fileName = `AnyBet_Executive_Report_${Date.now()}.pdf`
+      doc.save(fileName)
+
+      showToastNotice('PDF Report downloaded directly to your Downloads folder!', 'success')
+    } catch (err) {
+      console.error('PDF Generation Error:', err)
+      showToastNotice('Failed to generate PDF. Please try again.', 'warning')
     }
-
-    showToastNotice('Executive PDF Report generated! Select "Save as PDF" in print dialog.', 'success')
   }
 
   const value = useMemo(() => ({
