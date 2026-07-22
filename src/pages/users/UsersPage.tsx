@@ -11,6 +11,7 @@ import { auth, db, firebaseConfig } from '@/firebase/firebase'
 import { initializeApp, deleteApp } from 'firebase/app'
 import { getAuth as getSecondaryAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { type User, useAuth } from '@/context/AuthContext'
+import { useWallet } from '@/context/WalletContext'
 import { deleteUserAccount } from '@/services/userAdminService'
 
 import { Button } from '@/components/ui/button'
@@ -89,6 +90,7 @@ const formatLastLoginTable = (u: User) => {
 
 export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navigate: _navigate }) => {
   const { user: currentUser } = useAuth()
+  const { createWallet } = useWallet()
   const [users, setUsers] = useState<User[]>([])
   const [viewUser, setViewUser] = useState<User | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
@@ -235,6 +237,11 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
       }
 
       await setDoc(userRef, cleanDataToSave, { merge: true })
+
+      // Automatically initialize user's wallet if this is a newly created user account
+      if (!existingUser) {
+        createWallet(finalUserId, cleanDataToSave.username)
+      }
 
       const updatedLocalUser = {
         ...cleanDataToSave,
