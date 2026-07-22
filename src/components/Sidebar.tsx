@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Sword,
   Users,
+  Shield,
   Coins,
   Cpu,
   ChevronDown,
@@ -72,6 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'users', label: 'Users', icon: Users },
+    { id: 'roles-permissions', label: 'Roles & Permissions', icon: Shield },
     { id: 'challenges', label: 'Challenges', icon: Sword, isDropdown: true },
     { id: 'leaderboards', label: 'Leaderboards', icon: Award },
     { id: 'reputation', label: 'Reputation', icon: Trophy },

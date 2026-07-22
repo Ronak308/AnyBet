@@ -14,6 +14,7 @@ import { ReputationView } from '@/pages/ReputationView'
 import { FinancialsView } from '@/pages/FinancialsView'
 import { OracleConfigView } from '@/pages/OracleConfigView'
 import { UsersPage } from '@/pages/users/UsersPage'
+import { RolesPermissionsPage } from '@/pages/rolesAndPermissions/Role-Permission'
 import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { ProfileSettings } from '@/pages/profile/ProfileSettings'
 import { SupportCenterPage } from '@/pages/supportcenter/SupportTickets'
@@ -70,6 +71,11 @@ function OracleRoute() {
 function UsersRoute() {
   const navigate = useNavigate()
   return <UsersPage navigate={(tab) => navigate('/' + tab)} />
+}
+
+function RolesPermissionsRoute() {
+  const navigate = useNavigate()
+  return <RolesPermissionsPage navigate={(tab) => navigate('/' + tab)} />
 }
 
 function ProfileRoute() {
@@ -150,6 +156,7 @@ function AuthGate() {
             <Route path="ai-oracle-config" element={<OracleRoute />} />
             <Route path="ai-oracle-monitoring" element={<OracleRoute />} />
             <Route path="users" element={<UsersRoute />} />
+            <Route path="roles-permissions" element={<RolesPermissionsRoute />} />
             <Route path="profile" element={<ProfileRoute />} />
             <Route path="profile-settings" element={<ProfileSettingsRoute />} />
             <Route path="settings" element={<SettingsRoute />} />
