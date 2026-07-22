@@ -7,7 +7,10 @@ import {
   Lock, 
   Award, 
   Cpu,
-  X
+  X,
+  Sparkles,
+  RefreshCw,
+  ShieldCheck
 } from 'lucide-react'
 import { Card, CardContent } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'
@@ -15,6 +18,7 @@ import { Button } from '../../components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
 import { useChallenges } from '../../context/ChallengesContext'
 import type { ChallengeItem } from '../../context/ChallengesContext'
+import { evaluateBetWithGeminiAI } from '../../services/apiServices'
 
 export const LiveSettlementModule: React.FC = () => {
   const { challenges, settleChallenge, showToastNotice } = useChallenges()
@@ -22,12 +26,54 @@ export const LiveSettlementModule: React.FC = () => {
   const [settleModalChallenge, setSettleModalChallenge] = useState<ChallengeItem | null>(null)
   const [winnerInput, setWinnerInput] = useState('')
   const [settlementNotes, setSettlementNotes] = useState('')
+  const [isAnalyzingAI, setIsAnalyzingAI] = useState(false)
+  const [aiEvaluation, setAiEvaluation] = useState<{
+    predictedWinnerName: string
+    confidenceScore: number
+    explanation: string
+    supportingRationale: string[]
+  } | null>(null)
+
+  const handleOpenSettleModal = async (c: ChallengeItem) => {
+    setSettleModalChallenge(c)
+    setWinnerInput(c.participants[0]?.username || 'Alex_R')
+    setSettlementNotes('AI Oracle verification pending...')
+    setIsAnalyzingAI(true)
+    
+    // Live Dynamic Gemini AI Call
+    try {
+      const res = await evaluateBetWithGeminiAI(c.title, c.category, [], '')
+      setAiEvaluation(res)
+      setWinnerInput(res.predictedWinnerName)
+      setSettlementNotes(res.explanation)
+    } catch (e) {
+      console.warn('AI evaluation error:', e)
+    } finally {
+      setIsAnalyzingAI(false)
+    }
+  }
+
+  const handleReEvaluateAI = async () => {
+    if (!settleModalChallenge) return
+    setIsAnalyzingAI(true)
+    try {
+      const res = await evaluateBetWithGeminiAI(settleModalChallenge.title, settleModalChallenge.category, [], '')
+      setAiEvaluation(res)
+      setWinnerInput(res.predictedWinnerName)
+      setSettlementNotes(res.explanation)
+      showToastNotice('Gemini AI re-evaluated event telemetry!', 'success')
+    } catch (e) {
+      showToastNotice('AI evaluation failed', 'warning')
+    } finally {
+      setIsAnalyzingAI(false)
+    }
+  }
 
   // Live Metric Aggregations
   const liveChallenges = useMemo(() => challenges.filter(c => c.status === 'Live'), [challenges])
   const pendingSettlement = useMemo(() => challenges.filter(c => c.status === 'Disputed' || c.status === 'Live' || c.settlement?.status === 'Under Review'), [challenges])
-
   const totalLiveParticipants = useMemo(() => liveChallenges.reduce((sum, c) => sum + (c.participantsCount || 0), 0), [liveChallenges])
+
   const totalLivePrizePool = useMemo(() => liveChallenges.reduce((sum, c) => sum + (c.prizePool || 0), 0), [liveChallenges])
   const totalLockedCoins = useMemo(() => challenges.reduce((sum, c) => sum + (c.financials?.lockedCoins || 0), 0), [challenges])
 
@@ -201,10 +247,7 @@ export const LiveSettlementModule: React.FC = () => {
                       size="sm"
                       variant="primary"
                       glow
-                      onClick={() => {
-                        setSettleModalChallenge(c)
-                        setWinnerInput(c.participants[0]?.username || '')
-                      }}
+                      onClick={() => handleOpenSettleModal(c)}
                       className="text-xs font-mono gap-1.5 h-8"
                     >
                       <Award className="h-3.5 w-3.5" /> Settle Wager
@@ -227,7 +270,7 @@ export const LiveSettlementModule: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-background border border-border rounded-2xl w-full max-w-lg p-6 space-y-6 shadow-2xl relative"
+            className="bg-background border border-border rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl relative"
           >
             <div className="flex items-center justify-between border-b border-border/50 pb-3">
               <div className="flex items-center gap-2">
@@ -256,12 +299,57 @@ export const LiveSettlementModule: React.FC = () => {
               </div>
             </div>
 
-            {settleModalChallenge.settlement?.oracleResult && (
-              <div className="p-3 bg-black/50 border border-cyan-500/30 rounded-xl space-y-1">
-                <span className="text-[10px] font-mono text-cyan-400 uppercase font-bold">AI Oracle Feed Summary</span>
-                <p className="text-xs font-mono text-foreground/80">{settleModalChallenge.settlement.oracleResult}</p>
+            {/* DYNAMIC GEMINI AI EVALUATION & RATIONALE BOX */}
+            <div className="p-4 bg-primary/10 border border-primary/30 rounded-xl space-y-3 relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                  <span className="text-xs font-bold font-mono text-primary">Gemini 2.0 AI Oracle Evaluation</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleReEvaluateAI}
+                  disabled={isAnalyzingAI}
+                  className="h-6 text-[10px] font-mono gap-1 border-primary/30 text-primary"
+                >
+                  <RefreshCw className={`h-3 w-3 ${isAnalyzingAI ? 'animate-spin' : ''}`} /> Re-Evaluate
+                </Button>
               </div>
-            )}
+
+              {isAnalyzingAI ? (
+                <div className="flex items-center gap-2 text-xs font-mono text-muted py-3">
+                  <div className="w-3.5 h-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                  <span>Connecting to Gemini 2.0 Flash... Analyzing live telemetry & rule constraints...</span>
+                </div>
+              ) : aiEvaluation ? (
+                <div className="space-y-2 font-mono text-xs">
+                  <div className="flex items-center justify-between bg-surface/40 p-2 rounded-lg border border-border/40">
+                    <span className="text-muted">AI Winner Basis:</span>
+                    <span className="font-bold text-emerald-400">@{aiEvaluation.predictedWinnerName}</span>
+                    <Badge variant="success" className="text-[9px]">{aiEvaluation.confidenceScore}% Confidence</Badge>
+                  </div>
+
+                  <p className="text-[11px] text-foreground/90 font-sans bg-surface/20 p-2.5 rounded-lg border border-border/30 leading-relaxed">
+                    <strong>AI Decision Rationale:</strong> {aiEvaluation.explanation}
+                  </p>
+
+                  {aiEvaluation.supportingRationale && aiEvaluation.supportingRationale.length > 0 && (
+                    <div className="space-y-1 pt-1">
+                      <span className="text-[10px] text-muted uppercase font-bold block">Supporting Proof Basis:</span>
+                      {aiEvaluation.supportingRationale.map((point, idx) => (
+                        <div key={idx} className="flex items-center gap-1.5 text-[11px] text-muted">
+                          <ShieldCheck className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <span>{point}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-muted font-mono">AI evaluation feed ready.</p>
+              )}
+            </div>
 
             <form onSubmit={handleExecuteSettlement} className="space-y-4">
               <div>

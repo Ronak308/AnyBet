@@ -192,52 +192,162 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
   {
     id: 'cat-1',
     name: 'Sports',
-    description: 'Competitive athletics, leagues, tournaments, and live sporting events.',
+    description: 'Any game. Any league. Any bet. Athletics, football, basketball, and tournaments.',
     color: '#3B82F6', // Blue
     icon: 'Trophy',
     isEnabled: true,
     displayOrder: 1,
-    challengeCount: 18
+    challengeCount: 48
   },
   {
     id: 'cat-2',
-    name: 'Physical',
-    description: 'Fitness streaks, marathons, sleep trackers, IoT wear gadgets & workouts.',
-    color: '#10B981', // Emerald
-    icon: 'Activity',
+    name: 'Gaming & Esports',
+    description: 'Competitive games, rankings, speedruns, and live gaming challenges.',
+    color: '#8B5CF6', // Purple
+    icon: 'Gamepad2',
     isEnabled: true,
     displayOrder: 2,
-    challengeCount: 24
+    challengeCount: 36
   },
   {
     id: 'cat-3',
-    name: 'Prediction',
-    description: 'Financial markets, crypto price targets, political events & pop culture.',
-    color: '#8B5CF6', // Purple
-    icon: 'TrendingUp',
+    name: 'Fitness',
+    description: 'Workouts, daily step goals, body transformations & IoT activity trackers.',
+    color: '#10B981', // Emerald
+    icon: 'Dumbbell',
     isEnabled: true,
     displayOrder: 3,
-    challengeCount: 42
+    challengeCount: 29
   },
   {
     id: 'cat-4',
-    name: 'Performance',
-    description: 'Esports, gaming speedruns, coding marathons & skill competitions.',
-    color: '#F59E0B', // Amber
-    icon: 'Gamepad2',
+    name: 'Cards & Board Games',
+    description: 'Poker nights, chess tournaments, tabletop games, and everything in between.',
+    color: '#EC4899', // Pink
+    icon: 'Dices',
     isEnabled: true,
     displayOrder: 4,
-    challengeCount: 15
+    challengeCount: 21
   },
   {
     id: 'cat-5',
-    name: 'Custom',
-    description: 'User-generated peer-to-peer custom wagers and private challenges.',
-    color: '#EC4899', // Pink
-    icon: 'Sparkles',
+    name: 'Entertainment',
+    description: 'Movie awards, show premieres, music concerts, and celebrity predictions.',
+    color: '#F59E0B', // Amber
+    icon: 'Mic',
     isEnabled: true,
     displayOrder: 5,
+    challengeCount: 19
+  },
+  {
+    id: 'cat-6',
+    name: 'Education',
+    description: 'Study goals, academic benchmarks, reading challenges, and skill exams.',
+    color: '#06B6D4', // Cyan
+    icon: 'GraduationCap',
+    isEnabled: true,
+    displayOrder: 6,
+    challengeCount: 14
+  },
+  {
+    id: 'cat-7',
+    name: 'Tennis',
+    description: 'ATP/WTA matches, Grand Slam tournaments, set outcomes & player props.',
+    color: '#84CC16', // Lime
+    icon: 'Trophy',
+    isEnabled: true,
+    displayOrder: 7,
+    challengeCount: 16
+  },
+  {
+    id: 'cat-8',
+    name: 'Golf',
+    description: 'PGA Tournaments, head-to-head props, long drives & hole-in-one wagers.',
+    color: '#22C55E', // Green
+    icon: 'Target',
+    isEnabled: true,
+    displayOrder: 8,
     challengeCount: 12
+  },
+  {
+    id: 'cat-9',
+    name: 'Predictions',
+    description: 'Financial markets, crypto price targets, political events & world outcomes.',
+    color: '#6366F1', // Indigo
+    icon: 'TrendingUp',
+    isEnabled: true,
+    displayOrder: 9,
+    challengeCount: 54
+  },
+  {
+    id: 'cat-10',
+    name: 'Weather',
+    description: 'Rain or shine, temperature spikes, snowfall bets, and natural events.',
+    color: '#38BDF8', // Sky Blue
+    icon: 'CloudRain',
+    isEnabled: true,
+    displayOrder: 10,
+    challengeCount: 11
+  },
+  {
+    id: 'cat-11',
+    name: 'Reality TV & Shows',
+    description: 'Who will win, who gets eliminated, episode ratings & show predictions.',
+    color: '#E11D48', // Rose
+    icon: 'Tv',
+    isEnabled: true,
+    displayOrder: 11,
+    challengeCount: 23
+  },
+  {
+    id: 'cat-12',
+    name: 'Trivia & Fun',
+    description: 'Quizzes, debates, pub trivia nights, and friendly smart bets.',
+    color: '#A855F7', // Purple
+    icon: 'Brain',
+    isEnabled: true,
+    displayOrder: 12,
+    challengeCount: 18
+  },
+  {
+    id: 'cat-13',
+    name: 'Friendly Wagers',
+    description: 'Real money feel. Real friends. Real trust. Custom P2P friendly bets.',
+    color: '#F97316', // Orange
+    icon: 'Handshake',
+    isEnabled: true,
+    displayOrder: 13,
+    challengeCount: 31
+  },
+  {
+    id: 'cat-14',
+    name: 'Workplace',
+    description: 'Company team challenges, sales contests, hackathons, and office pools.',
+    color: '#64748B', // Slate
+    icon: 'Briefcase',
+    isEnabled: true,
+    displayOrder: 14,
+    challengeCount: 15
+  },
+  {
+    id: 'cat-15',
+    name: 'Community Events',
+    description: 'Pools, brackets, local fundraisers, charity challenges & group bets.',
+    color: '#14B8A6', // Teal
+    icon: 'Users',
+    isEnabled: true,
+    displayOrder: 15,
+    challengeCount: 27
+  },
+  {
+    id: 'cat-16',
+    name: 'Custom',
+    description: 'Create ANYTHING. Bet ANYTHING. Settle EVERYTHING. Limitless custom bets.',
+    color: '#8026FF', // AnyBet Violet
+    icon: 'Sparkles',
+    isEnabled: true,
+    displayOrder: 16,
+    challengeCount: 40
   }
 ]
 
@@ -310,7 +420,23 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     })
 
     const unsubCategories = subscribeToCategories((items) => {
-      if (items.length > 0) setCategories(items)
+      // Ensure all 16 AnyBet pitch deck categories exist
+      const existingIds = new Set(items.map(i => i.id))
+      const existingNames = new Set(items.map(i => i.name.toLowerCase()))
+      
+      const missingDefaultCategories = INITIAL_CATEGORIES.filter(
+        c => !existingIds.has(c.id) && !existingNames.has(c.name.toLowerCase())
+      )
+
+      if (missingDefaultCategories.length > 0) {
+        missingDefaultCategories.forEach(c => {
+          createCategoryInFirestore(c).catch(err => console.warn('Failed to seed category:', c.name, err))
+        })
+      }
+
+      const merged = items.length > 0 ? [...items, ...missingDefaultCategories] : INITIAL_CATEGORIES
+      merged.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+      setCategories(merged)
     })
 
     const unsubDisputes = subscribeToDisputes((items) => {
