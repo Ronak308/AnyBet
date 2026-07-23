@@ -140,15 +140,35 @@ export const UserDetails: React.FC<UserDetailsProps> = ({
               <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
                 {user.role}
               </span>
-              {status === 'active' ? (
-                <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Active
-                </span>
-              ) : (
-                <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
-                  Inactive
-                </span>
-              )}
+              {(() => {
+                const st = (status || 'active').toLowerCase()
+                if (st === 'active') {
+                  return (
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      Active
+                    </span>
+                  )
+                }
+                if (st === 'suspended') {
+                  return (
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      Suspended
+                    </span>
+                  )
+                }
+                if (st === 'banned') {
+                  return (
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-red-600/15 text-red-400 border border-red-600/30">
+                      Banned
+                    </span>
+                  )
+                }
+                return (
+                  <span className="px-2 py-0.5 rounded-md text-[9px] font-mono font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/20">
+                    Inactive
+                  </span>
+                )
+              })()}
             </div>
             <span className="text-xs font-mono text-muted">@{user.username}</span>
           </div>

@@ -5,9 +5,10 @@ import {
   signOut,
   onAuthStateChanged
 } from 'firebase/auth'
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 import { useWallet } from './WalletContext'
+import { toast } from '@/components/ui/Toast'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ interface AuthContextValue {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  login: (emailOrUsername: string, password: string) => Promise<{ success: boolean; error?: string }>
   signup: (name: string, email: string, username: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
 }
@@ -79,6 +80,15 @@ function generateId(): string {
   return `USR_${Date.now().toString(36).toUpperCase()}_${Math.random().toString(36).slice(2, 6).toUpperCase()}`
 }
 
+// ─── Authorized Roles ────────────────────────────────────────────────────────
+
+const AUTHORIZED_ROLES = ['admin', 'moderator', 'support', 'finance']
+
+function isAuthorizedRole(role?: string): boolean {
+  if (!role) return false
+  return AUTHORIZED_ROLES.includes(role.trim().toLowerCase())
+}
+
 // ─── Context ─────────────────────────────────────────────────────────────────
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -87,35 +97,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(() => getStoredUser())
   const [isLoading, setIsLoading] = useState(true)
 
-  // Rehydrate session / subscribe to auth state changes
+  // Rehydrate session & subscribe to realtime status changes for logged-in user
   useEffect(() => {
     if (USE_FIREBASE) {
-      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      let docUnsubscribe: (() => void) | null = null
+
+      const authUnsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        if (docUnsubscribe) {
+          docUnsubscribe()
+          docUnsubscribe = null
+        }
+
         if (firebaseUser) {
-          try {
-            const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
-            if (userDoc.exists()) {
-              const data = userDoc.data()
+          const userDocRef = doc(db, 'users', firebaseUser.uid)
+          docUnsubscribe = onSnapshot(userDocRef, async (userSnap) => {
+            if (userSnap.exists()) {
+              const data = userSnap.data()
               const cleanStatus = (data.status || 'active').trim().toLowerCase()
               const cleanRole = (data.role || 'user').trim().toLowerCase()
-              if (cleanStatus === 'inactive' || cleanRole !== 'admin') {
+
+              if (cleanStatus !== 'active' || !isAuthorizedRole(cleanRole)) {
+                let statusMessage = 'Your account status has been changed. You have been logged out.'
+                if (cleanStatus === 'suspended') {
+                  statusMessage = 'Your account has been suspended by an administrator.'
+                } else if (cleanStatus === 'banned') {
+                  statusMessage = 'Your account has been banned by an administrator.'
+                } else if (cleanStatus === 'inactive') {
+                  statusMessage = 'Your account has been deactivated by an administrator.'
+                } else if (!isAuthorizedRole(cleanRole)) {
+                  statusMessage = 'Your role permissions have been revoked.'
+                }
+
+                toast.error(statusMessage)
                 localStorage.removeItem(STORAGE_USER_KEY)
                 setUser(null)
                 await signOut(auth)
                 setIsLoading(false)
                 return
               }
+
               const freshUser = {
                 ...data,
-                role: 'admin'
+                id: firebaseUser.uid,
+                uid: firebaseUser.uid,
+                role: cleanRole,
+                status: cleanStatus
               } as User
+
               setUser(freshUser)
               localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(freshUser))
+              setIsLoading(false)
             } else {
-              // No Firestore doc — build minimal profile from Auth
+              // No Firestore doc — build minimal profile from Auth for default admin
               const email = firebaseUser.email || ''
               const isAdmin = email.trim().toLowerCase() === 'admin@anybet.com'
               if (!isAdmin) {
+                toast.error('User record not found in system. Access revoked.')
                 localStorage.removeItem(STORAGE_USER_KEY)
                 setUser(null)
                 await signOut(auth)
@@ -128,63 +165,122 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 email,
                 username: email.split('@')[0] || 'admin',
                 role: 'admin',
+                status: 'active',
                 joinedAt: new Date().toISOString()
               }
               setUser(fallback)
               localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(fallback))
+              setIsLoading(false)
             }
-          } catch (error) {
-            console.error('Error fetching user document from Firestore:', error)
-          } finally {
+          }, (error) => {
+            console.error('Error listening to user status changes:', error)
             setIsLoading(false)
-          }
+          })
         } else {
           localStorage.removeItem(STORAGE_USER_KEY)
           setUser(null)
           setIsLoading(false)
         }
       })
-      return () => unsubscribe()
+
+      return () => {
+        if (docUnsubscribe) docUnsubscribe()
+        authUnsubscribe()
+      }
     } else {
-      const stored = getStoredUser()
-      setUser(stored)
-      setIsLoading(false)
+      const checkStoredUserStatus = () => {
+        const stored = getStoredUser()
+        if (stored) {
+          const currentDb = getUsersDb()
+          const dbEntry = Object.values(currentDb).find(e => e.user.id === stored.id || e.user.email === stored.email)
+          const liveStatus = dbEntry ? (dbEntry.user.status || 'active').trim().toLowerCase() : (stored.status || 'active').trim().toLowerCase()
+          if (liveStatus !== 'active') {
+            toast.error(`Account ${liveStatus}. You have been logged out.`)
+            setUser(null)
+            localStorage.removeItem(STORAGE_USER_KEY)
+          } else {
+            setUser(stored)
+          }
+        } else {
+          setUser(null)
+        }
+        setIsLoading(false)
+      }
+
+      checkStoredUserStatus()
+      const interval = setInterval(checkStoredUserStatus, 2000)
+      window.addEventListener('storage', checkStoredUserStatus)
+
+      return () => {
+        clearInterval(interval)
+        window.removeEventListener('storage', checkStoredUserStatus)
+      }
     }
   }, [])
 
-  const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = useCallback(async (emailOrUsername: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    const rawInput = emailOrUsername.trim().replace(/^@/, '')
+    if (!rawInput) {
+      return { success: false, error: 'Please enter your email address or username to log in.' }
+    }
+
     if (USE_FIREBASE) {
       try {
-        const userCred = await signInWithEmailAndPassword(auth, email, password)
+        let finalEmail = rawInput.toLowerCase()
+
+        // If user typed a username (no '@' symbol), lookup corresponding email in Firestore
+        if (!finalEmail.includes('@')) {
+          try {
+            const usersRef = collection(db, 'users')
+            const q = query(usersRef, where('username', '==', rawInput.toLowerCase()))
+            const snap = await getDocs(q)
+            if (!snap.empty) {
+              const matchedData = snap.docs[0].data()
+              if (matchedData.email) {
+                finalEmail = matchedData.email.trim().toLowerCase()
+              }
+            }
+          } catch (err) {
+            console.warn('Username to email resolution error:', err)
+          }
+        }
+
+        const userCred = await signInWithEmailAndPassword(auth, finalEmail, password)
         const userDoc = await getDoc(doc(db, 'users', userCred.user.uid))
         if (userDoc.exists()) {
           const data = userDoc.data()
           const cleanStatus = (data.status || 'active').trim().toLowerCase()
-          if (cleanStatus === 'inactive') {
+          if (cleanStatus !== 'active') {
             localStorage.removeItem(STORAGE_USER_KEY)
             setUser(null)
             await signOut(auth)
+            if (cleanStatus === 'suspended') {
+              return { success: false, error: 'Your account has been suspended. Please contact system support.' }
+            }
+            if (cleanStatus === 'banned') {
+              return { success: false, error: 'Your account has been banned. Please contact system support.' }
+            }
             return { success: false, error: 'Your account is inactive. Please contact an administrator.' }
           }
           const cleanRole = (data.role || 'user').trim().toLowerCase()
-          if (cleanRole !== 'admin') {
+          if (!isAuthorizedRole(cleanRole)) {
             localStorage.removeItem(STORAGE_USER_KEY)
             setUser(null)
             await signOut(auth)
-            return { success: false, error: 'Access denied: Only administrators are authorized to log in.' }
+            return { success: false, error: 'Access denied: Users with role "user" are not authorized to log into the dashboard. Only Admin, Moderator, Support, and Finance roles can log in.' }
           }
           await updateDoc(doc(db, 'users', userCred.user.uid), {
             lastLoginAt: serverTimestamp()
           })
         } else {
           // If Firestore document doesn't exist yet, seed/create it
-          const cleanEmail = (userCred.user.email || email).trim().toLowerCase()
+          const cleanEmail = (userCred.user.email || finalEmail).trim().toLowerCase()
           const isAdmin = cleanEmail === 'admin@anybet.com'
           if (!isAdmin) {
             localStorage.removeItem(STORAGE_USER_KEY)
             setUser(null)
             await signOut(auth)
-            return { success: false, error: 'Access denied: Only administrators are authorized to log in.' }
+            return { success: false, error: 'Access denied: Only authorized roles (Admin, Moderator, Support, Finance) can log in.' }
           }
           await setDoc(doc(db, 'users', userCred.user.uid), {
             uid: userCred.user.uid,
@@ -205,42 +301,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       await new Promise(r => setTimeout(r, 650)) // simulate network
 
-      const db = getUsersDb()
-      const emailKey = email.trim() ? email.trim().toLowerCase() : 'admin@anybet.io'
-      let entry = db[emailKey]
+      const usersDb = getUsersDb()
+      const cleanInput = rawInput.toLowerCase()
+
+      let entryKey = Object.keys(usersDb).find(
+        k => k.toLowerCase() === cleanInput || usersDb[k].user.username.toLowerCase() === cleanInput
+      )
+
+      let entry = entryKey ? usersDb[entryKey] : null
 
       if (!entry) {
         // Direct login: Auto-create the user if they don't exist
-        const isDefault = emailKey === 'admin@anybet.io'
+        const isDefault = cleanInput === 'admin@anybet.io' || cleanInput === 'admin'
         const newUser: User = {
           id: generateId(),
-          name: isDefault ? 'Ronak' : emailKey.split('@')[0],
-          email: emailKey,
-          username: isDefault ? 'Ronak' : emailKey.split('@')[0],
+          name: isDefault ? 'Admin User' : cleanInput,
+          email: isDefault ? 'admin@anybet.com' : `${cleanInput}@anybet.com`,
+          username: isDefault ? 'admin' : cleanInput,
           role: isDefault ? 'admin' : 'user',
           joinedAt: new Date().toISOString(),
           status: 'active'
         }
-        db[emailKey] = { user: newUser, passwordHash: simpleHash(password || 'password123') }
-        saveUsersDb(db)
-        entry = db[emailKey]
+        usersDb[newUser.email] = { user: newUser, passwordHash: simpleHash(password || 'password123') }
+        saveUsersDb(usersDb)
+        entry = usersDb[newUser.email]
       }
 
-      if (entry.user.status === 'inactive') {
+      const userStatus = (entry.user.status || 'active').trim().toLowerCase()
+      if (userStatus !== 'active') {
+        if (userStatus === 'suspended') {
+          return { success: false, error: 'Your account has been suspended. Please contact system support.' }
+        }
+        if (userStatus === 'banned') {
+          return { success: false, error: 'Your account has been banned. Please contact system support.' }
+        }
         return { success: false, error: 'Your account is inactive. Please contact an administrator.' }
       }
 
       const cleanRole = (entry.user.role || 'user').trim().toLowerCase()
-      if (cleanRole !== 'admin') {
-        return { success: false, error: 'Access denied: Only administrators are authorized to log in.' }
+      if (!isAuthorizedRole(cleanRole)) {
+        return { success: false, error: 'Access denied: Users with role "user" are not authorized to log into the dashboard. Only Admin, Moderator, Support, and Finance roles can log in.' }
       }
 
       const updatedUser = {
         ...entry.user,
         lastLoginAt: new Date().toISOString()
       }
-      db[emailKey].user = updatedUser
-      saveUsersDb(db)
+      usersDb[entry.user.email] = { ...entry, user: updatedUser }
+      saveUsersDb(usersDb)
       localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(updatedUser))
       setUser(updatedUser)
       return { success: true }
@@ -281,9 +389,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem(STORAGE_USER_KEY)
         setUser(null)
 
-        return { 
-          success: false, 
-          error: 'Account created successfully! However, access is denied as only administrators can log into this console.' 
+        return {
+          success: false,
+          error: 'Account created successfully! However, access is denied as only administrators can log into this console.'
         }
       } catch (error: any) {
         console.error('Firebase Signup Error:', error)
@@ -298,8 +406,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (db[emailKey]) {
         const entry = db[emailKey]
         const cleanRole = (entry.user.role || 'user').trim().toLowerCase()
-        if (cleanRole !== 'admin') {
-          return { success: false, error: 'Access denied: Only administrators are authorized to log in.' }
+        if (!isAuthorizedRole(cleanRole)) {
+          return { success: false, error: 'Access denied: Users with role "user" are not authorized to log into the dashboard. Only Admin, Moderator, Support, and Finance roles can log in.' }
         }
         localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(entry.user))
         setUser(entry.user)
@@ -335,9 +443,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem(STORAGE_USER_KEY)
       setUser(null)
 
-      return { 
-        success: false, 
-        error: 'Account created successfully! However, access is denied as only administrators can log into this console.' 
+      return {
+        success: false,
+        error: 'Account created successfully! However, access is denied as only administrators can log into this console.'
       }
     }
   }, [])

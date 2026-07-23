@@ -33,7 +33,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Users
+  Shield
 } from 'lucide-react'
 
 const normalizeRole = (role: string): string => {
@@ -104,7 +104,7 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
 
   // Filters & Searching
   const [searchQuery, setSearchQuery] = useState('')
-  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all')
+  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'moderator' | 'finance' | 'support' | 'user'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 10
@@ -130,7 +130,7 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
           id: userId,
           uid: userId,
           role: normalizeRole(data.role || ''),
-          status: cleanStatus === 'active' ? 'active' : 'inactive'
+          status: cleanStatus
         } as User)
       })
 
@@ -153,7 +153,7 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
       const processedUsers = fetchedUsers.map(u => ({
         ...u,
         role: normalizeRole(u.role),
-        status: (u as any).status === 'active' ? 'active' : 'inactive'
+        status: (u as any).status || 'active'
       }))
 
       setUsers(processedUsers)
@@ -165,7 +165,7 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
       const processedFallback = fallbackList.map(u => ({
         ...u,
         role: normalizeRole(u.role),
-        status: (u as any).status === 'active' ? 'active' : 'inactive'
+        status: (u as any).status || 'active'
       }))
       setUsers(processedFallback)
     } finally {
@@ -468,20 +468,20 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="p-6 flex flex-col gap-6 w-full font-sans select-none"
+      className="p-6 space-y-6 min-h-screen text-foreground relative z-10 font-sans"
     >
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4">
         <div className="flex items-start gap-3">
-          <Users className="h-5 w-5 text-primary mt-0.5" />
+          <Shield className="h-5 w-5 text-primary mt-0.5" />
           <div>
             <h3 className="text-base font-bold text-foreground font-sans uppercase tracking-wider">User Management</h3>
             <p className="text-[11px] text-muted font-mono uppercase tracking-widest mt-1">
-              Managing administrator permissions and console access keys
+              Oversee platform accounts, roles, access levels, and security states
             </p>
           </div>
         </div>
       </div>
-
       {error && (
         <div className="flex items-start gap-2.5 p-3 bg-error-bg border border-error-border rounded-lg text-error-text text-xs font-mono">
           <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5 text-error-text" />
@@ -514,6 +514,9 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
           >
             <option value="all" className="bg-[#151221] text-foreground">All Roles</option>
             <option value="admin" className="bg-[#151221] text-foreground">Admin</option>
+            <option value="moderator" className="bg-[#151221] text-foreground">Moderator</option>
+            <option value="finance" className="bg-[#151221] text-foreground">Finance</option>
+            <option value="support" className="bg-[#151221] text-foreground">Support</option>
             <option value="user" className="bg-[#151221] text-foreground">User</option>
           </select>
 
@@ -526,6 +529,8 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
             <option value="all" className="bg-[#151221] text-foreground">All Statuses</option>
             <option value="active" className="bg-[#151221] text-foreground">Active</option>
             <option value="inactive" className="bg-[#151221] text-foreground">Inactive</option>
+            <option value="suspended" className="bg-[#151221] text-foreground">Suspended</option>
+            <option value="banned" className="bg-[#151221] text-foreground">Banned</option>
           </select>
 
           {/* Clear Filters Action */}
@@ -702,17 +707,39 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
 
                         {/* Status */}
                         <TableCell className="py-2.5 w-44">
-                          {status === 'active' ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                              Active
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
-                              <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                              Inactive
-                            </span>
-                          )}
+                          {(() => {
+                            const st = (status || 'active').toLowerCase()
+                            if (st === 'active') {
+                              return (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                  Active
+                                </span>
+                              )
+                            }
+                            if (st === 'suspended') {
+                              return (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                  Suspended
+                                </span>
+                              )
+                            }
+                            if (st === 'banned') {
+                              return (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-red-600/15 text-red-600 dark:text-red-400 border border-red-600/30">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
+                                  Banned
+                                </span>
+                              )
+                            }
+                            return (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase bg-muted/10 text-muted border border-muted/20">
+                                <span className="h-1.5 w-1.5 rounded-full bg-muted" />
+                                Inactive
+                              </span>
+                            )
+                          })()}
                         </TableCell>
 
                         {/* Last Login */}

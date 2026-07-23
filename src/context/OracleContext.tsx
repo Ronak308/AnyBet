@@ -548,7 +548,7 @@ export const OracleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       },
       timeline: [
         { id: `t-${Date.now()}`, stage: 'Test Challenge Created', description: `Created with ${stake} Coins stake`, timestamp: new Date().toLocaleString(), completed: true },
-        { id: `t-${Date.now()+1}`, stage: 'Pending AI Evaluation', description: 'Queued for Gemini AI evaluation', timestamp: new Date().toLocaleString(), completed: true }
+        { id: `t-${Date.now() + 1}`, stage: 'Pending AI Evaluation', description: 'Queued for Gemini AI evaluation', timestamp: new Date().toLocaleString(), completed: true }
       ]
     }
 

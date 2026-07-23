@@ -33,35 +33,31 @@ export const ToastContainer: React.FC = () => {
       const customEvent = e as CustomEvent<{ message: string; type: ToastType }>
       if (!customEvent.detail || !customEvent.detail.message) return
       
-      const newToast: ToastMessage = {
-        id: `${Date.now()}_${Math.random()}`,
-        message: customEvent.detail.message,
-        type: customEvent.detail.type || 'info'
-      }
+      const newToastMessage = customEvent.detail.message
+      const newToastType = customEvent.detail.type || 'info'
       
-      setToasts(prev => [...prev, newToast])
+      setToasts(prev => {
+        // Prevent duplicate toast with identical message and type from appearing simultaneously
+        if (prev.some(t => t.message === newToastMessage && t.type === newToastType)) {
+          return prev
+        }
+        return [
+          ...prev,
+          {
+            id: `${Date.now()}_${Math.random()}`,
+            message: newToastMessage,
+            type: newToastType
+          }
+        ]
+      })
     }
 
     window.addEventListener('app-show-toast', handleToastEvent)
-    
-    // Also intercept standard show-toast custom event if other modules dispatch it
-    const handleLegacyToastEvent = (e: Event) => {
-      const customEvent = e as CustomEvent<{ message: string; type: ToastType }>
-      if (!customEvent.detail || !customEvent.detail.message) return
-      
-      const newToast: ToastMessage = {
-        id: `${Date.now()}_${Math.random()}`,
-        message: customEvent.detail.message,
-        type: customEvent.detail.type || 'info'
-      }
-      
-      setToasts(prev => [...prev, newToast])
-    }
-    window.addEventListener('show-toast', handleLegacyToastEvent)
+    window.addEventListener('show-toast', handleToastEvent)
 
     return () => {
       window.removeEventListener('app-show-toast', handleToastEvent)
-      window.removeEventListener('show-toast', handleLegacyToastEvent)
+      window.removeEventListener('show-toast', handleToastEvent)
     }
   }, [])
 

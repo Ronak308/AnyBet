@@ -203,7 +203,7 @@ export const AddEditUser: React.FC<AddEditUserProps> = ({
                                     <UserIcon className="h-12 w-12 text-primary/45" />
                                 )}
                             </div>
-                            
+
                             {/* Hidden file input */}
                             <input
                                 type="file"
@@ -229,7 +229,7 @@ export const AddEditUser: React.FC<AddEditUserProps> = ({
                                 }}
                                 disabled={isLoading}
                             />
-                            
+
                             {/* Clickable Overlay */}
                             <label
                                 htmlFor="avatar-upload-input"
@@ -238,7 +238,7 @@ export const AddEditUser: React.FC<AddEditUserProps> = ({
                                 <Camera className="h-7 w-7 text-white" />
                             </label>
                         </div>
-                        
+
                         {/* Right side: instructions and action buttons */}
                         <div className="flex flex-col gap-2.5 items-start">
                             <div className="flex flex-col gap-0.5">
@@ -415,6 +415,8 @@ export const AddEditUser: React.FC<AddEditUserProps> = ({
                                 >
                                     <option value="active" className="bg-[#120F1D] text-foreground">Active</option>
                                     <option value="inactive" className="bg-[#120F1D] text-foreground">Inactive</option>
+                                    <option value="suspended" className="bg-[#120F1D] text-foreground">Suspended</option>
+                                    <option value="banned" className="bg-[#120F1D] text-foreground">Banned</option>
                                 </select>
                             </div>
                         </div>

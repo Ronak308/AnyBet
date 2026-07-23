@@ -128,16 +128,15 @@ function AuthGate() {
 
   return (
     <Routes>
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/operations" replace /> : <LoginPage onSwitchToSignup={() => {}} />} />
+      <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage onSwitchToSignup={() => { }} />} />
 
       {!isAuthenticated ? (
         <Route path="*" element={<Navigate to="/login" state={{ from: location }} replace />} />
       ) : (
         <>
-          <Route path="/" element={<Navigate to="/operations" replace />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route element={<DashboardLayout />}>
             <Route path="dashboard" element={<OperationsRoute />} />
-            <Route path="operations" element={<OperationsRoute />} />
             <Route path="challenges" element={<ChallengesRoute />} />
             <Route path="challenges-all" element={<ChallengesRoute />} />
             <Route path="challenges-categories" element={<ChallengesRoute />} />

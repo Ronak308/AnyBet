@@ -1,10 +1,47 @@
 import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Lock, Eye, EyeOff, LogIn, AlertCircle, Zap } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Mail, Lock, Eye, EyeOff, LogIn, Zap } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import { toast } from '@/components/ui/Toast'
 import { SmoothInput } from '../../components/ui/skiper106'
 import { Button } from '../../components/ui/button'
 import { Logo } from '../../components/ui/Logo'
+
+function formatLoginErrorMessage(rawError?: string): string {
+  if (!rawError) return 'Invalid email or password. Please check your credentials and try again.'
+
+  const lower = rawError.toLowerCase()
+
+  if (lower.includes('user-not-found') || lower.includes('wrong-password') || lower.includes('invalid-credential') || lower.includes('invalid credential')) {
+    return 'Incorrect email or password. Please check your details and try again.'
+  }
+  if (lower.includes('invalid-email') || lower.includes('invalid email')) {
+    return 'Please enter a valid email address format.'
+  }
+  if (lower.includes('user-disabled') || lower.includes('user disabled')) {
+    return 'This account has been disabled. Please contact system support.'
+  }
+  if (lower.includes('too-many-requests') || lower.includes('too many requests')) {
+    return 'Too many failed attempts. Please wait a moment before trying again.'
+  }
+  if (lower.includes('network-request-failed') || lower.includes('network error')) {
+    return 'Network connection error. Please check your internet connection and try again.'
+  }
+  if (lower.includes('role') || lower.includes('authorized') || lower.includes('access denied')) {
+    return 'Access Denied: Standard user accounts cannot log into the dashboard. Only Admin, Moderator, Support, and Finance roles are authorized.'
+  }
+  if (lower.includes('suspended')) {
+    return 'Account Suspended: Your account has been suspended. Please contact system support.'
+  }
+  if (lower.includes('banned')) {
+    return 'Account Banned: Your account has been banned. Please contact system support.'
+  }
+  if (lower.includes('inactive')) {
+    return 'Account Inactive: Your account has been deactivated. Please contact an administrator.'
+  }
+
+  return rawError
+}
 
 interface LoginPageProps {
   onSwitchToSignup: () => void
@@ -17,21 +54,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup: _onSwitc
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
 
     const finalEmail = email.trim()
     const finalPassword = password
 
     if (!finalEmail) {
-      setError('Email or username is required.')
+      toast.error('Please enter your email or username to log in.')
       return
     }
     if (!finalPassword) {
-      setError('Password is required.')
+      toast.error('Please enter your password.')
       return
     }
 
@@ -40,7 +75,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup: _onSwitc
     setIsLoading(false)
 
     if (!result.success) {
-      setError(result.error ?? 'Login failed. Please try again.')
+      const userFriendlyMsg = formatLoginErrorMessage(result.error)
+      toast.error(userFriendlyMsg)
     }
   }
 
@@ -136,23 +172,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup: _onSwitc
                   </button>
                 </div>
               </div>
-
-              {/* Error message */}
-              <AnimatePresence mode="wait">
-                {error && (
-                  <motion.div
-                    key="error"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="flex items-start gap-2.5 p-3 bg-error-bg border border-error-border rounded-lg text-error-text text-xs font-mono overflow-hidden"
-                  >
-                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-error-text" />
-                    <span>{error}</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
               {/* Submit */}
               <Button
