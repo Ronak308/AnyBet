@@ -79,7 +79,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'reputation', label: 'Reputation', icon: Trophy },
     { id: 'financials', label: 'Financials', icon: Coins, isDropdown: true },
     { id: 'ai-oracle', label: 'AI Oracle', icon: Cpu, isDropdown: true },
-    { id: 'support-center', label: 'Support Center', icon: HelpCircle, isDropdown: true },
+    { id: 'support-center', label: 'Support Center', icon: MessageSquare, isDropdown: true },
+    { id: 'help', label: 'Help', icon: HelpCircle },
     { id: 'settings', label: 'Settings', icon: Settings },
   ]
 

@@ -19,6 +19,7 @@ import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { ProfileSettings } from '@/pages/profile/ProfileSettings'
 import { SupportCenterPage } from '@/pages/supportcenter/SupportTickets'
 import { PlatformSettingsView } from '@/pages/PlatformSettingsView'
+import { HelpPage } from '@/pages/HelpPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
@@ -92,6 +93,11 @@ function SettingsRoute() {
   return <PlatformSettingsView />
 }
 
+function HelpRoute() {
+  const navigate = useNavigate()
+  return <HelpPage navigate={(tab) => navigate('/' + tab)} />
+}
+
 function SupportCenterRoute() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -160,6 +166,7 @@ function AuthGate() {
             <Route path="profile" element={<ProfileRoute />} />
             <Route path="profile-settings" element={<ProfileSettingsRoute />} />
             <Route path="settings" element={<SettingsRoute />} />
+            <Route path="help" element={<HelpRoute />} />
             <Route path="support-center" element={<SupportCenterRoute />} />
             <Route path="support-tickets" element={<SupportCenterRoute />} />
             <Route path="support-disputes" element={<SupportCenterRoute />} />
