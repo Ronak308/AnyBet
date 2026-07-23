@@ -74,7 +74,7 @@ export const WalletsModule: React.FC<{
       .filter(t => t.type === 'Bet Win' || t.type === 'Reward')
       .reduce((sum, t) => sum + Math.round(t.amount * 0.05), 0)
 
-    const lifetimeRevenue = feeEarnings > 0 ? feeEarnings : 12900000
+    const lifetimeRevenue = feeEarnings
     const totalSystem = totalLiquid + totalEscrow + lifetimeRevenue || 1
 
     const liquidPct = Math.min(100, Math.max(1, Math.round((totalLiquid / totalSystem) * 100)))

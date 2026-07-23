@@ -151,7 +151,9 @@ interface WalletContextValue {
   
   // Reward Actions
   claimDailyReward: (userId: string) => { success: boolean; message: string; coinsGranted?: number }
-  updateDailyRewardConfig: (config: Partial<{ dailyCoins: number; cooldownHours: number }>) => void
+  updateDailyRewardConfig: (config: Partial<{ dailyCoins: number; cooldownHours: number; streakMultipliers: number[] }>) => void
+  updateRewardRule: (ruleId: string, updates: Partial<RewardRule>) => void
+  toggleRewardRule: (ruleId: string) => void
   createBonusCampaign: (camp: Omit<BonusCampaign, 'id' | 'currentClaims'>) => void
   updateBonusCampaign: (id: string, updates: Partial<BonusCampaign>) => void
   deleteBonusCampaign: (id: string) => void
@@ -172,21 +174,9 @@ interface WalletContextValue {
 
 // ─── Initial Mock Data ────────────────────────────────────────────────────────
 
-const INITIAL_WALLETS: UserWallet[] = [
-  { id: 'wal_1', userId: 'USR_01', username: 'Ronak', totalBalance: 250, lockedBalance: 30, status: 'Active', createdAt: '2026-01-10T10:00:00Z', lastActivity: 'Just now' },
-  { id: 'wal_2', userId: 'USR_02', username: 'block_wizard', totalBalance: 90, lockedBalance: 10, status: 'Active', createdAt: '2026-02-14T14:30:00Z', lastActivity: '12m ago' },
-  { id: 'wal_3', userId: 'USR_03', username: 'crypto_king', totalBalance: 1500, lockedBalance: 200, status: 'Active', createdAt: '2026-03-01T09:15:00Z', lastActivity: '1h ago' },
-  { id: 'wal_4', userId: 'USR_04', username: 'risky_bets', totalBalance: 50, lockedBalance: 0, status: 'Frozen', createdAt: '2026-04-20T16:00:00Z', lastActivity: '2d ago' },
-  { id: 'wal_5', userId: 'USR_05', username: 'oracle_eye', totalBalance: 400, lockedBalance: 50, status: 'Active', createdAt: '2026-05-11T11:45:00Z', lastActivity: '30m ago' },
-]
+const INITIAL_WALLETS: UserWallet[] = []
 
-const INITIAL_TRANSACTIONS: CoinTransaction[] = [
-  { id: 'tx_101', txHash: '0x8F9...2E1', userId: 'USR_01', username: 'Ronak', type: 'Deposit', amount: 50, status: 'Settled', timestamp: '2026-07-20T10:30:00Z', description: 'Starter Coin Pack Purchase (Virtual)' },
-  { id: 'tx_102', txHash: '0x32A...BF8', userId: 'USR_02', username: 'block_wizard', type: 'Bet Win', amount: 20, status: 'Settled', timestamp: '2026-07-20T09:15:00Z', description: 'Won Challenge #AB-9821 Payout' },
-  { id: 'tx_103', txHash: '0x1A2...FF0', userId: 'USR_03', username: 'crypto_king', type: 'Reward', amount: 5, status: 'Settled', timestamp: '2026-07-20T08:00:00Z', description: 'Daily Login Streak Bonus (Day 5)' },
-  { id: 'tx_104', txHash: '0xC4D...789', userId: 'USR_01', username: 'Ronak', type: 'Bet Stake', amount: 10, status: 'Settled', timestamp: '2026-07-19T22:10:00Z', description: 'Staked on Challenge #AB-9942' },
-  { id: 'tx_105', txHash: '0xE5F...112', userId: 'USR_05', username: 'oracle_eye', type: 'Withdrawal', amount: 20, status: 'Pending', timestamp: '2026-07-19T18:45:00Z', description: 'Requested Virtual Coin Redemption' },
-]
+const INITIAL_TRANSACTIONS: CoinTransaction[] = []
 
 const INITIAL_PACKAGES: CoinPackage[] = [
   { id: 'pkg_starter', name: 'Starter Pack', coins: 10, bonusCoins: 1, tag: 'POPULAR', priceUsd: 10, isEnabled: true },
@@ -206,33 +196,7 @@ const INITIAL_CAMPAIGNS: BonusCampaign[] = [
   { id: 'cmp_2', title: 'Weekly Prediction League', type: 'Tournament', bonusCoins: 50, minStake: 10, status: 'Active', expiresAt: '2026-07-27' },
 ]
 
-const INITIAL_WITHDRAWALS: WithdrawalRequest[] = [
-  { 
-    id: 'wd_1', 
-    userId: 'USR_05', 
-    username: 'oracle_eye', 
-    amount: 40, 
-    status: 'Pending', 
-    requestedAt: '2026-07-19T18:45:00Z',
-    payoutMethod: 'Crypto (USDT)',
-    payoutDetails: 'TY7H2jKx8L9PzQ10wsDmV3yTR5xzA9eS'
-  },
-  { 
-    id: 'wd_2', 
-    userId: 'USR_02', 
-    username: 'block_wizard', 
-    amount: 10, 
-    status: 'Approved', 
-    requestedAt: '2026-07-18T12:00:00Z', 
-    processedAt: '2026-07-18T14:20:00Z',
-    payoutMethod: 'Bank Wire',
-    payoutDetails: 'Chase Bank - A/C *****4820 (Routing: 021000021)',
-    txHash: 'TXN-BANK-8820921-ACH',
-    taxDeducted: 0.10,
-    feeDeducted: 5.00,
-    netDisbursed: 4.90
-  },
-]
+const INITIAL_WITHDRAWALS: WithdrawalRequest[] = []
 
 // ─── Local Storage Keys ──────────────────────────────────────────────────────
 
@@ -292,6 +256,15 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   })
 
+  const [rewardRules, setRewardRules] = useState<RewardRule[]>(() => {
+    try {
+      const saved = localStorage.getItem('anybet_reward_rules')
+      return saved ? JSON.parse(saved) : INITIAL_REWARD_RULES
+    } catch {
+      return INITIAL_REWARD_RULES
+    }
+  })
+
   const [platformFeePercent, setPlatformFeePercent] = useState<number>(() => {
     try {
       const saved = localStorage.getItem('anybet_platform_fee')
@@ -301,10 +274,21 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   })
 
-  const [dailyRewardConfig, setDailyRewardConfig] = useState({
-    dailyCoins: 2,
-    cooldownHours: 24,
-    streakMultipliers: [1.0, 1.2, 1.5, 1.8, 2.0, 2.5, 3.0]
+  const [dailyRewardConfig, setDailyRewardConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem('anybet_daily_reward_config')
+      return saved ? JSON.parse(saved) : {
+        dailyCoins: 2,
+        cooldownHours: 24,
+        streakMultipliers: [1.0, 1.2, 1.5, 1.8, 2.0, 2.5, 3.0]
+      }
+    } catch {
+      return {
+        dailyCoins: 2,
+        cooldownHours: 24,
+        streakMultipliers: [1.0, 1.2, 1.5, 1.8, 2.0, 2.5, 3.0]
+      }
+    }
   })
 
   const [userLastClaimTimestamp, setUserLastClaimTimestamp] = useState<number | null>(() => {
@@ -312,28 +296,16 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return saved ? parseInt(saved, 10) : null
   })
 
-  // Firestore Subscriptions & Initial Seeder
+  // Firestore Subscriptions
   useEffect(() => {
-    seedInitialFinancialsData(INITIAL_WALLETS, INITIAL_TRANSACTIONS, {
-      totalCoinsIssued: 5000,
-      coinsInCirculation: 3000,
-      coinsLockedInBets: 500,
-      totalRewardsDistributed: 300,
-      pendingWithdrawals: 100,
-      platformReserve: 10000,
-      totalCollectedFees: 850,
-      platformFeePercent: 5,
-      reserveFundBalance: 10000
-    }, INITIAL_WITHDRAWALS, INITIAL_PACKAGES)
-
     const unsubWallets = subscribeToWallets((items: UserWallet[]) => {
-      if (items.length > 0) setWallets(items)
+      setWallets(items)
     })
     const unsubTxs = subscribeToTransactions((items: CoinTransaction[]) => {
-      if (items.length > 0) setTransactions(items)
+      setTransactions(items)
     })
     const unsubWithdrawals = subscribeToWithdrawals((items: WithdrawalRequest[]) => {
-      if (items.length > 0) setWithdrawalRequests(items)
+      setWithdrawalRequests(items)
     })
     const unsubPackages = subscribeToCoinPackages((items: CoinPackage[]) => {
       if (items.length > 0) setCoinPackages(items)
@@ -588,8 +560,28 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [dailyRewardConfig, userLastClaimTimestamp, creditCoins])
 
-  const updateDailyRewardConfig = useCallback((config: Partial<{ dailyCoins: number; cooldownHours: number }>) => {
-    setDailyRewardConfig(prev => ({ ...prev, ...config }))
+  const updateDailyRewardConfig = useCallback((config: Partial<{ dailyCoins: number; cooldownHours: number; streakMultipliers: number[] }>) => {
+    setDailyRewardConfig(prev => {
+      const updated = { ...prev, ...config }
+      localStorage.setItem('anybet_daily_reward_config', JSON.stringify(updated))
+      return updated
+    })
+  }, [])
+
+  const updateRewardRule = useCallback((ruleId: string, updates: Partial<RewardRule>) => {
+    setRewardRules(prev => {
+      const updated = prev.map(r => r.id === ruleId ? { ...r, ...updates } : r)
+      localStorage.setItem('anybet_reward_rules', JSON.stringify(updated))
+      return updated
+    })
+  }, [])
+
+  const toggleRewardRule = useCallback((ruleId: string) => {
+    setRewardRules(prev => {
+      const updated = prev.map(r => r.id === ruleId ? { ...r, isEnabled: r.isEnabled === false } : r)
+      localStorage.setItem('anybet_reward_rules', JSON.stringify(updated))
+      return updated
+    })
   }, [])
 
   const updateBonusCampaign = useCallback((id: string, updates: Partial<BonusCampaign>) => {
@@ -777,7 +769,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       wallets,
       transactions,
       coinPackages,
-      rewardRules: INITIAL_REWARD_RULES,
+      rewardRules,
+      updateRewardRule,
+      toggleRewardRule,
       bonusCampaigns,
       withdrawalRequests,
       treasury: treasuryStats,

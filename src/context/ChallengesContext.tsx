@@ -91,6 +91,18 @@ export interface SettlementDetail {
   status: SettlementStatus
 }
 
+export interface TournamentMatch {
+  id: string
+  roundName: string // e.g. 'Round 1', 'Quarter-Final', 'Semi-Final', 'Final'
+  matchNumber: number
+  team1Name: string
+  team2Name: string
+  winningTeam?: string
+  status: 'Scheduled' | 'Live' | 'Completed' | 'Cancelled'
+  score?: string // e.g. '2 - 1'
+  scheduledTime?: string
+}
+
 export interface TimelineEvent {
   id: string
   stage: string
@@ -120,6 +132,7 @@ export interface ChallengeItem {
   status: ChallengeStatus
   rules: string[]
   participants: ChallengeParticipant[]
+  matches?: TournamentMatch[]
   financials: FinancialBreakdown
   settlement: SettlementDetail
   timeline: TimelineEvent[]
@@ -175,6 +188,8 @@ interface ChallengesContextValue {
   createChallenge: (newChallenge: Partial<ChallengeItem>) => void
   updateChallenge: (id: string, updates: Partial<ChallengeItem>) => void
   updateChallengeStatus: (id: string, status: ChallengeStatus) => void
+  updateTournamentMatch: (challengeId: string, matchId: string, updates: Partial<TournamentMatch>) => void
+  addTournamentMatch: (challengeId: string, match: Omit<TournamentMatch, 'id'>) => void
   approveChallenge: (id: string) => void
   rejectChallenge: (id: string) => void
   suspendChallenge: (id: string) => void
@@ -598,6 +613,49 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       updateChallengeInFirestore(id, { status: updatedItem.status, timeline: updatedItem.timeline })
     }
     showToastNotice(`Challenge ${id} status set to ${status}`, 'success')
+  }
+
+  const updateTournamentMatch = (challengeId: string, matchId: string, updates: Partial<TournamentMatch>) => {
+    setChallenges(prev => prev.map(c => {
+      if (c.id === challengeId) {
+        const existingMatches = c.matches || []
+        const updatedMatches = existingMatches.map(m => m.id === matchId ? { ...m, ...updates } : m)
+        const updated = { ...c, matches: updatedMatches }
+        updateChallengeInFirestore(challengeId, { matches: updatedMatches })
+        return updated
+      }
+      return c
+    }))
+    if (selectedChallenge?.id === challengeId) {
+      setSelectedChallenge(prev => prev ? {
+        ...prev,
+        matches: (prev.matches || []).map(m => m.id === matchId ? { ...m, ...updates } : m)
+      } : null)
+    }
+    showToastNotice('Tournament sub-match updated', 'info')
+  }
+
+  const addTournamentMatch = (challengeId: string, match: Omit<TournamentMatch, 'id'>) => {
+    const newMatch: TournamentMatch = {
+      ...match,
+      id: `m-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`
+    }
+    setChallenges(prev => prev.map(c => {
+      if (c.id === challengeId) {
+        const updatedMatches = [...(c.matches || []), newMatch]
+        const updated = { ...c, matches: updatedMatches }
+        updateChallengeInFirestore(challengeId, { matches: updatedMatches })
+        return updated
+      }
+      return c
+    }))
+    if (selectedChallenge?.id === challengeId) {
+      setSelectedChallenge(prev => prev ? {
+        ...prev,
+        matches: [...(prev.matches || []), newMatch]
+      } : null)
+    }
+    showToastNotice('New tournament sub-match added', 'success')
   }
 
   const approveChallenge = (id: string) => updateChallengeStatus(id, 'Approved')
@@ -1035,6 +1093,8 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     createChallenge,
     updateChallenge,
     updateChallengeStatus,
+    updateTournamentMatch,
+    addTournamentMatch,
     approveChallenge,
     rejectChallenge,
     suspendChallenge,

@@ -251,6 +251,12 @@ export const AllChallengesModule: React.FC = () => {
     // Auto-approve Admin Portal creations so no manual approval click is required for Public Pools
     const initialStatus: ChallengeStatus = (newSource === 'Admin Portal' || newCategory === 'Sports' || newCategory === 'Prediction') ? 'Approved' : 'Pending Review'
 
+    const initialMatches: import('../../context/ChallengesContext').TournamentMatch[] = (newType.toLowerCase().includes('tournament') || newFrequency === 'Weekly' || newFrequency === 'Monthly') ? [
+      { id: `m-${Date.now()}-1`, roundName: 'Round 1', matchNumber: 1, team1Name: newCreatorName.trim() || 'Team Alpha', team2Name: newOpponentName.trim() || 'Team Bravo', status: 'Scheduled', score: '0 - 0' },
+      { id: `m-${Date.now()}-2`, roundName: 'Round 1', matchNumber: 2, team1Name: 'Team Charlie', team2Name: 'Team Delta', status: 'Scheduled', score: '0 - 0' },
+      { id: `m-${Date.now()}-3`, roundName: 'Finals', matchNumber: 3, team1Name: 'Winner Match #1', team2Name: 'Winner Match #2', status: 'Scheduled', score: '0 - 0' }
+    ] : []
+
     createChallenge({
       title: finalTitle,
       category: newCategory,
@@ -264,6 +270,7 @@ export const AllChallengesModule: React.FC = () => {
       stakeAmount: Number(newStake) || 100,
       maxParticipants: Number(newMaxParticipants) || 100,
       rules: activeRulesList,
+      matches: initialMatches,
       status: initialStatus
     })
 

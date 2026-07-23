@@ -23,6 +23,8 @@ import type { BonusCampaign } from '../../context/WalletContext'
 export const RewardsModule: React.FC = () => {
   const {
     rewardRules,
+    updateRewardRule,
+    toggleRewardRule,
     bonusCampaigns,
     dailyRewardConfig,
     updateDailyRewardConfig,
@@ -35,6 +37,49 @@ export const RewardsModule: React.FC = () => {
 
   const [dailyCoinsInput, setDailyCoinsInput] = useState(dailyRewardConfig.dailyCoins.toString())
   const [cooldownInput, setCooldownInput] = useState(dailyRewardConfig.cooldownHours.toString())
+  const [streakInputs, setStreakInputs] = useState<string[]>(() => 
+    (dailyRewardConfig.streakMultipliers || [1.0, 1.2, 1.5, 1.8, 2.0, 2.5, 3.0]).map(m => m.toString())
+  )
+
+  // Keep inputs synced if dailyRewardConfig updates
+  React.useEffect(() => {
+    setDailyCoinsInput(dailyRewardConfig.dailyCoins.toString())
+    setCooldownInput(dailyRewardConfig.cooldownHours.toString())
+    if (dailyRewardConfig.streakMultipliers) {
+      setStreakInputs(dailyRewardConfig.streakMultipliers.map(m => m.toString()))
+    }
+  }, [dailyRewardConfig])
+
+  // Reward Rule Modal States
+  const [isRuleModalOpen, setIsRuleModalOpen] = useState(false)
+  const [editingRule, setEditingRule] = useState<import('../../context/WalletContext').RewardRule | null>(null)
+  const [ruleNameInput, setRuleNameInput] = useState('')
+  const [ruleCoinsInput, setRuleCoinsInput] = useState('10')
+  const [ruleXpInput, setRuleXpInput] = useState('10')
+
+  const handleOpenRuleModal = (rule: import('../../context/WalletContext').RewardRule) => {
+    setEditingRule(rule)
+    setRuleNameInput(rule.name || rule.event)
+    setRuleCoinsInput((rule.coinReward || rule.rewardCoins || 10).toString())
+    setRuleXpInput((rule.xpReward || 10).toString())
+    setIsRuleModalOpen(true)
+  }
+
+  const handleSaveRule = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingRule) return
+    const coins = parseInt(ruleCoinsInput, 10) || 0
+    const xp = parseInt(ruleXpInput, 10) || 0
+
+    updateRewardRule(editingRule.id, {
+      name: ruleNameInput,
+      coinReward: coins,
+      rewardCoins: coins,
+      xpReward: xp
+    })
+    showNotice(`Reward rule "${ruleNameInput}" updated successfully.`, 'success')
+    setIsRuleModalOpen(false)
+  }
 
   // Select last 4 reward claims or promo code usage for audit ledger
   const rewardTransactions = React.useMemo(() => {
@@ -88,14 +133,22 @@ export const RewardsModule: React.FC = () => {
     e.preventDefault()
     const coins = parseInt(dailyCoinsInput, 10)
     const cooldown = parseInt(cooldownInput, 10)
+    const multipliers = streakInputs.map(val => {
+      const parsed = parseFloat(val)
+      return isNaN(parsed) || parsed <= 0 ? 1.0 : parsed
+    })
 
     if (isNaN(coins) || coins <= 0 || isNaN(cooldown) || cooldown <= 0) {
       showNotice('Please enter valid positive values for daily reward coins and cooldown.', 'warning')
       return
     }
 
-    updateDailyRewardConfig({ dailyCoins: coins, cooldownHours: cooldown })
-    showNotice(`Daily Reward Config updated: +${coins} Coins every ${cooldown} hours.`, 'success')
+    updateDailyRewardConfig({
+      dailyCoins: coins,
+      cooldownHours: cooldown,
+      streakMultipliers: multipliers
+    })
+    showNotice(`Daily Reward Engine config updated successfully!`, 'success')
   }
 
   const handleOpenCampModal = (camp?: BonusCampaign) => {
@@ -213,16 +266,16 @@ export const RewardsModule: React.FC = () => {
         
         {/* Daily Reward Settings Card */}
         <Card className="bg-surface/30 border-border/60">
-          <CardContent className="p-6 flex flex-col justify-between h-full gap-4">
+          <CardContent className="p-6 flex flex-col gap-4">
             <div className="border-b border-border/40 pb-3">
-              <h3 className="text-base font-bold text-foreground">Daily Login Reward Engine</h3>
-              <p className="text-xs text-muted">Configure daily free coin grants and claim cooldown rules for players.</p>
+              <h3 className="text-base font-bold text-foreground">Daily Login Reward Engine Settings</h3>
+              <p className="text-xs text-muted mt-0.5">Configure base daily coin grants, claim cooldown, and 7-day streak multipliers.</p>
             </div>
 
             <form onSubmit={handleSaveDailyConfig} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Daily Coins</label>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Base Daily Coins</label>
                   <Input
                     type="number"
                     value={dailyCoinsInput}
@@ -232,7 +285,7 @@ export const RewardsModule: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Cooldown (Hours)</label>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Claim Cooldown (Hours)</label>
                   <Input
                     type="number"
                     value={cooldownInput}
@@ -242,7 +295,33 @@ export const RewardsModule: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end">
+              {/* Editable 7-Day Streak Multipliers */}
+              <div className="space-y-1.5 pt-1">
+                <label className="text-[10px] font-mono uppercase text-muted block">
+                  7-Day Streak Multipliers (Day 1 to Day 7)
+                </label>
+                <div className="grid grid-cols-7 gap-1.5">
+                  {streakInputs.map((val, idx) => (
+                    <div key={idx} className="flex flex-col gap-1">
+                      <span className="text-[9px] font-mono text-muted text-center uppercase">Day {idx + 1}</span>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        value={val}
+                        onChange={e => {
+                          const newArr = [...streakInputs]
+                          newArr[idx] = e.target.value
+                          setStreakInputs(newArr)
+                        }}
+                        className="bg-surface/40 text-xs font-mono text-foreground text-center px-1 h-8"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end border-t border-border/30">
                 <Button type="submit" variant="primary" glow className="text-xs font-mono h-9 px-5 w-full sm:w-auto">
                   <Check className="h-4 w-4 mr-1.5" /> Save Reward Config
                 </Button>
@@ -283,7 +362,10 @@ export const RewardsModule: React.FC = () => {
 
       {/* Streak Multiplier Rules Table */}
       <div className="flex flex-col gap-3">
-        <h3 className="text-sm font-bold text-foreground">Streak & Achievement Reward Rules</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-foreground">Streak & Achievement Reward Rules</h3>
+          <span className="text-xs text-muted font-mono">Click status badge to toggle or ✏️ to edit rule values</span>
+        </div>
 
         <div className="border border-border/60 rounded-xl overflow-hidden bg-surface/20">
           <Table>
@@ -293,6 +375,7 @@ export const RewardsModule: React.FC = () => {
                 <TableHead className="text-xs font-mono">Trigger Event</TableHead>
                 <TableHead className="text-xs font-mono">Reward Amount</TableHead>
                 <TableHead className="text-xs font-mono">Status</TableHead>
+                <TableHead className="text-xs font-mono text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -300,13 +383,34 @@ export const RewardsModule: React.FC = () => {
                 <TableRow key={rule.id}>
                   <TableCell className="font-bold text-xs text-foreground">{rule.name || rule.event}</TableCell>
                   <TableCell className="font-mono text-xs text-muted">{rule.trigger || rule.event}</TableCell>
-                  <TableCell className="font-mono text-xs font-bold text-emerald-400">+{rule.coinReward || rule.rewardCoins || 100} Coins</TableCell>
+                  <TableCell className="font-mono text-xs font-bold text-emerald-400">
+                    +{rule.coinReward || rule.rewardCoins || 0} Coins
+                    {rule.xpReward ? <span className="text-primary text-[10px] ml-2">(+{rule.xpReward} XP)</span> : null}
+                  </TableCell>
                   <TableCell>
-                    {rule.isEnabled !== false ? (
-                      <Badge variant="success">ENABLED</Badge>
-                    ) : (
-                      <Badge variant="outline">DISABLED</Badge>
-                    )}
+                    <button
+                      onClick={() => {
+                        toggleRewardRule(rule.id)
+                        showNotice(`Reward rule status updated.`, 'info')
+                      }}
+                      className="cursor-pointer"
+                      title="Click to Toggle Rule Status"
+                    >
+                      {rule.isEnabled !== false ? (
+                        <Badge variant="success" className="hover:opacity-80">ENABLED</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-red-400 border-red-500/40 hover:opacity-80">DISABLED</Badge>
+                      )}
+                    </button>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <button
+                      onClick={() => handleOpenRuleModal(rule)}
+                      className="p-1.5 rounded-md text-primary hover:bg-surface/60 transition-colors cursor-pointer"
+                      title="Edit Reward Rule Values"
+                    >
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -468,6 +572,64 @@ export const RewardsModule: React.FC = () => {
                 </Button>
                 <Button type="submit" variant="primary" glow className="text-xs font-mono">
                   <Sparkles className="h-4 w-4 mr-1.5" /> Save Campaign
+                </Button>
+              </div>
+            </form>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* EDIT REWARD RULE MODAL SHEET */}
+      <Sheet open={isRuleModalOpen} onOpenChange={setIsRuleModalOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-md bg-background border-l border-border p-6 overflow-y-auto font-sans">
+          <div className="flex flex-col gap-6">
+            <div className="border-b border-border/40 pb-4 pr-8">
+              <h3 className="text-lg font-bold text-foreground">Edit Achievement Reward Rule</h3>
+              <p className="text-xs text-muted mt-0.5">Modify coins reward and XP granted for this trigger event.</p>
+            </div>
+
+            <form onSubmit={handleSaveRule} className="space-y-4">
+              <div>
+                <label className="text-[10px] font-mono uppercase text-muted block mb-1">Rule Name / Description</label>
+                <Input
+                  type="text"
+                  value={ruleNameInput}
+                  onChange={e => setRuleNameInput(e.target.value)}
+                  className="bg-surface/40 text-xs font-mono text-foreground"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Reward Coins</label>
+                  <Input
+                    type="number"
+                    value={ruleCoinsInput}
+                    onChange={e => setRuleCoinsInput(e.target.value)}
+                    className="bg-surface/40 text-xs font-mono text-foreground"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">XP Reward</label>
+                  <Input
+                    type="number"
+                    value={ruleXpInput}
+                    onChange={e => setRuleXpInput(e.target.value)}
+                    className="bg-surface/40 text-xs font-mono text-foreground"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 flex justify-end gap-3 border-t border-border/40">
+                <Button type="button" variant="ghost" onClick={() => setIsRuleModalOpen(false)} className="text-xs font-mono">
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" glow className="text-xs font-mono">
+                  <Check className="h-4 w-4 mr-1.5" /> Save Rule
                 </Button>
               </div>
             </form>

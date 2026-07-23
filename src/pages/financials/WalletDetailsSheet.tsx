@@ -26,25 +26,16 @@ export const WalletDetailsSheet: React.FC<WalletDetailsSheetProps> = ({ wallet, 
   const userTxs = useMemo(() => {
     if (!wallet) return []
     const realTxs = transactions.filter(t => t.userId === wallet.userId || t.username === wallet.username)
-    if (realTxs.length > 0) {
-      return realTxs.map(t => ({
-        id: t.id,
-        txHash: t.txHash || t.id,
-        type: t.type,
-        description: (t.type as string) === 'Challenge Win' ? 'Won Challenge Pool' : t.type === 'Bet Stake' ? 'Escrow Bet Stake' : t.type,
-        amount: t.amount,
-        isCredit: t.type !== 'Withdrawal' && t.type !== 'Bet Stake',
-        timestamp: typeof t.timestamp === 'string' ? t.timestamp : new Date(t.timestamp).toLocaleString(),
-        status: 'Completed'
-      }))
-    }
-    return [
-      { id: 'TX-901', txHash: '0x8f2a...9911', type: 'Challenge Win Payout', description: 'Won #AB-9921 BTC Prediction Pool', amount: 29250, isCredit: true, timestamp: '2026-07-21 14:32:00', status: 'Completed' },
-      { id: 'TX-882', txHash: '0x7b1c...4420', type: 'Bet Stake Locked', description: 'Locked in Escrow #AB-8820 Sports Pool', amount: 10000, isCredit: false, timestamp: '2026-07-19 18:15:00', status: 'Escrow Locked' },
-      { id: 'TX-771', txHash: '0x3d4e...1102', type: 'Wallet Deposit', description: 'Added via UPI / Gateway Payment', amount: 50000, isCredit: true, timestamp: '2026-07-15 10:00:00', status: 'Completed' },
-      { id: 'TX-660', txHash: '0x5f6a...8831', type: 'Withdrawal', description: 'Withdrawal to Bank Account', amount: 15000, isCredit: false, timestamp: '2026-07-12 11:20:00', status: 'Completed' },
-      { id: 'TX-550', txHash: '0x9e8d...2214', type: 'Admin Promo Bonus', description: 'Awarded Rank #1 Leaderboard Bonus', amount: 1000, isCredit: true, timestamp: '2026-07-10 09:00:00', status: 'Completed' }
-    ]
+    return realTxs.map(t => ({
+      id: t.id,
+      txHash: t.txHash || t.id,
+      type: t.type,
+      description: t.description || ((t.type as string) === 'Challenge Win' ? 'Won Challenge Pool' : t.type === 'Bet Stake' ? 'Escrow Bet Stake' : t.type),
+      amount: t.amount,
+      isCredit: t.type !== 'Withdrawal' && t.type !== 'Bet Stake',
+      timestamp: typeof t.timestamp === 'string' ? t.timestamp : new Date(t.timestamp).toLocaleString(),
+      status: t.status || 'Completed'
+    }))
   }, [wallet, transactions])
 
   // Filtered transactions by Search Query

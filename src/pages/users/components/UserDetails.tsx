@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import type { User } from '@/context/AuthContext'
 import { Card } from '../../../components/ui/card'
 import { Button } from '../../../components/ui/button'
 import { Badge } from '../../../components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table'
 import { Ban, Calendar, Activity, Mail, X, Phone, Fingerprint } from 'lucide-react'
+import { useWallet } from '../../../context/WalletContext'
+import { useChallenges } from '../../../context/ChallengesContext'
 
 interface UserDetailsProps {
   user: User
@@ -21,21 +23,76 @@ export const UserDetails: React.FC<UserDetailsProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'profile' | 'wallet' | 'challenge-history'>('profile')
   const status = (user as any).status || 'active'
+  const { wallets, transactions } = useWallet()
+  const { challenges } = useChallenges()
 
-  // User Financial & Betting Mock Stats
-  const walletBalance = (user as any).walletBalance || (user as any).balance || 145000
-  const totalWagered = (user as any).totalWagered || 320000
-  const totalWins = (user as any).totalWins || 28
-  const totalLosses = (user as any).totalLosses || 6
-  const winRate = Math.round((totalWins / Math.max(1, totalWins + totalLosses)) * 100)
+  // Dynamic User Wallet & Financial Stats from WalletContext / Firestore
+  const userWallet = wallets.find(w => w.userId === user.id || w.username === user.username || w.id === user.id)
+  const walletBalance = userWallet ? userWallet.totalBalance : ((user as any).totalBalance || (user as any).walletBalance || (user as any).balance || 0)
 
-  // Past Challenge Participation History
-  const challengeHistory = [
-    { id: 'AB-9921', title: 'Will Bitcoin cross $100k by midnight?', choice: 'YES', stake: 15000, outcome: 'WON', payout: 29250, date: '2026-07-21' },
-    { id: 'AB-8820', title: 'Champions League Score Predictor', choice: 'YES', stake: 10000, outcome: 'WON', payout: 24000, date: '2026-07-19' },
-    { id: 'AB-7712', title: 'Marathon Completion Under 3 Hours', choice: 'NO', stake: 5000, outcome: 'LOST', payout: 0, date: '2026-07-15' },
-    { id: 'AB-6610', title: 'Will it Rain in Tokyo Tomorrow?', choice: 'YES', stake: 8000, outcome: 'ACTIVE', payout: 16800, date: '2026-07-22' }
-  ]
+  const userTxs = transactions.filter(t => t.userId === user.id || t.username === user.username || (userWallet && t.userId === userWallet.userId))
+  const betStakeTxs = userTxs.filter(t => t.type === 'Bet Stake')
+  const totalWagered = betStakeTxs.reduce((sum, t) => sum + t.amount, 0)
+  const winTxs = userTxs.filter(t => t.type === 'Bet Win')
+  const totalWins = winTxs.length
+  const totalLosses = 0
+  const winRate = (totalWins + totalLosses) > 0 ? Math.round((totalWins / (totalWins + totalLosses)) * 100) : 0
+
+  // Filter STRICTLY for real challenges or bet stake/win transactions (excluding Welcome Bonus & non-betting txs)
+  const challengeHistory = useMemo(() => {
+    const history: Array<{
+      id: string
+      title: string
+      choice: string
+      stake: number
+      outcome: string
+      payout: number
+      date: string
+    }> = []
+
+    // 1. Include challenges from ChallengesContext joined or created by user
+    const userChallenges = challenges.filter(c => 
+      c.creatorId === user.id || 
+      c.creatorName === user.username || 
+      c.participants?.some(p => p.id === user.id || p.username === user.username)
+    )
+
+    userChallenges.forEach(c => {
+      const p = c.participants?.find(part => part.id === user.id || part.username === user.username)
+      const stake = p ? p.stakeAmount : c.stakeAmount
+      const outcome = c.status === 'Completed' ? (p?.result === 'Winner' ? 'WON' : 'LOST') : c.status === 'Live' ? 'ACTIVE' : c.status.toUpperCase()
+      const payout = p?.result === 'Winner' ? c.prizePool : 0
+
+      history.push({
+        id: c.id.length > 10 ? c.id.slice(-7).toUpperCase() : c.id,
+        title: c.title,
+        choice: 'STAKE',
+        stake: stake,
+        outcome: outcome,
+        payout: payout,
+        date: c.startDate ? new Date(c.startDate).toLocaleDateString('en-US') : 'Recent'
+      })
+    })
+
+    // 2. Include specific bet stake / win transactions not already in history
+    const bettingTxs = userTxs.filter(t => t.type === 'Bet Stake' || t.type === 'Bet Win')
+    bettingTxs.forEach(t => {
+      const txId = t.id.length > 10 ? t.id.slice(-7).toUpperCase() : t.id
+      if (!history.some(h => h.id === txId)) {
+        history.push({
+          id: txId,
+          title: t.description || 'Bet Stake Placement',
+          choice: t.type === 'Bet Win' ? 'WIN' : 'STAKE',
+          stake: t.amount,
+          outcome: t.type === 'Bet Win' ? 'WON' : 'ACTIVE',
+          payout: t.type === 'Bet Win' ? t.amount : 0,
+          date: new Date(t.timestamp).toLocaleDateString('en-US')
+        })
+      }
+    })
+
+    return history
+  }, [challenges, userTxs, user])
 
   const parseFirestoreDate = (val: any): Date | null => {
     if (!val) return null
@@ -323,28 +380,36 @@ export const UserDetails: React.FC<UserDetailsProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {challengeHistory.map((item) => (
-                <TableRow key={item.id} className="hover:bg-surface/30 font-mono text-xs">
-                  <TableCell className="font-bold text-primary">{item.id}</TableCell>
-                  <TableCell className="font-sans font-bold text-foreground text-xs">{item.title}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">{item.choice}</Badge>
-                  </TableCell>
-                  <TableCell className="text-muted">{item.stake.toLocaleString()} Coins</TableCell>
-                  <TableCell>
-                    {item.outcome === 'WON' ? (
-                      <Badge variant="success" className="text-[9px] gap-1">🥇 WON</Badge>
-                    ) : item.outcome === 'LOST' ? (
-                      <Badge variant="outline" className="text-[9px] text-red-400 border-red-500/40 bg-red-500/10">❌ LOST</Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-[9px] text-amber-400 border-amber-500/40">⏳ IN-GAME</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right font-bold text-emerald-400">
-                    {item.payout > 0 ? `+${item.payout.toLocaleString()} Coins` : '0 Coins'}
+              {challengeHistory.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-xs text-muted font-mono">
+                    No betting or challenge history found for this user.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                challengeHistory.map((item) => (
+                  <TableRow key={item.id} className="hover:bg-surface/30 font-mono text-xs">
+                    <TableCell className="font-bold text-primary">{item.id}</TableCell>
+                    <TableCell className="font-sans font-bold text-foreground text-xs">{item.title}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-[9px] border-primary/30 text-primary">{item.choice}</Badge>
+                    </TableCell>
+                    <TableCell className="text-muted">{item.stake.toLocaleString()} Coins</TableCell>
+                    <TableCell>
+                      {item.outcome === 'WON' ? (
+                        <Badge variant="success" className="text-[9px] gap-1">🥇 WON</Badge>
+                      ) : item.outcome === 'LOST' ? (
+                        <Badge variant="outline" className="text-[9px] text-red-400 border-red-500/40 bg-red-500/10">❌ LOST</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[9px] text-amber-400 border-amber-500/40">⏳ IN-GAME</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-emerald-400">
+                      {item.payout > 0 ? `+${item.payout.toLocaleString()} Coins` : '0 Coins'}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>

@@ -8,14 +8,17 @@ import {
   TrendingUp, 
   Cpu, 
   Award, 
-  Check
+  Check,
+  Swords,
+  Plus,
+  Edit2
 } from 'lucide-react'
 import { Badge } from '../../components/ui/badge'
 import { Button } from '../../components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
 import { Sheet, SheetContent } from '../../components/ui/sheet'
 import { useChallenges } from '../../context/ChallengesContext'
-import type { ChallengeItem, ChallengeStatus } from '../../context/ChallengesContext'
+import type { ChallengeItem, ChallengeStatus, TournamentMatch } from '../../context/ChallengesContext'
 
 interface ChallengeDetailsSheetProps {
   challenge: ChallengeItem | null
@@ -26,12 +29,26 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
   const { 
     settleChallenge, 
     approveChallenge, 
+    updateTournamentMatch,
+    addTournamentMatch,
     showToastNotice 
   } = useChallenges()
 
-  const [activeSubTab, setActiveSubTab] = useState<'info' | 'participants' | 'financials' | 'settlement' | 'timeline'>('info')
+  const [activeSubTab, setActiveSubTab] = useState<'info' | 'matches' | 'participants' | 'financials' | 'settlement' | 'timeline'>('info')
   const [winnerInput, setWinnerInput] = useState('')
   const [isSettling, setIsSettling] = useState(false)
+
+  // Sub-Match Add Form State
+  const [isAddingMatch, setIsAddingMatch] = useState(false)
+  const [newRoundName, setNewRoundName] = useState('Round 1')
+  const [newTeam1, setNewTeam1] = useState('')
+  const [newTeam2, setNewTeam2] = useState('')
+  const [newMatchScore, setNewMatchScore] = useState('0 - 0')
+
+  // Sub-Match Quick Edit State
+  const [editingMatchId, setEditingMatchId] = useState<string | null>(null)
+  const [editScoreInput, setEditScoreInput] = useState('')
+  const [editWinnerInput, setEditWinnerInput] = useState('')
 
   const getStatusBadge = (status: ChallengeStatus) => {
     switch (status) {
@@ -144,6 +161,7 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
               <div className="flex items-center gap-1 px-6 overflow-x-auto">
                 {[
                   { id: 'info', label: 'Overview & Rules', icon: FileText },
+                  { id: 'matches', label: `Fixtures & Matches (${(challenge.matches || []).length})`, icon: Swords },
                   { id: 'participants', label: `Participants (${challenge.participantsCount})`, icon: Users },
                   { id: 'financials', label: 'Financials & Odds', icon: Coins },
                   { id: 'settlement', label: 'Settlement & Oracle', icon: Cpu }
@@ -229,6 +247,257 @@ export const ChallengeDetailsSheet: React.FC<ChallengeDetailsSheetProps> = ({ ch
                       ))}
                     </ul>
                   </div>
+                </div>
+              )}
+
+              {/* TAB 1.5: FIXTURES & SUB-MATCHES (Team 1 vs Team 2) */}
+              {activeSubTab === 'matches' && (
+                <div className="space-y-4 font-mono">
+                  <div className="flex items-center justify-between border-b border-border/40 pb-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                        <Swords className="h-4 w-4 text-primary" /> Tournament Sub-Matches & Fixtures
+                      </h3>
+                      <p className="text-xs text-muted font-sans mt-0.5">Manage Team 1 vs Team 2 fixtures, live scores, and winning teams.</p>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsAddingMatch(!isAddingMatch)}
+                      className="text-xs font-mono gap-1.5 h-8 border-primary/40 text-primary hover:bg-primary/10 cursor-pointer"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> {isAddingMatch ? 'Close Form' : 'Add Fixture'}
+                    </Button>
+                  </div>
+
+                  {/* ADD SUB-MATCH FORM */}
+                  {isAddingMatch && (
+                    <div className="p-4 bg-surface/40 border border-primary/30 rounded-2xl space-y-3">
+                      <h4 className="text-xs font-bold text-primary uppercase">New Sub-Match Fixture</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] text-muted block mb-1">Round Name</label>
+                          <input
+                            type="text"
+                            value={newRoundName}
+                            onChange={e => setNewRoundName(e.target.value)}
+                            placeholder="e.g. Round 1, Semi-Final"
+                            className="w-full bg-surface/60 border border-border rounded-xl p-2 text-xs text-foreground outline-none focus:border-primary"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-muted block mb-1">Initial Score</label>
+                          <input
+                            type="text"
+                            value={newMatchScore}
+                            onChange={e => setNewMatchScore(e.target.value)}
+                            placeholder="e.g. 0 - 0"
+                            className="w-full bg-surface/60 border border-border rounded-xl p-2 text-xs text-foreground outline-none focus:border-primary"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] text-emerald-400 font-bold block mb-1">Team 1 Name</label>
+                          <input
+                            type="text"
+                            value={newTeam1}
+                            onChange={e => setNewTeam1(e.target.value)}
+                            placeholder="e.g. Real Madrid / Team Alpha"
+                            className="w-full bg-surface/60 border border-emerald-500/40 rounded-xl p-2 text-xs text-foreground outline-none focus:border-emerald-500"
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] text-rose-400 font-bold block mb-1">Team 2 Name</label>
+                          <input
+                            type="text"
+                            value={newTeam2}
+                            onChange={e => setNewTeam2(e.target.value)}
+                            placeholder="e.g. Barcelona / Team Bravo"
+                            className="w-full bg-surface/60 border border-rose-500/40 rounded-xl p-2 text-xs text-foreground outline-none focus:border-rose-500"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setIsAddingMatch(false)}
+                          className="text-xs font-mono h-8"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          glow
+                          onClick={() => {
+                            if (!newTeam1.trim() || !newTeam2.trim()) {
+                              showToastNotice('Please specify Team 1 and Team 2 names', 'warning')
+                              return
+                            }
+                            addTournamentMatch(challenge.id, {
+                              roundName: newRoundName || 'Round 1',
+                              matchNumber: (challenge.matches || []).length + 1,
+                              team1Name: newTeam1,
+                              team2Name: newTeam2,
+                              status: 'Scheduled',
+                              score: newMatchScore || '0 - 0'
+                            })
+                            setNewTeam1('')
+                            setNewTeam2('')
+                            setIsAddingMatch(false)
+                          }}
+                          className="text-xs font-mono h-8"
+                        >
+                          Save Fixture
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* MATCHES LIST / CARDS */}
+                  {(!challenge.matches || challenge.matches.length === 0) ? (
+                    <div className="p-8 text-center bg-surface/20 rounded-xl border border-border/40 space-y-2">
+                      <Swords className="h-8 w-8 text-muted mx-auto opacity-50" />
+                      <p className="text-xs text-muted">No sub-matches / fixtures created for this tournament yet.</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsAddingMatch(true)}
+                        className="text-xs font-mono mt-2"
+                      >
+                        + Add First Sub-Match Fixture
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {challenge.matches.map((m, idx) => (
+                        <div key={m.id || idx} className="p-4 bg-surface/30 border border-border/60 rounded-2xl space-y-3">
+                          <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="pro" className="text-[9px] font-mono">{m.roundName || `Match #${idx + 1}`}</Badge>
+                              <span className="text-xs text-muted">Match #{m.matchNumber || idx + 1}</span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {m.status === 'Completed' ? (
+                                <Badge variant="success">COMPLETED</Badge>
+                              ) : m.status === 'Live' ? (
+                                <Badge variant="warning">● LIVE</Badge>
+                              ) : (
+                                <Badge variant="outline">SCHEDULED</Badge>
+                              )}
+                              <button
+                                onClick={() => {
+                                  setEditingMatchId(editingMatchId === m.id ? null : m.id)
+                                  setEditScoreInput(m.score || '0 - 0')
+                                  setEditWinnerInput(m.winningTeam || '')
+                                }}
+                                className="p-1 text-primary hover:bg-surface/60 rounded cursor-pointer"
+                                title="Edit Match Score / Declare Winner"
+                              >
+                                <Edit2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* TEAM 1 vs TEAM 2 CARD DISPLAY */}
+                          <div className="grid grid-cols-3 items-center text-center p-3 bg-surface/50 rounded-xl border border-border/40">
+                            <div className="text-left space-y-1">
+                              <span className="text-[10px] text-muted uppercase block">Team 1</span>
+                              <h4 className={`text-sm font-bold ${m.winningTeam === m.team1Name ? 'text-emerald-400' : 'text-foreground'}`}>
+                                {m.team1Name} {m.winningTeam === m.team1Name && '👑'}
+                              </h4>
+                            </div>
+
+                            <div>
+                              <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">
+                                {m.score || 'VS'}
+                              </span>
+                            </div>
+
+                            <div className="text-right space-y-1">
+                              <span className="text-[10px] text-muted uppercase block">Team 2</span>
+                              <h4 className={`text-sm font-bold ${m.winningTeam === m.team2Name ? 'text-emerald-400' : 'text-foreground'}`}>
+                                {m.team2Name} {m.winningTeam === m.team2Name && '👑'}
+                              </h4>
+                            </div>
+                          </div>
+
+                          {/* WINNING TEAM BADGE IF DECLARED */}
+                          {m.winningTeam && (
+                            <div className="text-xs text-center text-emerald-400 font-bold bg-emerald-500/10 py-1.5 rounded-lg border border-emerald-500/30">
+                              🏆 Winner Declared: {m.winningTeam}
+                            </div>
+                          )}
+
+                          {/* INLINE EDIT SCORE / WINNER PANEL */}
+                          {editingMatchId === m.id && (
+                            <div className="p-3 bg-surface/60 border border-primary/40 rounded-xl space-y-3 text-xs pt-3">
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <label className="text-[10px] text-muted block mb-1">Score</label>
+                                  <input
+                                    type="text"
+                                    value={editScoreInput}
+                                    onChange={e => setEditScoreInput(e.target.value)}
+                                    className="w-full bg-surface border border-border rounded-lg p-1.5 text-xs text-foreground"
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="text-[10px] text-muted block mb-1">Winning Team</label>
+                                  <select
+                                    value={editWinnerInput}
+                                    onChange={e => setEditWinnerInput(e.target.value)}
+                                    className="w-full bg-surface border border-border rounded-lg p-1.5 text-xs text-foreground cursor-pointer"
+                                  >
+                                    <option value="">-- Select Winner --</option>
+                                    <option value={m.team1Name}>{m.team1Name} (Team 1)</option>
+                                    <option value={m.team2Name}>{m.team2Name} (Team 2)</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div className="flex justify-end gap-2 pt-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setEditingMatchId(null)}
+                                  className="text-xs font-mono h-7"
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  glow
+                                  onClick={() => {
+                                    updateTournamentMatch(challenge.id, m.id, {
+                                      score: editScoreInput,
+                                      winningTeam: editWinnerInput,
+                                      status: editWinnerInput ? 'Completed' : 'Live'
+                                    })
+                                    setEditingMatchId(null)
+                                  }}
+                                  className="text-xs font-mono h-7"
+                                >
+                                  Update Match
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
