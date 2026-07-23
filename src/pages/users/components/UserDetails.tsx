@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import type { User } from '@/context/AuthContext'
+import { usePermissions } from '@/context/PermissionContext'
 import { Card } from '../../../components/ui/card'
 import { Button } from '../../../components/ui/button'
 import { Badge } from '../../../components/ui/badge'
@@ -21,6 +22,7 @@ export const UserDetails: React.FC<UserDetailsProps> = ({
   onEdit,
   onClose
 }) => {
+  const { canEdit } = usePermissions()
   const [activeTab, setActiveTab] = useState<'profile' | 'wallet' | 'challenge-history'>('profile')
   const status = (user as any).status || 'active'
   const { wallets, transactions } = useWallet()
@@ -428,21 +430,25 @@ export const UserDetails: React.FC<UserDetailsProps> = ({
               Close
             </Button>
           )}
-          <Button
-            variant="outline"
-            className="flex-1 text-xs font-mono uppercase tracking-wider py-2 h-9 border-muted/30 hover:bg-surface/50"
-            onClick={() => onEdit(user)}
-          >
-            Edit Profile
-          </Button>
-          <Button
-            variant={status === 'inactive' ? 'outline' : 'danger'}
-            className={`flex-1 text-xs font-mono uppercase tracking-wider py-2 h-9 gap-1.5 ${status === 'inactive' ? 'border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10' : ''}`}
-            onClick={() => onToggleStatus(user.id)}
-          >
-            <Ban className="h-3.5 w-3.5" />
-            {status === 'inactive' ? 'Activate' : 'Deactivate'}
-          </Button>
+          {canEdit('users') && (
+            <Button
+              variant="outline"
+              className="flex-1 text-xs font-mono uppercase tracking-wider py-2 h-9 border-muted/30 hover:bg-surface/50"
+              onClick={() => onEdit(user)}
+            >
+              Edit Profile
+            </Button>
+          )}
+          {canEdit('users') && (
+            <Button
+              variant={status === 'inactive' ? 'outline' : 'danger'}
+              className={`flex-1 text-xs font-mono uppercase tracking-wider py-2 h-9 gap-1.5 ${status === 'inactive' ? 'border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10' : ''}`}
+              onClick={() => onToggleStatus(user.id)}
+            >
+              <Ban className="h-3.5 w-3.5" />
+              {status === 'inactive' ? 'Activate' : 'Deactivate'}
+            </Button>
+          )}
         </div>
       </div>
     </Card>

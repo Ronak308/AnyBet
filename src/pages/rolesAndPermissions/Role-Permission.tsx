@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import {
   Shield,
+  ShieldAlert,
   Users,
   Coins,
   Sword,
@@ -28,6 +29,7 @@ import {
   RotateCcw,
   Minus
 } from 'lucide-react'
+import { usePermissions } from '@/context/PermissionContext'
 
 type AccessLevel = 'no_access' | 'view_only' | 'create_update' | 'approve_review' | 'full_access'
 type ActionPermission = 'view' | 'create' | 'edit' | 'delete' | 'approve'
@@ -180,8 +182,28 @@ interface RoleDefinition {
 const AccessDropdown: React.FC<{
   currentLevel: AccessLevel
   onSelect: (level: AccessLevel) => void
-}> = ({ currentLevel, onSelect }) => {
+  disabled?: boolean
+}> = ({ currentLevel, onSelect, disabled }) => {
   const currentConfig = ACCESS_LEVELS[currentLevel] || ACCESS_LEVELS.no_access
+
+  if (disabled) {
+    return (
+      <div
+        className="w-[154px] px-2.5 py-1 rounded-lg border text-sm font-medium flex items-center justify-between gap-1 shrink-0 bg-card/50 dark:bg-surface/40 border-border/50 text-muted-foreground opacity-70 cursor-not-allowed"
+      >
+        <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+          <span className={`w-4 h-4 flex items-center justify-center rounded text-[10px] font-mono font-bold border shrink-0 ${currentConfig.badgeClass}`}>
+            {currentConfig.code === '-' ? (
+              <Minus className="h-3 w-3 stroke-[3]" />
+            ) : (
+              currentConfig.code
+            )}
+          </span>
+          <span className="truncate font-bold text-[12.5px] text-foreground/80">{currentConfig.label}</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <DropdownMenu>
@@ -336,14 +358,10 @@ export const DEFAULT_PERMISSIONS: Record<string, Record<string, AccessLevel>> = 
 }
 
 export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }> = () => {
+  const { canView, canEdit } = usePermissions()
+  const isEditable = canEdit('roles-permissions')
+
   const [roles] = useState<RoleDefinition[]>([
-    {
-      id: 'admin',
-      name: 'Admin',
-      description: 'Full administrative access to all operations, configurations, and financial tools.',
-      userCount: 4,
-      color: 'from-purple-500/25 to-indigo-500/10 text-purple-400 border-purple-500/30'
-    },
     {
       id: 'moderator',
       name: 'Moderator',
@@ -367,7 +385,7 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
     }
   ])
 
-  const [selectedRoleId, setSelectedRoleId] = useState<string>('admin')
+  const [selectedRoleId, setSelectedRoleId] = useState<string>('moderator')
 
   // Helper to load cached permissions from localStorage if available to prevent UI flashing
   const getInitialPermissions = (): Record<string, Record<string, AccessLevel>> => {
@@ -444,6 +462,7 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
   const [saving, setSaving] = useState(false)
 
   const handleUpdateAccess = (itemKey: string, level: AccessLevel) => {
+    if (!isEditable) return
     setRoleModuleAccess(prev => ({
       ...prev,
       [selectedRoleId]: {
@@ -454,6 +473,7 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
   }
 
   const handleResetPermissions = () => {
+    if (!isEditable) return
     const currentRoleName = roles.find(r => r.id === selectedRoleId)?.name || 'Selected Role'
     setRoleModuleAccess(savedPermissions)
     window.dispatchEvent(
@@ -467,6 +487,7 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
   }
 
   const handleSaveChanges = async () => {
+    if (!isEditable) return
     setSaving(true)
     let saveSuccess = true
 
@@ -481,6 +502,7 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
         await setDoc(docRef, docData, { merge: true })
       }
       localStorage.setItem('anybet_role_permissions', JSON.stringify(roleModuleAccess))
+      window.dispatchEvent(new Event('permissions-updated'))
     } catch (e) {
       console.error('Error saving role permissions to Firestore:', e)
       saveSuccess = false
@@ -511,6 +533,20 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
     }
   }
 
+  if (!canView('roles-permissions')) {
+    return (
+      <div className="p-6 min-h-screen flex items-center justify-center font-sans">
+        <div className="p-8 rounded-2xl max-w-md w-full text-center space-y-4 border border-rose-500/30 bg-rose-500/5 backdrop-blur-md">
+          <ShieldAlert className="h-12 w-12 text-rose-500 mx-auto" />
+          <h3 className="text-base font-bold text-foreground font-sans uppercase tracking-wider">Access Restricted</h3>
+          <p className="text-xs text-muted font-mono leading-relaxed">
+            Your assigned role does not have permission to view the Roles & Permissions module.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="p-6 space-y-6 min-h-screen text-foreground relative z-10 font-sans">
 
@@ -519,7 +555,9 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
         <div className="flex items-start gap-3">
           <Shield className="h-5 w-5 text-primary mt-0.5" />
           <div>
-            <h3 className="text-base font-bold text-foreground font-sans uppercase tracking-wider">Roles & Permissions</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-foreground font-sans uppercase tracking-wider">Roles & Permissions</h3>
+            </div>
             <p className="text-[11px] text-muted font-mono uppercase tracking-widest mt-1">
               Managing organizational roles and system module access clearance levels
             </p>
@@ -550,31 +588,33 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
             })}
           </TabsList>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              onClick={handleResetPermissions}
-              disabled={!hasChanges || saving}
-              className={`h-9 px-3.5 gap-1.5 text-xs font-mono uppercase tracking-wider border border-border text-muted transition-all ${!hasChanges || saving
-                ? 'opacity-50 cursor-not-allowed border-border/40 text-muted/50'
-                : 'hover:text-foreground hover:bg-surface/60 cursor-pointer'
-                }`}
-            >
-              <RotateCcw className="h-3.5 w-3.5" /> Reset
-            </Button>
+          {canEdit('roles-permissions') && (
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="outline"
+                onClick={handleResetPermissions}
+                disabled={!hasChanges || saving}
+                className={`h-9 px-3.5 gap-1.5 text-xs font-mono uppercase tracking-wider border border-border text-muted transition-all ${!hasChanges || saving
+                  ? 'opacity-50 cursor-not-allowed border-border/40 text-muted/50'
+                  : 'hover:text-foreground hover:bg-surface/60 cursor-pointer'
+                  }`}
+              >
+                <RotateCcw className="h-3.5 w-3.5" /> Reset
+              </Button>
 
-            <Button
-              onClick={handleSaveChanges}
-              disabled={saving || !hasChanges}
-              className={`h-9 px-4 gap-2 text-xs font-mono uppercase tracking-wider text-white transition-all ${!hasChanges || saving
-                ? 'bg-primary/40 text-white/50 border border-primary/20 cursor-not-allowed shadow-none'
-                : 'bg-primary hover:bg-primary-hover cursor-pointer shadow-[0_0_15px_rgba(128,38,255,0.3)] active:scale-95'
-                }`}
-            >
-              <Save className="h-4 w-4" />
-              {saving ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </div>
+              <Button
+                onClick={handleSaveChanges}
+                disabled={saving || !hasChanges}
+                className={`h-9 px-4 gap-2 text-xs font-mono uppercase tracking-wider text-white transition-all ${!hasChanges || saving
+                  ? 'bg-primary/40 text-white/50 border border-primary/20 cursor-not-allowed shadow-none'
+                  : 'bg-primary hover:bg-primary-hover cursor-pointer shadow-[0_0_15px_rgba(128,38,255,0.3)] active:scale-95'
+                  }`}
+              >
+                <Save className="h-4 w-4" />
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* ─── SINGLE-TAB MODULES SECTION ─── */}
@@ -615,6 +655,7 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
                   <AccessDropdown
                     currentLevel={currentLevel}
                     onSelect={(lvl) => handleUpdateAccess(module.id, lvl)}
+                    disabled={!isEditable}
                   />
                 </div>
               )
@@ -677,6 +718,7 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
                           <AccessDropdown
                             currentLevel={subLevel}
                             onSelect={(lvl) => handleUpdateAccess(sub.id, lvl)}
+                            disabled={!isEditable}
                           />
                         </div>
                       )

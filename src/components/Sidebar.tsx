@@ -29,6 +29,7 @@ import {
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
 import { useAuth } from '../context/AuthContext'
+import { usePermissions } from '../context/PermissionContext'
 import { ConfirmationModal } from './ui/confirmation-modal'
 
 import { Logo } from './ui/Logo'
@@ -49,6 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   className
 }) => {
   const { logout } = useAuth()
+  const { canView } = usePermissions()
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [financialsOpen, setFinancialsOpen] = useState(() => activeTab.startsWith('financials'))
   const [challengesOpen, setChallengesOpen] = useState(() => activeTab.startsWith('challenges'))
@@ -174,6 +176,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     : activeTab === item.id
 
             if (isChallengesGroup) {
+              const visibleSubItems = challengeSubItems.filter(sub => canView(sub.id))
+              if (visibleSubItems.length === 0) return null
+
               return (
                 <div key={item.id} className="flex flex-col gap-1">
                   <Button
@@ -182,12 +187,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       if (isCollapsed) {
                         setIsCollapsed(false)
                         setChallengesOpen(true)
-                        setActiveTab('challenges-all')
+                        setActiveTab(visibleSubItems[0]?.id || 'challenges-all')
                       } else {
                         const newOpen = !challengesOpen
                         setChallengesOpen(newOpen)
                         if (newOpen && !activeTab.startsWith('challenges')) {
-                          setActiveTab('challenges-all')
+                          setActiveTab(visibleSubItems[0]?.id || 'challenges-all')
                         }
                       }
                     }}
@@ -223,7 +228,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         transition={{ duration: 0.2 }}
                         className="flex flex-col gap-0.5 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
                       >
-                        {challengeSubItems.map((sub) => {
+                        {visibleSubItems.map((sub) => {
                           const SubIcon = sub.icon
                           const isSubActive = activeTab === sub.id || (activeTab === 'challenges' && sub.id === 'challenges-all')
 
@@ -251,6 +256,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }
 
             if (isFinancialsGroup) {
+              const visibleSubItems = financialSubItems.filter(sub => canView(sub.id))
+              if (visibleSubItems.length === 0) return null
+
               return (
                 <div key={item.id} className="flex flex-col gap-1">
                   <Button
@@ -259,12 +267,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       if (isCollapsed) {
                         setIsCollapsed(false)
                         setFinancialsOpen(true)
-                        setActiveTab('financials-wallet')
+                        setActiveTab(visibleSubItems[0]?.id || 'financials-wallet')
                       } else {
                         const newOpen = !financialsOpen
                         setFinancialsOpen(newOpen)
                         if (newOpen && !activeTab.startsWith('financials')) {
-                          setActiveTab('financials-wallet')
+                          setActiveTab(visibleSubItems[0]?.id || 'financials-wallet')
                         }
                       }
                     }}
@@ -300,7 +308,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         transition={{ duration: 0.2 }}
                         className="flex flex-col gap-0.5 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
                       >
-                        {financialSubItems.map((sub) => {
+                        {visibleSubItems.map((sub) => {
                           const SubIcon = sub.icon
                           const isSubActive = activeTab === sub.id || (activeTab === 'financials' && sub.id === 'financials-wallet')
 
@@ -328,6 +336,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }
 
             if (isOracleGroup) {
+              const visibleSubItems = oracleSubItems.filter(sub => canView(sub.id))
+              if (visibleSubItems.length === 0) return null
+
               return (
                 <div key={item.id} className="flex flex-col gap-1">
                   <Button
@@ -336,12 +347,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       if (isCollapsed) {
                         setIsCollapsed(false)
                         setOracleOpen(true)
-                        setActiveTab('ai-oracle-control')
+                        setActiveTab(visibleSubItems[0]?.id || 'ai-oracle-control')
                       } else {
                         const newOpen = !oracleOpen
                         setOracleOpen(newOpen)
                         if (newOpen && !activeTab.startsWith('ai-oracle') && !activeTab.startsWith('oracle')) {
-                          setActiveTab('ai-oracle-control')
+                          setActiveTab(visibleSubItems[0]?.id || 'ai-oracle-control')
                         }
                       }
                     }}
@@ -377,7 +388,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         transition={{ duration: 0.2 }}
                         className="flex flex-col gap-0.5 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
                       >
-                        {oracleSubItems.map((sub) => {
+                        {visibleSubItems.map((sub) => {
                           const SubIcon = sub.icon
                           const isSubActive = activeTab === sub.id || (activeTab === 'ai-oracle' && sub.id === 'ai-oracle-control')
 
@@ -405,6 +416,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }
 
             if (isSupportGroup) {
+              const visibleSubItems = supportSubItems.filter(sub => canView(sub.id))
+              if (visibleSubItems.length === 0) return null
+
               return (
                 <div key={item.id} className="flex flex-col gap-1">
                   <Button
@@ -413,12 +427,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       if (isCollapsed) {
                         setIsCollapsed(false)
                         setSupportOpen(true)
-                        setActiveTab('support-tickets')
+                        setActiveTab(visibleSubItems[0]?.id || 'support-tickets')
                       } else {
                         const newOpen = !supportOpen
                         setSupportOpen(newOpen)
                         if (newOpen && !activeTab.startsWith('support')) {
-                          setActiveTab('support-tickets')
+                          setActiveTab(visibleSubItems[0]?.id || 'support-tickets')
                         }
                       }
                     }}
@@ -454,7 +468,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         transition={{ duration: 0.2 }}
                         className="flex flex-col gap-0.5 pl-4 pr-1 overflow-hidden border-l-2 border-primary/20 ml-5 my-0.5"
                       >
-                        {supportSubItems.map((sub) => {
+                        {visibleSubItems.map((sub) => {
                           const SubIcon = sub.icon
                           const isSubActive = activeTab === sub.id || (activeTab === 'support-center' && sub.id === 'support-tickets')
 
@@ -481,29 +495,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
               )
             }
 
-            return (
-              <Button
-                key={item.id}
-                variant={isActive ? "nav-active" : "nav"}
-                onClick={() => setActiveTab(item.id)}
-                className={cn(
-                  "flex items-center h-9 w-full transition-all duration-200 group",
-                  isCollapsed ? "justify-center px-0" : "px-4"
-                )}
-                glow={isActive}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {!isCollapsed && (
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="font-semibold text-[13px] font-sans"
-                  >
-                    {item.label}
-                  </motion.span>
-                )}
-              </Button>
-            )
+            if (!item.isDropdown) {
+              if (['users', 'roles-permissions', 'leaderboards', 'reputation', 'settings', 'dashboard'].includes(item.id)) {
+                if (!canView(item.id)) return null
+              }
+
+              return (
+                <Button
+                  key={item.id}
+                  variant={isActive ? "nav-active" : "nav"}
+                  onClick={() => setActiveTab(item.id)}
+                  className={cn(
+                    "flex items-center h-9 w-full transition-all duration-200 group",
+                    isCollapsed ? "justify-center px-0" : "px-4"
+                  )}
+                  glow={isActive}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {!isCollapsed && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="font-semibold text-[13px] font-sans"
+                    >
+                      {item.label}
+                    </motion.span>
+                  )}
+                </Button>
+              )
+            }
           })}
         </nav>
       </div>

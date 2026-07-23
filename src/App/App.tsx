@@ -107,6 +107,53 @@ function SupportCenterRoute() {
 
 // ─── Protected Layout & Route Gate ───────────────────────────────────────────
 
+import { usePermissions } from '@/context/PermissionContext'
+import { ShieldAlert } from 'lucide-react'
+
+function AccessRestrictedView({ moduleName }: { moduleName: string }) {
+  return (
+    <div className="p-6 min-h-[calc(100vh-4rem)] flex items-center justify-center font-sans">
+      <div className="p-8 rounded-2xl max-w-md w-full text-center space-y-4 border border-rose-500/30 bg-rose-500/5 backdrop-blur-md">
+        <ShieldAlert className="h-12 w-12 text-rose-500 mx-auto" />
+        <h3 className="text-base font-bold text-foreground font-sans uppercase tracking-wider">Access Restricted</h3>
+        <p className="text-xs text-muted font-mono leading-relaxed">
+          Your assigned role does not have permission to view the <span className="text-primary font-bold">{moduleName}</span> module.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function ProtectedModuleRoute({ moduleKey, label, children }: { moduleKey: string; label: string; children: React.ReactNode }) {
+  const { canView } = usePermissions()
+  if (!canView(moduleKey)) {
+    return <AccessRestrictedView moduleName={label} />
+  }
+  return <>{children}</>
+}
+
+function DefaultRedirect() {
+  const { canView } = usePermissions()
+
+  const defaultRoutes = [
+    { key: 'dashboard', path: '/dashboard' },
+    { key: 'users', path: '/users' },
+    { key: 'roles-permissions', path: '/roles-permissions' },
+    { key: 'challenges-all', path: '/challenges-all' },
+    { key: 'leaderboards', path: '/leaderboards' },
+    { key: 'reputation', path: '/reputation' },
+    { key: 'financials-wallet', path: '/financials-wallet' },
+    { key: 'ai-oracle-control', path: '/ai-oracle-control' },
+    { key: 'support-tickets', path: '/support-tickets' },
+    { key: 'settings', path: '/settings' },
+  ]
+
+  const firstAllowed = defaultRoutes.find(route => canView(route.key))
+  const targetPath = firstAllowed ? firstAllowed.path : '/profile'
+
+  return <Navigate to={targetPath} replace />
+}
+
 function AuthGate() {
   const { isAuthenticated, isLoading } = useAuth()
   const location = useLocation()
@@ -128,50 +175,50 @@ function AuthGate() {
 
   return (
     <Routes>
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage onSwitchToSignup={() => { }} />} />
+      <Route path="/login" element={isAuthenticated ? <DefaultRedirect /> : <LoginPage onSwitchToSignup={() => { }} />} />
 
       {!isAuthenticated ? (
         <Route path="*" element={<Navigate to="/login" state={{ from: location }} replace />} />
       ) : (
         <>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<DefaultRedirect />} />
           <Route element={<DashboardLayout />}>
-            <Route path="dashboard" element={<OperationsRoute />} />
-            <Route path="challenges" element={<ChallengesRoute />} />
-            <Route path="challenges-all" element={<ChallengesRoute />} />
-            <Route path="challenges-categories" element={<ChallengesRoute />} />
-            <Route path="challenges-live" element={<ChallengesRoute />} />
-            <Route path="challenges-disputes" element={<ChallengesRoute />} />
-            <Route path="challenges-analytics" element={<ChallengesRoute />} />
-            <Route path="leaderboards" element={<LeaderboardsRoute />} />
-            <Route path="reputation" element={<ReputationRoute />} />
-            <Route path="financials" element={<FinancialsRoute />} />
-            <Route path="financials-wallet" element={<FinancialsRoute />} />
-            <Route path="financials-payments" element={<FinancialsRoute />} />
-            <Route path="financials-transactions" element={<FinancialsRoute />} />
-            <Route path="financials-rewards" element={<FinancialsRoute />} />
-            <Route path="financials-treasury" element={<FinancialsRoute />} />
-            <Route path="financials-revenue" element={<FinancialsRoute />} />
-            <Route path="financials-escrow" element={<FinancialsRoute />} />
-            <Route path="financials-fees" element={<FinancialsRoute />} />
-            <Route path="financials-disputes" element={<FinancialsRoute />} />
-            <Route path="ai-oracle" element={<OracleRoute />} />
-            <Route path="ai-oracle-control" element={<OracleRoute />} />
-            <Route path="ai-oracle-settlement" element={<OracleRoute />} />
-            <Route path="ai-oracle-config" element={<OracleRoute />} />
-            <Route path="ai-oracle-monitoring" element={<OracleRoute />} />
-            <Route path="users" element={<UsersRoute />} />
-            <Route path="roles-permissions" element={<RolesPermissionsRoute />} />
+            <Route path="dashboard" element={<ProtectedModuleRoute moduleKey="dashboard" label="Dashboard"><OperationsRoute /></ProtectedModuleRoute>} />
+            <Route path="challenges" element={<ProtectedModuleRoute moduleKey="challenges-all" label="Challenges"><ChallengesRoute /></ProtectedModuleRoute>} />
+            <Route path="challenges-all" element={<ProtectedModuleRoute moduleKey="challenges-all" label="All Challenges"><ChallengesRoute /></ProtectedModuleRoute>} />
+            <Route path="challenges-categories" element={<ProtectedModuleRoute moduleKey="challenges-categories" label="Challenge Categories"><ChallengesRoute /></ProtectedModuleRoute>} />
+            <Route path="challenges-live" element={<ProtectedModuleRoute moduleKey="challenges-live" label="Live & Settlement"><ChallengesRoute /></ProtectedModuleRoute>} />
+            <Route path="challenges-disputes" element={<ProtectedModuleRoute moduleKey="challenges-disputes" label="Disputes"><ChallengesRoute /></ProtectedModuleRoute>} />
+            <Route path="challenges-analytics" element={<ProtectedModuleRoute moduleKey="challenges-analytics" label="Analytics"><ChallengesRoute /></ProtectedModuleRoute>} />
+            <Route path="leaderboards" element={<ProtectedModuleRoute moduleKey="leaderboards" label="Leaderboards"><LeaderboardsRoute /></ProtectedModuleRoute>} />
+            <Route path="reputation" element={<ProtectedModuleRoute moduleKey="reputation" label="Reputation"><ReputationRoute /></ProtectedModuleRoute>} />
+            <Route path="financials" element={<ProtectedModuleRoute moduleKey="financials-wallet" label="Financials"><FinancialsRoute /></ProtectedModuleRoute>} />
+            <Route path="financials-wallet" element={<ProtectedModuleRoute moduleKey="financials-wallet" label="Wallet"><FinancialsRoute /></ProtectedModuleRoute>} />
+            <Route path="financials-payments" element={<ProtectedModuleRoute moduleKey="financials-wallet" label="Payments"><FinancialsRoute /></ProtectedModuleRoute>} />
+            <Route path="financials-transactions" element={<ProtectedModuleRoute moduleKey="financials-transactions" label="Transactions"><FinancialsRoute /></ProtectedModuleRoute>} />
+            <Route path="financials-rewards" element={<ProtectedModuleRoute moduleKey="financials-rewards" label="Rewards"><FinancialsRoute /></ProtectedModuleRoute>} />
+            <Route path="financials-treasury" element={<ProtectedModuleRoute moduleKey="financials-treasury" label="Treasury"><FinancialsRoute /></ProtectedModuleRoute>} />
+            <Route path="financials-revenue" element={<ProtectedModuleRoute moduleKey="financials-treasury" label="Revenue"><FinancialsRoute /></ProtectedModuleRoute>} />
+            <Route path="financials-escrow" element={<ProtectedModuleRoute moduleKey="financials-treasury" label="Escrow"><FinancialsRoute /></ProtectedModuleRoute>} />
+            <Route path="financials-fees" element={<ProtectedModuleRoute moduleKey="financials-treasury" label="Fees"><FinancialsRoute /></ProtectedModuleRoute>} />
+            <Route path="financials-disputes" element={<ProtectedModuleRoute moduleKey="financials-treasury" label="Financial Disputes"><FinancialsRoute /></ProtectedModuleRoute>} />
+            <Route path="ai-oracle" element={<ProtectedModuleRoute moduleKey="ai-oracle-control" label="AI Oracle"><OracleRoute /></ProtectedModuleRoute>} />
+            <Route path="ai-oracle-control" element={<ProtectedModuleRoute moduleKey="ai-oracle-control" label="Oracle Control Center"><OracleRoute /></ProtectedModuleRoute>} />
+            <Route path="ai-oracle-settlement" element={<ProtectedModuleRoute moduleKey="ai-oracle-settlement" label="Oracle Settlement Center"><OracleRoute /></ProtectedModuleRoute>} />
+            <Route path="ai-oracle-config" element={<ProtectedModuleRoute moduleKey="ai-oracle-config" label="Oracle Configuration"><OracleRoute /></ProtectedModuleRoute>} />
+            <Route path="ai-oracle-monitoring" element={<ProtectedModuleRoute moduleKey="ai-oracle-monitoring" label="Oracle Monitoring"><OracleRoute /></ProtectedModuleRoute>} />
+            <Route path="users" element={<ProtectedModuleRoute moduleKey="users" label="Users"><UsersRoute /></ProtectedModuleRoute>} />
+            <Route path="roles-permissions" element={<ProtectedModuleRoute moduleKey="roles-permissions" label="Roles & Permissions"><RolesPermissionsRoute /></ProtectedModuleRoute>} />
             <Route path="profile" element={<ProfileRoute />} />
             <Route path="profile-settings" element={<ProfileSettingsRoute />} />
-            <Route path="settings" element={<SettingsRoute />} />
+            <Route path="settings" element={<ProtectedModuleRoute moduleKey="settings" label="Settings"><SettingsRoute /></ProtectedModuleRoute>} />
             <Route path="help" element={<HelpRoute />} />
-            <Route path="support-center" element={<SupportCenterRoute />} />
-            <Route path="support-tickets" element={<SupportCenterRoute />} />
-            <Route path="support-disputes" element={<SupportCenterRoute />} />
-            <Route path="support-refunds" element={<SupportCenterRoute />} />
-            <Route path="support-faq" element={<SupportCenterRoute />} />
-            <Route path="support-categories" element={<SupportCenterRoute />} />
+            <Route path="support-center" element={<ProtectedModuleRoute moduleKey="support-tickets" label="Support Center"><SupportCenterRoute /></ProtectedModuleRoute>} />
+            <Route path="support-tickets" element={<ProtectedModuleRoute moduleKey="support-tickets" label="Support Tickets"><SupportCenterRoute /></ProtectedModuleRoute>} />
+            <Route path="support-disputes" element={<ProtectedModuleRoute moduleKey="support-tickets" label="Support Disputes"><SupportCenterRoute /></ProtectedModuleRoute>} />
+            <Route path="support-refunds" element={<ProtectedModuleRoute moduleKey="support-tickets" label="Support Refunds"><SupportCenterRoute /></ProtectedModuleRoute>} />
+            <Route path="support-faq" element={<ProtectedModuleRoute moduleKey="support-faq" label="FAQ Manager"><SupportCenterRoute /></ProtectedModuleRoute>} />
+            <Route path="support-categories" element={<ProtectedModuleRoute moduleKey="support-categories" label="Support Categories"><SupportCenterRoute /></ProtectedModuleRoute>} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </>
@@ -184,22 +231,25 @@ import { WalletProvider } from '@/context/WalletContext'
 import { ChallengesProvider } from '@/context/ChallengesContext'
 import { OracleProvider } from '@/context/OracleContext'
 import { PlatformSettingsProvider } from '@/context/PlatformSettingsContext'
+import { PermissionProvider } from '@/context/PermissionContext'
 
 function App() {
   return (
     <ThemeProvider>
       <WalletProvider>
         <AuthProvider>
-          <ChallengesProvider>
-            <OracleProvider>
-              <PlatformSettingsProvider>
-                <BrowserRouter>
-                  <AuthGate />
-                  <ToastContainer />
-                </BrowserRouter>
-              </PlatformSettingsProvider>
-            </OracleProvider>
-          </ChallengesProvider>
+          <PermissionProvider>
+            <ChallengesProvider>
+              <OracleProvider>
+                <PlatformSettingsProvider>
+                  <BrowserRouter>
+                    <AuthGate />
+                    <ToastContainer />
+                  </BrowserRouter>
+                </PlatformSettingsProvider>
+              </OracleProvider>
+            </ChallengesProvider>
+          </PermissionProvider>
         </AuthProvider>
       </WalletProvider>
     </ThemeProvider>

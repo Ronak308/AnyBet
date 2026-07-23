@@ -12,6 +12,7 @@ import { initializeApp, deleteApp } from 'firebase/app'
 import { getAuth as getSecondaryAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { type User, useAuth } from '@/context/AuthContext'
 import { useWallet } from '@/context/WalletContext'
+import { usePermissions } from '@/context/PermissionContext'
 import { deleteUserAccount } from '@/services/userAdminService'
 
 import { Button } from '@/components/ui/button'
@@ -91,6 +92,7 @@ const formatLastLoginTable = (u: User) => {
 export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navigate: _navigate }) => {
   const { user: currentUser } = useAuth()
   const { createWallet } = useWallet()
+  const { canView, canCreate, canEdit, canDelete } = usePermissions()
   const [users, setUsers] = useState<User[]>([])
   const [viewUser, setViewUser] = useState<User | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
@@ -463,6 +465,20 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
     show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 100, damping: 15 } }
   }
 
+  if (!canView('users')) {
+    return (
+      <div className="p-6 min-h-screen flex items-center justify-center font-sans">
+        <div className="p-8 rounded-2xl max-w-md w-full text-center space-y-4 border border-rose-500/30 bg-rose-500/5 backdrop-blur-md">
+          <ShieldAlert className="h-12 w-12 text-rose-500 mx-auto" />
+          <h3 className="text-base font-bold text-foreground font-sans uppercase tracking-wider">Access Restricted</h3>
+          <p className="text-xs text-muted font-mono leading-relaxed">
+            Your assigned role does not have permission to view the Users Management module.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <motion.div
       variants={containerVariants}
@@ -551,14 +567,16 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
 
         {/* Right Side: Create Action */}
         <div className="w-full md:w-auto flex justify-end">
-          <Button
-            variant="primary"
-            glow
-            onClick={openCreateUser}
-            className="gap-2 text-xs font-mono shrink-0 h-9 w-full md:w-auto"
-          >
-            <UserPlus className="h-4 w-4" /> Add User
-          </Button>
+          {canCreate('users') && (
+            <Button
+              variant="primary"
+              glow
+              onClick={openCreateUser}
+              className="gap-2 text-xs font-mono shrink-0 h-9 w-full md:w-auto"
+            >
+              <UserPlus className="h-4 w-4" /> Add User
+            </Button>
+          )}
         </div>
       </div>
 
@@ -573,9 +591,15 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
             {selectedIds.length} user{selectedIds.length > 1 ? 's' : ''} selected
           </span>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="primary" glow onClick={() => { bulkActivate(selectedIds); setSelectedIds([]); }} className="text-xs font-mono h-8">Activate</Button>
-            <Button size="sm" variant="outline" onClick={() => { bulkDeactivate(selectedIds); setSelectedIds([]); }} className="text-xs font-mono h-8">Deactivate</Button>
-            <Button size="sm" variant="ghost" onClick={() => { bulkDelete(selectedIds); }} className="text-xs font-mono h-8 text-muted hover:text-red-400">Delete</Button>
+            {canEdit('users') && (
+              <>
+                <Button size="sm" variant="primary" glow onClick={() => { bulkActivate(selectedIds); setSelectedIds([]); }} className="text-xs font-mono h-8">Activate</Button>
+                <Button size="sm" variant="outline" onClick={() => { bulkDeactivate(selectedIds); setSelectedIds([]); }} className="text-xs font-mono h-8">Deactivate</Button>
+              </>
+            )}
+            {canDelete('users') && (
+              <Button size="sm" variant="ghost" onClick={() => { bulkDelete(selectedIds); }} className="text-xs font-mono h-8 text-muted hover:text-red-400">Delete</Button>
+            )}
           </div>
         </motion.div>
       )}
@@ -770,20 +794,24 @@ export const UsersPage: React.FC<{ navigate: (tab: string) => void }> = ({ navig
                                   <Eye className="h-3.5 w-3.5 text-primary" />
                                   View Details
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => openEditForUser(u)}
-                                  className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2"
-                                >
-                                  <Edit3 className="h-3.5 w-3.5 text-muted" />
-                                  Edit User
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-red-400 focus:bg-red-950/20 focus:text-red-300 flex items-center gap-2 text-xs font-mono cursor-pointer rounded-md p-2"
-                                  onClick={() => handleDeleteUser(u.id, u.username)}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5 text-red-400" />
-                                  Delete User
-                                </DropdownMenuItem>
+                                {canEdit('users') && (
+                                  <DropdownMenuItem
+                                    onClick={() => openEditForUser(u)}
+                                    className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2"
+                                  >
+                                    <Edit3 className="h-3.5 w-3.5 text-muted" />
+                                    Edit User
+                                  </DropdownMenuItem>
+                                )}
+                                {canDelete('users') && (
+                                  <DropdownMenuItem
+                                    className="text-red-400 focus:bg-red-950/20 focus:text-red-300 flex items-center gap-2 text-xs font-mono cursor-pointer rounded-md p-2"
+                                    onClick={() => handleDeleteUser(u.id, u.username)}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                                    Delete User
+                                  </DropdownMenuItem>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
