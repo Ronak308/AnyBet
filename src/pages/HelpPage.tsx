@@ -53,40 +53,40 @@ export const HelpPage: React.FC<HelpPageProps> = ({ navigate }) => {
     {
       id: 'overview',
       title: 'Platform Overview',
-      description: 'Understand AnyBet ecosystem flow, database synchronization, and administrative lifecycle.',
+      description: 'Understand the AnyBet flow, automatic updates, and administrative steps.',
       icon: BookOpen,
       color: 'text-primary',
-      detailedGuide: 'AnyBet is an advanced peer-to-peer prediction and challenge platform. Admins oversee the ecosystem through this dashboard, checking live metrics, managing dispute resolutions, adjusting wallet balances, configuring AI nodes, and altering platform parameters. All platform views update in real-time, pulling directly from Firestore collections and integrating with third-party Web APIs.',
+      detailedGuide: 'AnyBet is an online system where players make friendly challenges and bets against each other. As an administrator, you use this control panel to view activity, solve disputes when players disagree, adjust player coin balances, manage automated check systems, and set overall site rules. Everything you see here updates automatically as players perform actions in the mobile app.',
       faqs: [
         {
           question: 'What is the standard lifecycle of a challenge?',
-          answer: 'A user creates a challenge with rules, categories, and stake amounts. Other users join the pool. The challenge goes "Live". Upon completion, outcomes are resolved either by automated API feeds, the Gemini AI Oracle, or participant consensus. If a conflict occurs, it enters a "Disputed" status for administrative arbitration.',
+          answer: 'A player creates a challenge with basic rules and sets a coin amount to play. Other players join the challenge, and it becomes active. Once it ends, the system checks public results or uses an automated assistant to see who won. If the players do not agree on the winner, it goes into a dispute state for you to resolve manually.',
           keywords: ['lifecycle', 'challenge', 'process', 'flow', 'dispute']
         },
         {
-          question: 'Are operations synchronized in real-time?',
-          answer: 'Yes. AnyBet uses Firebase Firestore reactive subscriptions (onSnapshot listeners). Any changes made in the dashboard or by mobile app users immediately update in real-time across all connected admin screens.',
-          keywords: ['real-time', 'firestore', 'sync', 'database']
+          question: 'Do updates show up immediately?',
+          answer: 'Yes. Any changes made by players on their mobile app or by other admins on this website will show up on your screen right away without needing to refresh the page.',
+          keywords: ['real-time', 'updates', 'sync', 'refresh']
         }
       ]
     },
     {
       id: 'dashboard',
       title: 'Dashboard & Operations',
-      description: 'Analyze platform growth charts, active participants, and AI settlement efficiency.',
+      description: 'Analyze player growth charts, active participants, and checker success rates.',
       icon: LayoutDashboard,
       color: 'text-purple-400',
       tabRoute: 'dashboard',
-      detailedGuide: 'The primary operations console features real-time charts (payout volumes, transaction counts) and interactive AI node indicators. Administrators can monitor active nodes, calibrate clusters, and view streaming feeds of live events being settled.',
+      detailedGuide: 'This main screen shows charts of overall site activity, coin volumes, and the status of our automated checking systems. You can also view a live feed of active challenges that are being settled.',
       faqs: [
         {
-          question: "How do I read the 'AI Oracle Nodes' status indicator map?",
-          answer: 'The status grid shows real-time health of active AI nodes. Green represents an active node synced with the network. Yellow/Orange implies a node is idling or undergoing calibration. Red means a node is offline or experiencing network latency.',
+          question: "What do the colored dots in the System Status grid mean?",
+          answer: 'The dots represent the automated checking systems. A green dot means the checker is active and working normally. Yellow or orange means it is currently idle or running self-tests. A red dot means the checker is temporarily offline.',
           keywords: ['nodes', 'status', 'grid', 'calibration', 'health']
         },
         {
-          question: 'What does clicking "Run Calibration Suite" do?',
-          answer: 'It triggers a ping diagnostic routine across all virtual nodes, verifying response latency and resetting any nodes stuck in idle states back to online status.',
+          question: "What does clicking 'Run Calibration Suite' do?",
+          answer: 'It triggers a quick test of the system checkers to verify their connection speeds and automatically restarts any idle checkers back to working status.',
           keywords: ['calibration', 'run', 'fix', 'nodes', 'latency']
         }
       ]
@@ -94,20 +94,20 @@ export const HelpPage: React.FC<HelpPageProps> = ({ navigate }) => {
     {
       id: 'users',
       title: 'User Management',
-      description: 'Edit profiles, credit coin balances, and review suspension flags.',
+      description: 'Edit profiles, adjust coin balances, and review suspension flags.',
       icon: Users,
       color: 'text-blue-400',
       tabRoute: 'users',
-      detailedGuide: 'The User Management module lists all registered platform accounts. From here, you can examine detailed portfolios, edit user attributes, manually add or subtract coins, adjust verification badges, or permanently remove accounts.',
+      detailedGuide: 'This tab lists all registered player accounts. You can view user profiles, see their coin balances, add or subtract coins from their accounts, adjust verification badges, or delete accounts if needed.',
       faqs: [
         {
           question: "How do I adjust a user's coin balance?",
-          answer: "Open the Users tab, locate the desired user, click edit to trigger the User Drawer. Under the 'Adjust Coins' field, type the positive or negative amount to update the wallet, then press 'Save Changes'.",
+          answer: "Find the user in the list and click edit to open the User Drawer. Under the 'Adjust Coins' box, type in the number of coins you want to add (use a minus sign if you want to remove coins), then click save.",
           keywords: ['coins', 'balance', 'adjust', 'add', 'wallet']
         },
         {
-          question: 'Does deleting a user clear their login details?',
-          answer: 'Yes. Deleting a user in the Users page triggers a Cloud Function that deletes the user record in Firestore and invokes the Firebase Admin Auth SDK to remove their authentication credentials permanently.',
+          question: "Does deleting a user account block them from logging back in?",
+          answer: 'Yes. Deleting a user profile removes their account from our records and immediately blocks their credentials so they cannot log in again.',
           keywords: ['delete', 'remove', 'user', 'auth', 'credentials']
         }
       ]
@@ -115,20 +115,20 @@ export const HelpPage: React.FC<HelpPageProps> = ({ navigate }) => {
     {
       id: 'roles',
       title: 'Roles & Permissions',
-      description: 'Manage administrator capabilities and edit role access overrides.',
+      description: 'Manage staff access levels and edit permission overrides.',
       icon: Shield,
       color: 'text-emerald-400',
       tabRoute: 'roles-permissions',
-      detailedGuide: 'Configure permission grids for roles like Admins, Moderators, Support Agents, and Oracle Operators. Permissions cover platform config editing, dispute settlement, user account deletion, and financial audits.',
+      detailedGuide: 'Configure what actions different staff members can perform. You can adjust permissions for roles like Admin, Moderator, and Support Agent to choose who can edit site settings, resolve disputes, delete users, or view financial records.',
       faqs: [
         {
-          question: 'Can I assign multiple roles to a user?',
-          answer: 'Currently, users hold a single primary role (e.g. Admin, Moderator) which determines their set of access bits. You can toggle roles for any user inside their edit drawer.',
+          question: "Can a staff member have more than one role?",
+          answer: 'No, each staff member has one primary role (like Admin or Support). You can change their role anytime in the user editing screen.',
           keywords: ['roles', 'permissions', 'assign', 'multiple']
         },
         {
-          question: 'Do permission changes apply instantly?',
-          answer: 'Yes. Since role configurations are retrieved in real-time, any changes made to a role permission matrix will be applied across all active operator sessions on their next interface interaction.',
+          question: "Do permission changes take effect immediately?",
+          answer: 'Yes. Once you change permissions for a role, all staff members with that role will have their access updated on their next action.',
           keywords: ['real-time', 'security', 'permissions', 'apply']
         }
       ]
@@ -140,16 +140,16 @@ export const HelpPage: React.FC<HelpPageProps> = ({ navigate }) => {
       icon: Sword,
       color: 'text-rose-400',
       tabRoute: 'challenges-all',
-      detailedGuide: 'View ongoing, completed, and disputed challenges. Admins can manage betting categories (e.g. adding icons/colors), check analytics dashboards, and arbitrate participant conflicts.',
+      detailedGuide: 'View active, finished, or disputed challenges. You can also manage playing categories, choose their display order and colors, and see overall participation metrics.',
       faqs: [
         {
           question: 'How do I resolve a challenge dispute?',
-          answer: 'Go to Challenges -> Disputes or click the dispute notification. Inspect evidence details and chat transcripts. Choose to either award the pool to a participant (YES/NO outcome) or click "Refund Stake" to return all locked coins back to the players.',
+          answer: 'Go to the disputes page. Review the details, rules, and proofs uploaded by the players. You can select the winner manually based on the rules, or choose to refund the coins back to all players.',
           keywords: ['dispute', 'resolve', 'winner', 'evidence', 'refund']
         },
         {
-          question: 'What is the difference between a category being disabled vs. deleted?',
-          answer: 'Disabling a category hides it from users creating new challenges on the mobile client, but leaves historical challenge logs intact. Deleting a category removes it from the database.',
+          question: "What happens if I disable a category instead of deleting it?",
+          answer: 'Disabling a category hides it so players cannot select it when creating new challenges, but keeps all past challenges under that category visible. Deleting a category removes it completely.',
           keywords: ['category', 'disable', 'delete', 'hide']
         }
       ]
@@ -157,20 +157,20 @@ export const HelpPage: React.FC<HelpPageProps> = ({ navigate }) => {
     {
       id: 'leaderboards',
       title: 'Leaderboards & Reputation',
-      description: 'Audit win streaks, rank configurations, and trust factor multipliers.',
+      description: 'Audit win streaks, rank configurations, and trust factor ratings.',
       icon: Award,
       color: 'text-amber-400',
       tabRoute: 'leaderboards',
-      detailedGuide: 'Tracks top performers on the platform. Reputation metrics evaluate trust factors. High win percentages and zero dispute histories boost reputation, while frequent disputes lower it.',
+      detailedGuide: 'Tracks top players on the platform based on their performance and trust ratings. Honest players earn higher ratings, while players with frequent disputes will see their ratings drop.',
       faqs: [
         {
-          question: 'How does user Reputation affect gameplay?',
-          answer: 'Users with high reputation scores receive coin purchase bonuses, platform fee discounts, and priority dispute settlement. Users with low reputation face stricter maximum stake limits.',
+          question: "How does a player's trust rating affect them?",
+          answer: 'Players with high trust ratings receive coin purchase bonuses and lower entry fees. Players with low trust ratings will face lower betting limits.',
           keywords: ['reputation', 'score', 'trust', 'fees', 'limits']
         },
         {
-          question: 'Can admins manually override user reputation?',
-          answer: 'Yes, inside the User portfolio view, reputation points can be manually credited or deducted in cases of bad behavior or exceptional community service.',
+          question: "Can I manually change a player's trust rating?",
+          answer: "Yes, you can increase or decrease a player's trust score inside their profile view if you need to reward good behavior or penalize cheating.",
           keywords: ['override', 'reputation', 'change', 'points']
         }
       ]
@@ -178,20 +178,20 @@ export const HelpPage: React.FC<HelpPageProps> = ({ navigate }) => {
     {
       id: 'financials',
       title: 'Financials & Treasury',
-      description: 'Approve cashout requests, audit escrows, and inspect transaction ledgers.',
+      description: 'Approve cashout requests, audit escrows, and inspect transaction records.',
       icon: Coins,
       color: 'text-cyan-400',
       tabRoute: 'financials-wallet',
-      detailedGuide: 'The financial center handles depositing packages, cashout approvals, and platform treasury vaults. Admins can audit ledger histories, review locked escrow balances, and track fees.',
+      detailedGuide: 'Manage deposits, cashout requests, and platform fee holdings. This is where you approve player cashout requests and track system revenue.',
       faqs: [
         {
-          question: 'Where do platform challenge fees accumulate?',
-          answer: 'A pre-configured percentage (e.g., 5%) of every resolved challenge prize pool is automatically deducted and deposited into the Platform Treasury vault.',
+          question: "Where do the site fees go?",
+          answer: 'A small fee (typically 5%) is automatically taken from the winning pool of resolved challenges and placed into the main site vault.',
           keywords: ['treasury', 'vault', 'fees', 'accumulate', 'payout']
         },
         {
-          question: 'How do I approve or deny withdrawal/cashout requests?',
-          answer: 'Navigate to Financials -> Payment Management. View the pending withdrawals list, review details (user history, requested sum), and click either "Approve" (funds are marked settled) or "Deny" (coins are returned to user wallet).',
+          question: "How do I process a player's cashout request?",
+          answer: "Go to the payments page. Click on a pending cashout request, review the player's cashout details, and click approve to mark it as complete, or deny to send the coins back to their wallet.",
           keywords: ['withdrawal', 'cashout', 'approve', 'deny', 'payments']
         }
       ]
@@ -199,20 +199,20 @@ export const HelpPage: React.FC<HelpPageProps> = ({ navigate }) => {
     {
       id: 'oracle',
       title: 'AI Oracle Control',
-      description: 'Manage Gemini models, override thresholds, and monitor feed pings.',
+      description: 'Manage automated result checking, override limits, and monitor api health.',
       icon: Cpu,
       color: 'text-indigo-400',
       tabRoute: 'ai-oracle-control',
-      detailedGuide: 'Controls the AI arbitration engine. Manage automated settlement settings, API key parameters, and minimum confidence scores. Check latencies of references like Binance and CoinGecko.',
+      detailedGuide: 'Configure the automated result-checking system. You can choose whether the system should automatically settle outcomes or wait for you to review them first.',
       faqs: [
         {
-          question: 'What is the "Confidence Score Threshold"?',
-          answer: 'It is the minimum percentage (e.g. 95%) calculated by the Gemini AI evaluator required to trigger an automatic payout. Any AI resolution below this threshold remains in the settlement queue for manual approval.',
+          question: "What is the 'Confidence Score' setting?",
+          answer: 'It is the percentage level of certainty the automated system must reach to resolve a challenge automatically. If the system is unsure, it will place the challenge in your review list instead of paying out.',
           keywords: ['confidence', 'threshold', 'oracle', 'payout', 'auto-settle']
         },
         {
-          question: 'How do I change the Gemini API Key?',
-          answer: 'Go to AI Oracle -> Configuration, input your new Gemini API key in the credentials field, and click Save. The system will test connection parameters to verify validity.',
+          question: "How do I update the connection key for the automated checker?",
+          answer: 'Go to the configuration page under the automated checks tab, enter the new code key in the key field, and click save. The system will run a quick check to make sure it can connect.',
           keywords: ['gemini', 'key', 'api', 'credentials', 'config']
         }
       ]
@@ -220,15 +220,15 @@ export const HelpPage: React.FC<HelpPageProps> = ({ navigate }) => {
     {
       id: 'support',
       title: 'Support Center',
-      description: 'Assign help tickets, reply to inquiries, and update customer FAQs.',
+      description: 'Assign help tickets, reply to inquiries, and update user FAQ articles.',
       icon: MessageSquare,
       color: 'text-teal-400',
       tabRoute: 'support-tickets',
-      detailedGuide: 'Allows managing incoming customer support tickets. Filter by open/closed, change ticket statuses, reply directly to inquiries, and publish new articles to the customer-facing FAQ base.',
+      detailedGuide: 'Allows managing incoming player help tickets. You can filter by status, write replies, change priorities, and publish new articles to the customer-facing FAQ list.',
       faqs: [
         {
-          question: 'How do I assign support tickets?',
-          answer: 'Select a ticket, open the details pane, click the assignee selector, choose an agent, and click Update. The agent receives a real-time notification on their panel.',
+          question: "How do I assign a help ticket to a staff member?",
+          answer: 'Select the ticket, open the details panel, select the staff member from the list, and update. They will see it on their panel right away.',
           keywords: ['ticket', 'assign', 'moderator', 'agent', 'support']
         }
       ]
@@ -236,20 +236,20 @@ export const HelpPage: React.FC<HelpPageProps> = ({ navigate }) => {
     {
       id: 'settings',
       title: 'Platform Settings',
-      description: 'Toggle maintenance modes, edit fee percentages, and set stake ranges.',
+      description: 'Toggle maintenance switches, edit fee percentages, and set stake limits.',
       icon: Settings,
       color: 'text-slate-400',
       tabRoute: 'settings',
-      detailedGuide: 'Contains the core configuration constants of the platform. Modify challenge fee percentages, wager limits, coin-to-USD exchange ratios, maintenance switches, and security parameters.',
+      detailedGuide: 'Contains the main configuration controls of the website. Change challenge fees, wager limits, coin-to-USD exchange ratios, and maintenance states.',
       faqs: [
         {
-          question: 'What does "Platform Maintenance Mode" restrict?',
-          answer: 'Enabling Maintenance Mode prevents standard users from accessing their wallets, creating challenges, or joining pools on the mobile app. The admin operations dashboard remains fully accessible.',
+          question: "What happens when I turn on Maintenance Mode?",
+          answer: 'Turning on Maintenance Mode stops players from creating or joining challenges on the mobile app, but keeps this admin control panel open for you.',
           keywords: ['maintenance', 'lockdown', 'limits', 'offline']
         },
         {
-          question: 'How do I adjust global wager limits?',
-          answer: 'Under Settings, update the values for "Minimum Stake Limit" and "Maximum Stake Limit" in the input fields and click Save. Limits apply instantly to all new wagers.',
+          question: "How do I change the minimum and maximum coin stakes?",
+          answer: 'Under settings, change the numbers in the minimum and maximum stake boxes and click save. These limits apply immediately to all new challenges.',
           keywords: ['stake', 'limit', 'minimum', 'maximum', 'wager']
         }
       ]
