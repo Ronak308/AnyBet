@@ -18,7 +18,27 @@ import { evaluateDisputeWithGeminiAI } from '../services/apiServices'
 
 // ─── Interfaces & Types ───────────────────────────────────────────────────────
 
-export type ChallengeCategoryType = 'Sports' | 'Physical' | 'Prediction' | 'Performance' | 'Custom'
+export type ChallengeCategoryType = 
+  | 'Sports'
+  | 'Gaming & Esports'
+  | 'Fitness'
+  | 'Cards & Board Games'
+  | 'Entertainment'
+  | 'Education'
+  | 'Tennis'
+  | 'Golf'
+  | 'Predictions'
+  | 'Prediction'
+  | 'Weather'
+  | 'Reality TV & Shows'
+  | 'Trivia & Fun'
+  | 'Friendly Wagers'
+  | 'Workplace'
+  | 'Community Events'
+  | 'Physical'
+  | 'Performance'
+  | 'Custom'
+  | (string & {})
 
 export type ChallengeStatus = 
   | 'Draft'

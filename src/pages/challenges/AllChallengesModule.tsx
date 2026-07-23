@@ -135,15 +135,39 @@ export const AllChallengesModule: React.FC = () => {
   // Rule Presets Loader
   const loadCategoryPresetRules = (category: string) => {
     switch (category) {
+      case 'Predictions':
       case 'Prediction':
+      case 'Weather':
         setNewRules('Binance 24h UTC daily close candle price is reference benchmark\nTarget price threshold must be crossed prior to end date\nAI Oracle auto-settlement enabled with 95% confidence threshold')
         break
       case 'Sports':
+      case 'Tennis':
+      case 'Golf':
         setNewRules('Official league box score is final reference\nOvertime and extra time included in total score\nSettled automatically within 30 minutes of final whistle')
         break
+      case 'Fitness':
       case 'Physical':
         setNewRules('Uninterrupted GPS telemetry or video proof required\nHealthKit / Garmin sensor telemetry must show zero anomaly flags\nSubmitted proof must be uploaded before midnight')
         break
+      case 'Gaming & Esports':
+      case 'Performance':
+        setNewRules('Official match API frame hash or video recording required\nParticipant consensus or referee verification\nSubmitted proof within 2 hours of match end')
+        break
+      case 'Cards & Board Games':
+      case 'Trivia & Fun':
+        setNewRules('Match score log or video replay required\nBoth participants must submit matching result within 1 hour\nDisputed claims require referee screenshot submission')
+        break
+      case 'Entertainment':
+      case 'Reality TV & Shows':
+        setNewRules('Official broadcast or network announcement is official source\nResolution occurs within 24 hours of episode premiere\nCancelled broadcasts trigger full stake refund')
+        break
+      case 'Education':
+      case 'Workplace':
+      case 'Community Events':
+        setNewRules('Certificate or host admin sign-off required\nEvidence upload must be completed within 24 hours of event\nMajority host consensus settles payout pool')
+        break
+      case 'Friendly Wagers':
+      case 'Custom':
       default:
         setNewRules('Standard AnyBet Wager Rules apply\nParticipant consensus or AI evidence verification required\nFull escrow refund in case of disputed tie')
     }
@@ -665,7 +689,7 @@ export const AllChallengesModule: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Select Challenge Category</label>
+                  <label className="text-[10px] font-mono uppercase text-muted block mb-1">Select Challenge Category ({categories.filter(c => c.isEnabled !== false).length} Categories)</label>
                   <select
                     value={newCategory}
                     onChange={e => {
@@ -673,14 +697,26 @@ export const AllChallengesModule: React.FC = () => {
                       setNewCategory(cat)
                       loadCategoryPresetRules(cat)
                     }}
-                    className="w-full bg-surface/40 border border-border rounded-md p-2 text-xs font-mono text-foreground outline-none cursor-pointer"
+                    className="w-full bg-surface/40 border border-border rounded-md p-2 text-xs font-mono text-foreground outline-none cursor-pointer focus:border-primary"
                   >
-                    <option value="Prediction">Prediction (Crypto / Market Predictions)</option>
-                    <option value="Sports">Sports (Live Football / Cricket / League)</option>
-                    <option value="Physical">Physical (Fitness / Activity Streaks)</option>
-                    <option value="Performance">Performance (Esports / Gaming)</option>
-                    <option value="Custom">Custom P2P Wager</option>
+                    {categories.filter(c => c.isEnabled !== false).map(cat => (
+                      <option key={cat.id || cat.name} value={cat.name} className="bg-background text-foreground py-1">
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
+
+                  {/* Selected Category Details Preview */}
+                  {(() => {
+                    const activeCat = categories.find(c => c.name === newCategory)
+                    if (!activeCat || !activeCat.description) return null
+                    return (
+                      <div className="mt-1.5 p-2 bg-surface/30 border border-border/40 rounded-lg flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: activeCat.color || '#3B82F6' }} />
+                        <span className="text-[11px] font-sans text-muted leading-tight">{activeCat.description}</span>
+                      </div>
+                    )
+                  })()}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

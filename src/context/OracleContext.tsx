@@ -47,7 +47,7 @@ export interface AIAnalysisDetail {
 export interface SettlementQueueItem {
   id: string
   title: string
-  category: 'Sports' | 'Physical' | 'Prediction' | 'Performance' | 'Custom'
+  category: 'Sports' | 'Physical' | 'Prediction' | 'Performance' | 'Custom' | string
   type: string
   playersCount: number
   stakeAmount: number
