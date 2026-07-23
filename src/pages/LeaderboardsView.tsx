@@ -18,13 +18,23 @@ import {
   BarChart3,
   DollarSign,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MoreVertical,
+  Copy,
+  FileText
 } from 'lucide-react'
 import { Card, CardContent } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator
+} from '../components/ui/dropdown-menu'
 import { useChallenges } from '../context/ChallengesContext'
 import type { ChallengeItem } from '../context/ChallengesContext'
 import { useWallet } from '../context/WalletContext'
@@ -285,6 +295,31 @@ export const LeaderboardsView: React.FC = () => {
       }))
   }, [wallets])
 
+  // Current Active Dataset per selected Tab
+  const activeDataset = useMemo(() => {
+    switch (activeLeaderboardTab) {
+      case 'trending': return datasetTrending
+      case 'escrow': return datasetEscrowPots
+      case 'winning-users': return datasetTopWinners
+      case 'highest-earners': return datasetHighestEarners
+      case 'active-bettors': return datasetActiveBettors
+      case 'creators': return datasetCreators
+      case 'category-perf': return datasetCategoryPerf
+      case 'revenue': return datasetRevenue
+      case 'ai-resolution': return datasetAiResolution
+      case 'disputed': return datasetDisputed
+      case 'high-risk': return datasetHighRisk
+      default: return datasetTrending
+    }
+  }, [activeLeaderboardTab, datasetTrending, datasetEscrowPots, datasetTopWinners, datasetHighestEarners, datasetActiveBettors, datasetCreators, datasetCategoryPerf, datasetRevenue, datasetAiResolution, datasetDisputed, datasetHighRisk])
+
+  const totalPages = Math.ceil(activeDataset.length / itemsPerPage) || 1
+
+  const paginatedActiveDataset = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return activeDataset.slice(start, start + itemsPerPage)
+  }, [activeDataset, currentPage, itemsPerPage])
+
   const handleExportCSVAll = () => {
     const headers = 'ID,Name,Category,Status,Value\n'
     const rows = filteredChallenges.map(c => `${c.id},"${c.title}",${c.category},${c.status},${c.prizePool}`).join('\n')
@@ -483,8 +518,15 @@ export const LeaderboardsView: React.FC = () => {
         <Card className="bg-surface/30 border border-border/60 hover:border-primary/40 transition-all">
           <CardContent className="p-3.5 space-y-1">
             <span className="text-[9px] uppercase text-muted block">AI Accuracy %</span>
-            <h4 className="text-sm font-bold text-cyan-400">99.9%</h4>
-            <span className="text-[9px] text-muted">Gemini 2.0 Oracle</span>
+            <h4 className="text-sm font-bold text-cyan-400">
+              {(() => {
+                const aiChallenges = challenges.filter(c => c.settlement?.settlementMethod === 'AI Oracle')
+                if (aiChallenges.length === 0) return '100%'
+                const disputed = aiChallenges.filter(c => c.status === 'Disputed').length
+                return `${(((aiChallenges.length - disputed) / aiChallenges.length) * 100).toFixed(1)}%`
+              })()}
+            </h4>
+            <span className="text-[9px] text-muted">Gemini 3.6 Flash Oracle</span>
           </CardContent>
         </Card>
 
@@ -683,19 +725,31 @@ export const LeaderboardsView: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {datasetTrending.map(item => (
+              {paginatedActiveDataset.map((item: any) => (
                 <TableRow key={item.id} className="hover:bg-surface/30 font-mono text-xs">
                   <TableCell className="font-bold text-primary">{item.id}</TableCell>
                   <TableCell className="font-bold font-sans text-foreground">{item.name}</TableCell>
                   <TableCell><Badge variant="outline" className="text-[9px] border-primary/30 text-primary">{item.category}</Badge></TableCell>
-                  <TableCell className="font-bold text-emerald-400">{item.totalPot.toLocaleString()} Coins</TableCell>
+                  <TableCell className="font-bold text-emerald-400">{(item.totalPot || 0).toLocaleString()} Coins</TableCell>
                   <TableCell className="text-muted">{item.participants} Users</TableCell>
                   <TableCell className="text-cyan-400 font-bold">{item.odds}</TableCell>
                   <TableCell className="text-emerald-400 font-bold">{item.growthRate}</TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="outline" onClick={() => handleOpenSheetForRow(item)} className="h-7 text-[11px] font-mono gap-1 border-primary/30 text-primary">
-                      <Eye className="h-3 w-3" /> Inspect Sheet
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                        <DropdownMenuItem onClick={() => handleOpenSheetForRow(item)} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-primary/15 hover:text-primary cursor-pointer rounded-md p-2">
+                          <Eye className="h-3.5 w-3.5 text-primary" /> View / Inspect Specs
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(item.id || ''); showToastNotice(`Copied ID ${item.id}`, 'info'); }} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2">
+                          <Copy className="h-3.5 w-3.5 text-muted" /> Copy Wager ID
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -717,17 +771,29 @@ export const LeaderboardsView: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {datasetEscrowPots.map(item => (
+              {paginatedActiveDataset.map((item: any) => (
                 <TableRow key={item.id} className="hover:bg-surface/30 font-mono text-xs">
                   <TableCell className="font-bold text-primary">{item.id}</TableCell>
                   <TableCell className="font-bold font-sans text-foreground">{item.name}</TableCell>
-                  <TableCell className="font-bold text-emerald-400 text-sm">{item.potSize.toLocaleString()} Coins</TableCell>
+                  <TableCell className="font-bold text-emerald-400 text-sm">{(item.potSize || 0).toLocaleString()} Coins</TableCell>
                   <TableCell className="text-muted">{item.participants} Bettors</TableCell>
                   <TableCell className="text-muted">{item.resolutionTime}</TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="outline" onClick={() => handleOpenSheetForRow(item)} className="h-7 text-[11px] font-mono gap-1 border-primary/30 text-primary">
-                      <Eye className="h-3 w-3" /> Inspect Sheet
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                        <DropdownMenuItem onClick={() => handleOpenSheetForRow(item)} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-primary/15 hover:text-primary cursor-pointer rounded-md p-2">
+                          <Eye className="h-3.5 w-3.5 text-primary" /> View / Inspect Specs
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(item.id || ''); showToastNotice(`Copied ID ${item.id}`, 'info'); }} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2">
+                          <Copy className="h-3.5 w-3.5 text-muted" /> Copy Wager ID
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -750,18 +816,30 @@ export const LeaderboardsView: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {datasetTopWinners.map(item => (
+              {paginatedActiveDataset.map((item: any) => (
                 <TableRow key={item.rank} className="hover:bg-surface/30 font-mono text-xs">
                   <TableCell className="font-bold">{item.rank === 1 ? '🥇 #1' : item.rank === 2 ? '🥈 #2' : `#${item.rank}`}</TableCell>
                   <TableCell className="font-bold font-sans text-foreground">{item.username}</TableCell>
                   <TableCell className="text-muted">{item.totalWins} Wins</TableCell>
                   <TableCell className="text-emerald-400 font-bold">{item.winRate}</TableCell>
-                  <TableCell className="font-bold text-emerald-400">+{item.netProfit.toLocaleString()} Coins</TableCell>
+                  <TableCell className="font-bold text-emerald-400">+{(item.netProfit || 0).toLocaleString()} Coins</TableCell>
                   <TableCell className="text-muted">{item.lastActive}</TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="outline" onClick={() => handleOpenSheetForRow(item)} className="h-7 text-[11px] font-mono gap-1 border-primary/30 text-primary">
-                      <Eye className="h-3 w-3" /> Inspect Sheet
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                        <DropdownMenuItem onClick={() => handleOpenSheetForRow(item)} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-primary/15 hover:text-primary cursor-pointer rounded-md p-2">
+                          <Eye className="h-3.5 w-3.5 text-primary" /> View User Specs
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(item.username || ''); showToastNotice(`Copied Username ${item.username}`, 'info'); }} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2">
+                          <Copy className="h-3.5 w-3.5 text-muted" /> Copy Username
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -779,18 +857,36 @@ export const LeaderboardsView: React.FC = () => {
                 <TableHead className="text-xs font-mono">Lifetime Earnings</TableHead>
                 <TableHead className="text-xs font-mono">Total Withdrawals</TableHead>
                 <TableHead className="text-xs font-mono">Wallet Balance</TableHead>
-                <TableHead className="text-xs font-mono text-right">ROI %</TableHead>
+                <TableHead className="text-xs font-mono">ROI %</TableHead>
+                <TableHead className="text-xs font-mono text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {datasetHighestEarners.map(item => (
+              {paginatedActiveDataset.map((item: any) => (
                 <TableRow key={item.rank} className="hover:bg-surface/30 font-mono text-xs">
                   <TableCell className="font-bold">#{item.rank}</TableCell>
                   <TableCell className="font-bold font-sans text-foreground">{item.username}</TableCell>
-                  <TableCell className="font-bold text-emerald-400">+{item.lifetimeEarnings.toLocaleString()} Coins</TableCell>
-                  <TableCell className="text-muted">{item.totalWithdrawals.toLocaleString()} Coins</TableCell>
-                  <TableCell className="text-cyan-400 font-bold">{item.walletBalance.toLocaleString()} Coins</TableCell>
-                  <TableCell className="text-right text-primary font-bold">{item.roiPercent}</TableCell>
+                  <TableCell className="font-bold text-emerald-400">+{(item.lifetimeEarnings || 0).toLocaleString()} Coins</TableCell>
+                  <TableCell className="text-muted">{(item.totalWithdrawals || 0).toLocaleString()} Coins</TableCell>
+                  <TableCell className="text-cyan-400 font-bold">{(item.walletBalance || 0).toLocaleString()} Coins</TableCell>
+                  <TableCell className="text-primary font-bold">{item.roiPercent}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                        <DropdownMenuItem onClick={() => handleOpenSheetForRow(item)} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-primary/15 hover:text-primary cursor-pointer rounded-md p-2">
+                          <Eye className="h-3.5 w-3.5 text-primary" /> View Earner Specs
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(item.username || ''); showToastNotice(`Copied ${item.username}`, 'info'); }} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2">
+                          <Copy className="h-3.5 w-3.5 text-muted" /> Copy Profile
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -807,18 +903,36 @@ export const LeaderboardsView: React.FC = () => {
                 <TableHead className="text-xs font-mono">Total Bets Placed</TableHead>
                 <TableHead className="text-xs font-mono">Total Wagered Volume</TableHead>
                 <TableHead className="text-xs font-mono">Average Stake</TableHead>
-                <TableHead className="text-xs font-mono text-right">Active Challenges</TableHead>
+                <TableHead className="text-xs font-mono">Active Challenges</TableHead>
+                <TableHead className="text-xs font-mono text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {datasetActiveBettors.map(item => (
+              {paginatedActiveDataset.map((item: any) => (
                 <TableRow key={item.rank} className="hover:bg-surface/30 font-mono text-xs">
                   <TableCell className="font-bold">#{item.rank}</TableCell>
                   <TableCell className="font-bold font-sans text-foreground">{item.username}</TableCell>
                   <TableCell className="text-primary font-bold">{item.totalBets} Bets</TableCell>
-                  <TableCell className="text-emerald-400 font-bold">{item.wageredAmount.toLocaleString()} Coins</TableCell>
+                  <TableCell className="text-emerald-400 font-bold">{(item.wageredAmount || 0).toLocaleString()} Coins</TableCell>
                   <TableCell className="text-muted">{item.avgStake} Coins</TableCell>
-                  <TableCell className="text-right font-bold text-cyan-400">{item.activeChallenges} Active</TableCell>
+                  <TableCell className="font-bold text-cyan-400">{item.activeChallenges} Active</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                        <DropdownMenuItem onClick={() => handleOpenSheetForRow(item)} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-primary/15 hover:text-primary cursor-pointer rounded-md p-2">
+                          <Eye className="h-3.5 w-3.5 text-primary" /> View Bettor Specs
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(item.username || ''); showToastNotice(`Copied ${item.username}`, 'info'); }} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2">
+                          <Copy className="h-3.5 w-3.5 text-muted" /> Copy Bettor Info
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -835,18 +949,36 @@ export const LeaderboardsView: React.FC = () => {
                 <TableHead className="text-xs font-mono">Challenges Created</TableHead>
                 <TableHead className="text-xs font-mono">Participants Attracted</TableHead>
                 <TableHead className="text-xs font-mono">Volume Generated</TableHead>
-                <TableHead className="text-xs font-mono text-right">Engagement</TableHead>
+                <TableHead className="text-xs font-mono">Engagement</TableHead>
+                <TableHead className="text-xs font-mono text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {datasetCreators.map(item => (
+              {paginatedActiveDataset.map((item: any) => (
                 <TableRow key={item.rank} className="hover:bg-surface/30 font-mono text-xs">
                   <TableCell className="font-bold">#{item.rank}</TableCell>
                   <TableCell className="font-bold font-sans text-foreground">{item.username}</TableCell>
                   <TableCell className="text-purple-400 font-bold">{item.challengesCreated} Created</TableCell>
-                  <TableCell className="text-cyan-400 font-bold">{item.participantsAttracted.toLocaleString()} Users</TableCell>
-                  <TableCell className="text-emerald-400 font-bold">{item.volumeGenerated.toLocaleString()} Coins</TableCell>
-                  <TableCell className="text-right font-bold text-emerald-400">{item.avgEngagement}</TableCell>
+                  <TableCell className="text-cyan-400 font-bold">{(item.participantsAttracted || 0).toLocaleString()} Users</TableCell>
+                  <TableCell className="text-emerald-400 font-bold">{(item.volumeGenerated || 0).toLocaleString()} Coins</TableCell>
+                  <TableCell className="font-bold text-emerald-400">{item.avgEngagement}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                        <DropdownMenuItem onClick={() => handleOpenSheetForRow(item)} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-primary/15 hover:text-primary cursor-pointer rounded-md p-2">
+                          <Eye className="h-3.5 w-3.5 text-primary" /> View Creator Specs
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(item.username || ''); showToastNotice(`Copied ${item.username}`, 'info'); }} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2">
+                          <Copy className="h-3.5 w-3.5 text-muted" /> Copy Creator Info
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -863,18 +995,36 @@ export const LeaderboardsView: React.FC = () => {
                 <TableHead className="text-xs font-mono">Active Matches</TableHead>
                 <TableHead className="text-xs font-mono">Betting Volume</TableHead>
                 <TableHead className="text-xs font-mono">Platform Revenue (5%)</TableHead>
-                <TableHead className="text-xs font-mono text-right">Growth %</TableHead>
+                <TableHead className="text-xs font-mono">Growth %</TableHead>
+                <TableHead className="text-xs font-mono text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {datasetCategoryPerf.map(item => (
+              {paginatedActiveDataset.map((item: any) => (
                 <TableRow key={item.category} className="hover:bg-surface/30 font-mono text-xs">
                   <TableCell className="font-bold font-sans text-foreground">{item.category}</TableCell>
                   <TableCell className="text-muted">{item.totalChallenges}</TableCell>
                   <TableCell className="text-cyan-400 font-bold">{item.activeChallenges} Active</TableCell>
-                  <TableCell className="text-emerald-400 font-bold">{item.volume.toLocaleString()} Coins</TableCell>
-                  <TableCell className="text-primary font-bold">{item.revenue.toLocaleString()} Coins</TableCell>
-                  <TableCell className="text-right text-emerald-400 font-bold">{item.growth}</TableCell>
+                  <TableCell className="text-emerald-400 font-bold">{(item.volume || 0).toLocaleString()} Coins</TableCell>
+                  <TableCell className="text-primary font-bold">{(item.revenue || 0).toLocaleString()} Coins</TableCell>
+                  <TableCell className="text-emerald-400 font-bold">{item.growth}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                        <DropdownMenuItem onClick={() => handleOpenSheetForRow(item)} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-primary/15 hover:text-primary cursor-pointer rounded-md p-2">
+                          <Eye className="h-3.5 w-3.5 text-primary" /> View Category Specs
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(item.category || ''); showToastNotice(`Copied ${item.category}`, 'info'); }} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2">
+                          <Copy className="h-3.5 w-3.5 text-muted" /> Copy Category Name
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -891,18 +1041,36 @@ export const LeaderboardsView: React.FC = () => {
                 <TableHead className="text-xs font-mono">Category</TableHead>
                 <TableHead className="text-xs font-mono">Gross Volume</TableHead>
                 <TableHead className="text-xs font-mono">5% Admin Fee Revenue</TableHead>
-                <TableHead className="text-xs font-mono text-right">Status</TableHead>
+                <TableHead className="text-xs font-mono">Status</TableHead>
+                <TableHead className="text-xs font-mono text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {datasetRevenue.map(item => (
+              {paginatedActiveDataset.map((item: any) => (
                 <TableRow key={item.rank} className="hover:bg-surface/30 font-mono text-xs">
                   <TableCell className="font-bold">#{item.rank}</TableCell>
                   <TableCell className="font-bold font-sans text-foreground">{item.name}</TableCell>
                   <TableCell><Badge variant="outline" className="text-[9px] border-primary/30 text-primary">{item.category}</Badge></TableCell>
-                  <TableCell className="text-muted">{item.volume.toLocaleString()} Coins</TableCell>
-                  <TableCell className="text-emerald-400 font-bold text-sm">+{item.adminFee.toLocaleString()} Coins</TableCell>
-                  <TableCell className="text-right"><Badge variant="success" className="text-[9px]">{item.status}</Badge></TableCell>
+                  <TableCell className="text-muted">{(item.volume || 0).toLocaleString()} Coins</TableCell>
+                  <TableCell className="text-emerald-400 font-bold text-sm">+{(item.adminFee || 0).toLocaleString()} Coins</TableCell>
+                  <TableCell><Badge variant="success" className="text-[9px]">{item.status}</Badge></TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                        <DropdownMenuItem onClick={() => handleOpenSheetForRow(item)} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-primary/15 hover:text-primary cursor-pointer rounded-md p-2">
+                          <Eye className="h-3.5 w-3.5 text-primary" /> View Revenue Specs
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(item.name || ''); showToastNotice(`Copied ${item.name}`, 'info'); }} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2">
+                          <Copy className="h-3.5 w-3.5 text-muted" /> Copy Engine Name
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -919,11 +1087,12 @@ export const LeaderboardsView: React.FC = () => {
                 <TableHead className="text-xs font-mono">Successful</TableHead>
                 <TableHead className="text-xs font-mono">Disputed</TableHead>
                 <TableHead className="text-xs font-mono">Avg Settlement Speed</TableHead>
-                <TableHead className="text-xs font-mono text-right">AI Accuracy %</TableHead>
+                <TableHead className="text-xs font-mono">AI Accuracy %</TableHead>
+                <TableHead className="text-xs font-mono text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {datasetAiResolution.map(item => (
+              {paginatedActiveDataset.map((item: any) => (
                 <TableRow key={item.oracleSource} className="hover:bg-surface/30 font-mono text-xs">
                   <TableCell className="font-bold font-sans text-foreground flex items-center gap-2">
                     <Cpu className="h-3.5 w-3.5 text-cyan-400" /> {item.oracleSource}
@@ -932,7 +1101,24 @@ export const LeaderboardsView: React.FC = () => {
                   <TableCell className="text-emerald-400 font-bold">{item.successResolutions}</TableCell>
                   <TableCell className="text-amber-400 font-bold">{item.disputedCount}</TableCell>
                   <TableCell className="text-cyan-400 font-mono">{item.avgSpeed}</TableCell>
-                  <TableCell className="text-right text-emerald-400 font-bold">{item.accuracy}</TableCell>
+                  <TableCell className="text-emerald-400 font-bold">{item.accuracy}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                        <DropdownMenuItem onClick={() => handleOpenSheetForRow(item)} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-primary/15 hover:text-primary cursor-pointer rounded-md p-2">
+                          <Eye className="h-3.5 w-3.5 text-primary" /> View Oracle Specs
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(item.oracleSource || ''); showToastNotice('Copied Oracle Feed Log', 'info'); }} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2">
+                          <Copy className="h-3.5 w-3.5 text-muted" /> Copy Oracle Feed
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -953,7 +1139,7 @@ export const LeaderboardsView: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {datasetDisputed.map(item => (
+              {paginatedActiveDataset.map((item: any) => (
                 <TableRow key={item.id} className="hover:bg-surface/30 font-mono text-xs">
                   <TableCell className="font-bold text-amber-400">{item.id}</TableCell>
                   <TableCell className="font-bold font-sans text-foreground">{item.name}</TableCell>
@@ -961,9 +1147,21 @@ export const LeaderboardsView: React.FC = () => {
                   <TableCell className="text-muted">{item.reason}</TableCell>
                   <TableCell className="text-cyan-400 font-mono">{item.assignedMod}</TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="outline" onClick={() => handleOpenSheetForRow(item)} className="h-7 text-[11px] font-mono gap-1 border-amber-500/30 text-amber-400">
-                      <Eye className="h-3 w-3" /> Quick Review
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                        <DropdownMenuItem onClick={() => handleOpenSheetForRow(item)} className="flex items-center gap-2 text-xs font-mono text-amber-400 hover:bg-amber-500/15 cursor-pointer rounded-md p-2">
+                          <Eye className="h-3.5 w-3.5 text-amber-400" /> Quick Review
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(item.id || ''); showToastNotice(`Copied Dispute ID ${item.id}`, 'info'); }} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2">
+                          <Copy className="h-3.5 w-3.5 text-muted" /> Copy Dispute ID
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -985,7 +1183,7 @@ export const LeaderboardsView: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {datasetHighRisk.map(item => (
+              {paginatedActiveDataset.map((item: any) => (
                 <TableRow key={item.id} className="hover:bg-surface/30 font-mono text-xs">
                   <TableCell className="font-bold text-red-400">{item.id}</TableCell>
                   <TableCell className="font-bold font-sans text-foreground">{item.name}</TableCell>
@@ -997,9 +1195,21 @@ export const LeaderboardsView: React.FC = () => {
                   <TableCell className="text-muted">{item.detectionReason}</TableCell>
                   <TableCell className="text-cyan-400 font-mono">{item.flaggedUser}</TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="outline" onClick={() => handleOpenSheetForRow(item)} className="h-7 text-[11px] font-mono gap-1 border-red-500/30 text-red-400">
-                      <ShieldAlert className="h-3 w-3" /> Investigate Audit
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-muted hover:text-foreground hover:bg-surface/60 rounded-lg cursor-pointer">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 bg-[#120F1D] border-border/80 p-1.5 shadow-2xl">
+                        <DropdownMenuItem onClick={() => handleOpenSheetForRow(item)} className="flex items-center gap-2 text-xs font-mono text-red-400 hover:bg-red-500/15 cursor-pointer rounded-md p-2">
+                          <ShieldAlert className="h-3.5 w-3.5 text-red-400" /> Investigate Audit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(item.id || ''); showToastNotice(`Copied Flag ID ${item.id}`, 'info'); }} className="flex items-center gap-2 text-xs font-mono text-foreground hover:bg-surface/80 cursor-pointer rounded-md p-2">
+                          <Copy className="h-3.5 w-3.5 text-muted" /> Copy Flag ID
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
@@ -1012,9 +1222,9 @@ export const LeaderboardsView: React.FC = () => {
       {/* ─── ENTERPRISE PAGINATION CONTROL FOOTER ─── */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-surface/30 border border-border/60 rounded-2xl font-mono text-xs shadow-md">
         <div className="flex items-center gap-2 text-muted">
-          <span>Showing <strong className="text-foreground font-bold">{((currentPage - 1) * itemsPerPage) + 1}</strong> to <strong className="text-foreground font-bold">{Math.min(currentPage * itemsPerPage, 25)}</strong> of <strong className="text-foreground font-bold">25</strong> Results</span>
+          <span>Showing <strong className="text-foreground font-bold">{activeDataset.length > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0}</strong> to <strong className="text-foreground font-bold">{Math.min(currentPage * itemsPerPage, activeDataset.length)}</strong> of <strong className="text-foreground font-bold">{activeDataset.length}</strong> Results</span>
           <span className="text-border">|</span>
-          <span>Page <strong className="text-primary font-bold">{currentPage}</strong> of <strong className="text-foreground font-bold">5</strong></span>
+          <span>Page <strong className="text-primary font-bold">{currentPage}</strong> of <strong className="text-foreground font-bold">{totalPages}</strong></span>
         </div>
 
         <div className="flex items-center gap-1.5">
@@ -1028,7 +1238,7 @@ export const LeaderboardsView: React.FC = () => {
             <ChevronLeft className="h-3.5 w-3.5" /> Previous
           </Button>
 
-          {[1, 2, 3, 4, 5].map(page => (
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
@@ -1045,8 +1255,8 @@ export const LeaderboardsView: React.FC = () => {
           <Button
             size="sm"
             variant="outline"
-            disabled={currentPage === 5}
-            onClick={() => setCurrentPage(prev => Math.min(5, prev + 1))}
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
             className="h-8 text-xs font-mono gap-1 border-border/60 text-muted hover:text-foreground disabled:opacity-30 cursor-pointer"
           >
             Next <ChevronRight className="h-3.5 w-3.5" />

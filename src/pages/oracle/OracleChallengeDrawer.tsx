@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { 
-  X, 
-  CheckCircle, 
-  Clock, 
-  Coins, 
-  FileText, 
-  Cpu, 
-  Award, 
+import {
+  X,
+  CheckCircle,
+  Clock,
+  Coins,
+  FileText,
+  Cpu,
+  Award,
   Check,
   RotateCcw,
   ShieldCheck,
@@ -28,10 +28,10 @@ interface OracleChallengeDrawerProps {
 }
 
 export const OracleChallengeDrawer: React.FC<OracleChallengeDrawerProps> = ({ item, onClose }) => {
-  const { 
-    approveSettlement, 
-    refundSettlement, 
-    triggerRetryAI 
+  const {
+    approveSettlement,
+    refundSettlement,
+    triggerRetryAI
   } = useOracle()
 
   const [activeTab, setActiveTab] = useState<'overview' | 'ai_decision' | 'evidence' | 'financials' | 'timeline'>('ai_decision')
@@ -74,14 +74,14 @@ export const OracleChallengeDrawer: React.FC<OracleChallengeDrawerProps> = ({ it
 
   return (
     <Sheet open={!!item} onOpenChange={(open) => { if (!open) onClose() }}>
-      <SheetContent 
-        side="right" 
+      <SheetContent
+        side="right"
         hideClose={true}
         className="w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl bg-background border-l border-border p-0 overflow-hidden flex flex-col h-full shadow-2xl"
       >
         {item && (
           <div className="flex flex-col h-full overflow-hidden">
-            
+
             {/* Sheet Header */}
             <div className="p-6 border-b border-border/60 bg-surface/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
               <div className="flex flex-col gap-1.5">
@@ -95,8 +95,8 @@ export const OracleChallengeDrawer: React.FC<OracleChallengeDrawerProps> = ({ it
               </div>
 
               <div className="flex items-center gap-2">
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   disabled={item.status === 'Auto-Settled' || item.status === 'Refunded'}
                   onClick={() => triggerRetryAI(item.id)}
@@ -106,8 +106,8 @@ export const OracleChallengeDrawer: React.FC<OracleChallengeDrawerProps> = ({ it
                 </Button>
 
                 {item.status !== 'Auto-Settled' && item.status !== 'Refunded' && (
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="primary"
                     glow
                     onClick={() => approveSettlement(item.id)}
@@ -144,11 +144,10 @@ export const OracleChallengeDrawer: React.FC<OracleChallengeDrawerProps> = ({ it
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as any)}
-                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-mono tracking-wider transition-all border-b-2 font-medium cursor-pointer whitespace-nowrap shrink-0 ${
-                        isActive 
-                          ? 'border-primary text-primary font-bold bg-primary/10 rounded-t-lg' 
+                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-mono tracking-wider transition-all border-b-2 font-medium cursor-pointer whitespace-nowrap shrink-0 ${isActive
+                          ? 'border-primary text-primary font-bold bg-primary/10 rounded-t-lg'
                           : 'border-transparent text-muted hover:text-foreground hover:bg-surface/40 rounded-t-lg'
-                      }`}
+                        }`}
                     >
                       <Icon className="h-3.5 w-3.5" />
                       <span>{tab.label}</span>
@@ -175,7 +174,7 @@ export const OracleChallengeDrawer: React.FC<OracleChallengeDrawerProps> = ({ it
                         <p className="text-lg font-bold font-mono text-emerald-400">{item.aiAnalysis.predictedWinnerName}</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-col items-end">
                       <span className="text-[10px] font-mono text-muted uppercase">Confidence Score</span>
                       <span className="text-2xl font-black font-mono text-primary">{item.aiConfidence}%</span>
@@ -210,18 +209,18 @@ export const OracleChallengeDrawer: React.FC<OracleChallengeDrawerProps> = ({ it
                   <div className="p-4 bg-surface/40 border border-border/60 rounded-xl flex flex-wrap items-center justify-between gap-3">
                     <span className="text-xs font-mono text-muted">Operator Manual Decision:</span>
                     <div className="flex items-center gap-2">
-                      <Button 
-                        size="sm" 
-                        variant="primary" 
-                        glow 
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        glow
                         onClick={() => approveSettlement(item.id)}
                         className="text-xs font-mono bg-emerald-600 hover:bg-emerald-500 text-white"
                       >
                         Approve Winner ({item.aiAnalysis.predictedWinnerName})
                       </Button>
-                      <Button 
-                        size="sm" 
-                        variant="danger" 
+                      <Button
+                        size="sm"
+                        variant="danger"
                         onClick={() => refundSettlement(item.id, 'Manual refund issued by operator')}
                         className="text-xs font-mono"
                       >
@@ -321,8 +320,8 @@ export const OracleChallengeDrawer: React.FC<OracleChallengeDrawerProps> = ({ it
                             </div>
                             <div className="p-2.5 flex items-center justify-between text-[10px] font-mono text-muted">
                               <span>Submitted by: {img.submittedBy}</span>
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 variant="outline"
                                 disabled={isOcrScanning}
                                 onClick={() => handleScanVisionOCR(img.url, img.label)}
@@ -417,9 +416,8 @@ export const OracleChallengeDrawer: React.FC<OracleChallengeDrawerProps> = ({ it
                   <div className="relative border-l-2 border-primary/30 pl-6 space-y-6 my-2">
                     {item.timeline.map((ev, idx) => (
                       <div key={ev.id || idx} className="relative">
-                        <div className={`absolute -left-[31px] top-0 h-4 w-4 rounded-full border-2 flex items-center justify-center ${
-                          ev.completed ? 'bg-primary border-primary text-background' : 'bg-background border-border text-muted'
-                        }`}>
+                        <div className={`absolute -left-[31px] top-0 h-4 w-4 rounded-full border-2 flex items-center justify-center ${ev.completed ? 'bg-primary border-primary text-background' : 'bg-background border-border text-muted'
+                          }`}>
                           {ev.completed && <Check className="h-2.5 w-2.5 stroke-[3]" />}
                         </div>
                         <div className="flex flex-col gap-0.5">

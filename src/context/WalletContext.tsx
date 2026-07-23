@@ -213,7 +213,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [wallets, setWallets] = useState<UserWallet[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_WALLETS)
-      return saved ? JSON.parse(saved) : INITIAL_WALLETS
+      if (saved) {
+        const parsed: UserWallet[] = JSON.parse(saved)
+        return parsed.filter(w => !['USR_01', 'USR_02', 'USR_03', 'USR_04'].includes(w.userId) && !['USR_01', 'USR_02', 'USR_03', 'USR_04', 'wal_1', 'wal_2', 'wal_3', 'wal_4'].includes(w.id))
+      }
+      return INITIAL_WALLETS
     } catch {
       return INITIAL_WALLETS
     }
@@ -298,10 +302,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Firestore Subscriptions
   useEffect(() => {
     const unsubWallets = subscribeToWallets((items: UserWallet[]) => {
-      setWallets(items)
+      const filtered = items.filter(w => !['USR_01', 'USR_02', 'USR_03', 'USR_04'].includes(w.userId) && !['USR_01', 'USR_02', 'USR_03', 'USR_04', 'wal_1', 'wal_2', 'wal_3', 'wal_4'].includes(w.id))
+      setWallets(filtered)
     })
     const unsubTxs = subscribeToTransactions((items: CoinTransaction[]) => {
-      setTransactions(items)
+      const filtered = items.filter(t => !['USR_01', 'USR_02', 'USR_03', 'USR_04'].includes(t.userId))
+      setTransactions(filtered)
     })
     const unsubWithdrawals = subscribeToWithdrawals((items: WithdrawalRequest[]) => {
       setWithdrawalRequests(items)

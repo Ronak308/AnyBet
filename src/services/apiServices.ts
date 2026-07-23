@@ -143,7 +143,7 @@ Determine winner name, confidence percentage score (70-99), and rationale summar
           supportingRationale: [
             liveMarketPayload || 'Real-time Oracle Telemetry Feed verified',
             'Rule benchmark condition validated against live data',
-            `Gemini 2.0 Flash Model confidence rating: ${confidenceScore}%`
+            `Gemini 3.6 Flash Model confidence rating: ${confidenceScore}%`
           ],
           status: confidenceScore >= 95.0 ? 'Auto-Settled' : 'AI Analyzed'
         }
@@ -190,7 +190,7 @@ Determine winner name, confidence percentage score (70-99), and rationale summar
 
   if (liveMarketPayload) {
     winnerName = lowerTitle.includes('cross') || lowerTitle.includes('above') ? 'Target Reached (YES Outcome)' : 'System Admin (YES Outcome)'
-    rationaleDetail = `Gemini AI evaluated target price rules against Binance Public Spot API. ${liveMarketPayload}. Price telemetry confirms benchmark condition satisfied prior to settlement deadline.`
+    rationaleDetail = `Gemini 3.6 Flash AI evaluated target price rules against Binance Public Spot API. ${liveMarketPayload}. Price telemetry confirms benchmark condition satisfied prior to settlement deadline.`
     supportingPoints = [
       liveMarketPayload,
       'Rule condition satisfied: Target price benchmark surpassed',
@@ -198,7 +198,7 @@ Determine winner name, confidence percentage score (70-99), and rationale summar
     ]
   } else {
     winnerName = lowerTitle.includes('vs') ? 'Challenger (Winning Outcome)' : 'System Admin (YES Outcome)'
-    rationaleDetail = `Gemini AI analyzed wager rules against live oracle telemetry benchmarks for "${challengeTitle}". Resolution criteria satisfied with zero anomaly flags.`
+    rationaleDetail = `Gemini 3.6 Flash AI analyzed wager rules against live oracle telemetry benchmarks for "${challengeTitle}". Resolution criteria satisfied with zero anomaly flags.`
     supportingPoints = [
       `Rules verified: ${rules?.[0] || 'Standard AnyBet wager rules apply'}`,
       'Escrow balance locked & participant consensus confirmed',

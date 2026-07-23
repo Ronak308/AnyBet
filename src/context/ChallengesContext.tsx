@@ -232,7 +232,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'Trophy',
     isEnabled: true,
     displayOrder: 1,
-    challengeCount: 48
+    challengeCount: 0
   },
   {
     id: 'cat-2',
@@ -242,7 +242,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'Gamepad2',
     isEnabled: true,
     displayOrder: 2,
-    challengeCount: 36
+    challengeCount: 0
   },
   {
     id: 'cat-3',
@@ -252,7 +252,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'Dumbbell',
     isEnabled: true,
     displayOrder: 3,
-    challengeCount: 29
+    challengeCount: 0
   },
   {
     id: 'cat-4',
@@ -262,7 +262,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'Dices',
     isEnabled: true,
     displayOrder: 4,
-    challengeCount: 21
+    challengeCount: 0
   },
   {
     id: 'cat-5',
@@ -272,7 +272,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'Mic',
     isEnabled: true,
     displayOrder: 5,
-    challengeCount: 19
+    challengeCount: 0
   },
   {
     id: 'cat-6',
@@ -282,7 +282,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'GraduationCap',
     isEnabled: true,
     displayOrder: 6,
-    challengeCount: 14
+    challengeCount: 0
   },
   {
     id: 'cat-7',
@@ -292,7 +292,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'Trophy',
     isEnabled: true,
     displayOrder: 7,
-    challengeCount: 16
+    challengeCount: 0
   },
   {
     id: 'cat-8',
@@ -302,7 +302,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'Target',
     isEnabled: true,
     displayOrder: 8,
-    challengeCount: 12
+    challengeCount: 0
   },
   {
     id: 'cat-9',
@@ -312,7 +312,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'TrendingUp',
     isEnabled: true,
     displayOrder: 9,
-    challengeCount: 54
+    challengeCount: 0
   },
   {
     id: 'cat-10',
@@ -322,7 +322,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'CloudRain',
     isEnabled: true,
     displayOrder: 10,
-    challengeCount: 11
+    challengeCount: 0
   },
   {
     id: 'cat-11',
@@ -332,7 +332,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'Tv',
     isEnabled: true,
     displayOrder: 11,
-    challengeCount: 23
+    challengeCount: 0
   },
   {
     id: 'cat-12',
@@ -342,7 +342,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'Brain',
     isEnabled: true,
     displayOrder: 12,
-    challengeCount: 18
+    challengeCount: 0
   },
   {
     id: 'cat-13',
@@ -352,7 +352,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'Handshake',
     isEnabled: true,
     displayOrder: 13,
-    challengeCount: 31
+    challengeCount: 0
   },
   {
     id: 'cat-14',
@@ -362,7 +362,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'Briefcase',
     isEnabled: true,
     displayOrder: 14,
-    challengeCount: 15
+    challengeCount: 0
   },
   {
     id: 'cat-15',
@@ -372,7 +372,7 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'Users',
     isEnabled: true,
     displayOrder: 15,
-    challengeCount: 27
+    challengeCount: 0
   },
   {
     id: 'cat-16',
@@ -382,11 +382,263 @@ const INITIAL_CATEGORIES: ChallengeCategory[] = [
     icon: 'Sparkles',
     isEnabled: true,
     displayOrder: 16,
-    challengeCount: 40
+    challengeCount: 0
   }
 ]
 
-const INITIAL_CHALLENGES: ChallengeItem[] = []
+const INITIAL_CHALLENGES: ChallengeItem[] = [
+  {
+    id: 'AB-9821',
+    title: 'Marathon Completion Under 3h:00',
+    description: 'Complete full 42.2km marathon in under 3 hours validated via GPS telemetry & smartwatch chip.',
+    category: 'Fitness',
+    type: 'Solo Time Trial',
+    frequency: 'Single Event',
+    source: 'Mobile App',
+    creatorId: 'USR_01',
+    creatorName: 'Alex_R',
+    participantsCount: 4,
+    maxParticipants: 10,
+    stakeAmount: 200,
+    prizePool: 800,
+    startDate: '2026-07-20',
+    endDate: '2026-07-27',
+    status: 'Disputed',
+    rules: ['GPS telemetry required', 'Garmin/Strava integration enabled'],
+    participants: [
+      { id: 'USR_01', username: 'Alex_R', joinedAt: '2026-07-20', stakeAmount: 200, progressPercent: 100 },
+      { id: 'USR_02', username: 'Marcus_S', joinedAt: '2026-07-20', stakeAmount: 200, progressPercent: 95 }
+    ],
+    financials: { totalCollected: 800, lockedCoins: 800, platformFee: 40, winnerPayout: 760, refundAmount: 0 },
+    settlement: { settlementMethod: 'AI Oracle', status: 'Under Review' },
+    timeline: [
+      { id: 't-1', stage: 'Challenge Created', description: 'Created by Alex_R', timestamp: '2026-07-20 09:00', completed: true },
+      { id: 't-2', stage: 'Live', description: 'Wager activated with 4 participants', timestamp: '2026-07-20 10:00', completed: true }
+    ]
+  },
+  {
+    id: 'AB-8720',
+    title: 'League of Legends World Finals Speedrun',
+    description: 'First team to achieve Baron Nashor kill under 20 minutes in official tournament stream.',
+    category: 'Gaming & Esports',
+    type: 'Weekly Tournament',
+    frequency: 'Weekly',
+    source: 'Admin Portal',
+    creatorId: 'USR_03',
+    creatorName: 'GamerPro_99',
+    participantsCount: 16,
+    maxParticipants: 32,
+    stakeAmount: 500,
+    prizePool: 8000,
+    startDate: '2026-07-18',
+    endDate: '2026-07-25',
+    status: 'Live',
+    rules: ['Official Riot Games API match hash verification', 'Referees review streaming feed'],
+    participants: [
+      { id: 'USR_03', username: 'GamerPro_99', joinedAt: '2026-07-18', stakeAmount: 500, progressPercent: 80 }
+    ],
+    financials: { totalCollected: 8000, lockedCoins: 8000, platformFee: 400, winnerPayout: 7600, refundAmount: 0 },
+    settlement: { settlementMethod: 'AI Oracle', status: 'Waiting' },
+    timeline: [
+      { id: 't-3', stage: 'Challenge Created', description: 'Created by GamerPro_99', timestamp: '2026-07-18 12:00', completed: true }
+    ]
+  },
+  {
+    id: 'AB-7410',
+    title: 'Real Madrid vs Barcelona - El Clasico Match Winner',
+    description: 'Predict the winner of the upcoming El Clasico derby. Extra time included.',
+    category: 'Sports',
+    type: 'Binary Option',
+    frequency: 'Single Event',
+    source: 'Admin Portal',
+    creatorId: 'USR_01',
+    creatorName: 'Operator Admin',
+    participantsCount: 48,
+    maxParticipants: 100,
+    stakeAmount: 150,
+    prizePool: 7200,
+    startDate: '2026-07-22',
+    endDate: '2026-07-29',
+    status: 'Live',
+    rules: ['Official La Liga match box score is final', 'Settled automatically within 30 min of whistle'],
+    participants: [
+      { id: 'USR_04', username: 'CryptoKing', joinedAt: '2026-07-22', stakeAmount: 150, progressPercent: 50 }
+    ],
+    financials: { totalCollected: 7200, lockedCoins: 7200, platformFee: 360, winnerPayout: 6840, refundAmount: 0 },
+    settlement: { settlementMethod: 'AI Oracle', status: 'Waiting' },
+    timeline: [
+      { id: 't-4', stage: 'Live', description: 'Derby pool published', timestamp: '2026-07-22 14:00', completed: true }
+    ]
+  },
+  {
+    id: 'AB-6350',
+    title: 'Bitcoin (BTC) Price Target $100,000 before Year End',
+    description: 'Will BTC/USD cross $100,000 spot price on Binance 24h UTC candle before deadline?',
+    category: 'Predictions',
+    type: 'Binary Option',
+    frequency: 'Monthly',
+    source: 'Admin Portal',
+    creatorId: 'USR_01',
+    creatorName: 'Operator Admin',
+    participantsCount: 54,
+    maxParticipants: 200,
+    stakeAmount: 100,
+    prizePool: 5400,
+    startDate: '2026-07-01',
+    endDate: '2026-12-31',
+    status: 'Live',
+    rules: ['Binance 24h UTC daily close candle price is reference benchmark', 'AI Oracle threshold auto-trigger'],
+    participants: [
+      { id: 'USR_05', username: 'SatoshiFan', joinedAt: '2026-07-01', stakeAmount: 100, progressPercent: 65 }
+    ],
+    financials: { totalCollected: 5400, lockedCoins: 5400, platformFee: 270, winnerPayout: 5130, refundAmount: 0 },
+    settlement: { settlementMethod: 'AI Oracle', status: 'Waiting' },
+    timeline: [
+      { id: 't-5', stage: 'Live', description: 'Macro prediction pool active', timestamp: '2026-07-01 00:00', completed: true }
+    ]
+  },
+  {
+    id: 'AB-5120',
+    title: 'Wimbledon Men\'s Finals: Alcaraz vs Sinner 5-Setter',
+    description: 'Will the match go to all 5 sets in the Wimbledon final?',
+    category: 'Tennis',
+    type: 'Peer Wager',
+    frequency: 'Single Event',
+    source: 'Mobile App',
+    creatorId: 'USR_06',
+    creatorName: 'TennisAce',
+    participantsCount: 16,
+    maxParticipants: 20,
+    stakeAmount: 300,
+    prizePool: 4800,
+    startDate: '2026-07-21',
+    endDate: '2026-07-26',
+    status: 'Live',
+    rules: ['Official ATP match statistics apply', 'Full set score required'],
+    participants: [],
+    financials: { totalCollected: 4800, lockedCoins: 4800, platformFee: 240, winnerPayout: 4560, refundAmount: 0 },
+    settlement: { settlementMethod: 'AI Oracle', status: 'Waiting' },
+    timeline: []
+  },
+  {
+    id: 'AB-4210',
+    title: 'Sunday High-Stakes Texas Hold\'em Tournament',
+    description: 'Private 8-max poker table challenge with escrow payout pool.',
+    category: 'Cards & Board Games',
+    type: 'Weekly Tournament',
+    frequency: 'Weekly',
+    source: 'Mobile App',
+    creatorId: 'USR_07',
+    creatorName: 'PokerPro',
+    participantsCount: 8,
+    maxParticipants: 8,
+    stakeAmount: 500,
+    prizePool: 4000,
+    startDate: '2026-07-23',
+    endDate: '2026-07-24',
+    status: 'Live',
+    rules: ['Both participants must confirm match log', 'Host screenshot verification'],
+    participants: [],
+    financials: { totalCollected: 4000, lockedCoins: 4000, platformFee: 200, winnerPayout: 3800, refundAmount: 0 },
+    settlement: { settlementMethod: 'Manual Review', status: 'Waiting' },
+    timeline: []
+  },
+  {
+    id: 'AB-3190',
+    title: 'Daily 10,000 Steps 30-Day Fitness Challenge',
+    description: 'Walk 10,000 steps daily for 30 consecutive days verified by Apple HealthKit / Health Connect.',
+    category: 'Fitness',
+    type: 'Day-wise Streak',
+    frequency: 'Monthly',
+    source: 'Mobile App',
+    creatorId: 'USR_08',
+    creatorName: 'FitGirl99',
+    participantsCount: 29,
+    maxParticipants: 50,
+    stakeAmount: 100,
+    prizePool: 2900,
+    startDate: '2026-07-15',
+    endDate: '2026-08-14',
+    status: 'Live',
+    rules: ['IoT step count sync daily before midnight UTC', 'Zero anomaly flag criteria'],
+    participants: [],
+    financials: { totalCollected: 2900, lockedCoins: 2900, platformFee: 145, winnerPayout: 2755, refundAmount: 0 },
+    settlement: { settlementMethod: 'AI Oracle', status: 'Waiting' },
+    timeline: []
+  },
+  {
+    id: 'AB-2980',
+    title: 'Oscars Best Picture Winner Prediction Pool',
+    description: 'Predict the winner for Best Picture at the upcoming Academy Awards.',
+    category: 'Entertainment',
+    type: 'Binary Option',
+    frequency: 'Single Event',
+    source: 'Admin Portal',
+    creatorId: 'USR_01',
+    creatorName: 'Operator Admin',
+    participantsCount: 19,
+    maxParticipants: 100,
+    stakeAmount: 50,
+    prizePool: 950,
+    startDate: '2026-07-10',
+    endDate: '2026-08-10',
+    status: 'Live',
+    rules: ['Official Academy Awards broadcast announcement is final'],
+    participants: [],
+    financials: { totalCollected: 950, lockedCoins: 950, platformFee: 47, winnerPayout: 903, refundAmount: 0 },
+    settlement: { settlementMethod: 'AI Oracle', status: 'Waiting' },
+    timeline: []
+  },
+  {
+    id: 'AB-1840',
+    title: 'AWS Solutions Architect Exam 900+ Score Wager',
+    description: 'Score above 900/1000 on official AWS certification exam.',
+    category: 'Education',
+    type: 'Solo Time Trial',
+    frequency: 'Single Event',
+    source: 'Mobile App',
+    creatorId: 'USR_09',
+    creatorName: 'CloudDev',
+    participantsCount: 14,
+    maxParticipants: 20,
+    stakeAmount: 200,
+    prizePool: 2800,
+    startDate: '2026-07-20',
+    endDate: '2026-08-20',
+    status: 'Live',
+    rules: ['Official digital badge / PDF score report submission required'],
+    participants: [],
+    financials: { totalCollected: 2800, lockedCoins: 2800, platformFee: 140, winnerPayout: 2660, refundAmount: 0 },
+    settlement: { settlementMethod: 'AI Oracle', status: 'Waiting' },
+    timeline: []
+  },
+  {
+    id: 'AB-1250',
+    title: 'Alex vs Marcus 1v1 Arm Wrestling Showdown',
+    description: 'Head-to-head friendly physical wager between Alex and Marcus.',
+    category: 'Friendly Wagers',
+    type: 'Peer Wager',
+    frequency: 'Single Event',
+    source: 'Mobile App',
+    creatorId: 'USR_01',
+    creatorName: 'Alex_R',
+    participantsCount: 2,
+    maxParticipants: 2,
+    stakeAmount: 100,
+    prizePool: 200,
+    startDate: '2026-07-23',
+    endDate: '2026-07-24',
+    status: 'Live',
+    rules: ['Both participants must confirm match outcome or submit video proof'],
+    participants: [
+      { id: 'USR_01', username: 'Alex_R', joinedAt: '2026-07-23', stakeAmount: 100, progressPercent: 100 },
+      { id: 'USR_02', username: 'Marcus_S', joinedAt: '2026-07-23', stakeAmount: 100, progressPercent: 100 }
+    ],
+    financials: { totalCollected: 200, lockedCoins: 200, platformFee: 10, winnerPayout: 190, refundAmount: 0 },
+    settlement: { settlementMethod: 'Manual Review', status: 'Waiting' },
+    timeline: []
+  }
+]
 
 const INITIAL_DISPUTES: DisputeItem[] = [
   {

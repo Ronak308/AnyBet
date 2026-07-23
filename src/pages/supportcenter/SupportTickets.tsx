@@ -219,15 +219,25 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
         const dbTickets: Ticket[] = []
         snapshot.forEach(doc => {
           const data = doc.data()
+          const rawUser = data.user || {}
+          const userObj = {
+            name: rawUser.name || data.userName || data.user_name || 'Anonymous User',
+            username: rawUser.username || data.username || data.user_username || 'anonymous',
+            avatar: rawUser.avatar || data.avatar || '',
+            walletBalance: typeof rawUser.walletBalance === 'number' ? rawUser.walletBalance : (data.walletBalance || 0),
+            activeBets: typeof rawUser.activeBets === 'number' ? rawUser.activeBets : (data.activeBets || 0),
+            browser: rawUser.browser || data.browser || 'Unknown',
+            ip: rawUser.ip || data.ip || '0.0.0.0'
+          }
           dbTickets.push({
             id: data.id || doc.id,
-            user: data.user,
-            subject: data.subject,
-            description: data.description,
-            category: data.category,
-            priority: data.priority,
-            status: data.status,
-            date: data.date,
+            user: userObj,
+            subject: data.subject || '',
+            description: data.description || '',
+            category: data.category || 'Payment',
+            priority: data.priority || 'Low',
+            status: data.status || 'Open',
+            date: data.date || new Date().toISOString(),
             messages: data.messages || []
           } as Ticket)
         })
@@ -604,10 +614,12 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
 
   // Filtered Tickets list
   const filteredTickets = tickets.filter(ticket => {
-    const matchesSearch = ticket.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.subject.toLowerCase().includes(searchQuery.toLowerCase())
+    const userName = ticket.user?.name || ''
+    const username = ticket.user?.username || ''
+    const matchesSearch = (ticket.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (ticket.subject || '').toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesStatus = statusFilter === 'All' || ticket.status === statusFilter
     const matchesPriority = priorityFilter === 'All' || ticket.priority === priorityFilter
@@ -1154,8 +1166,11 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
               ) : (
                 paginatedTickets.map(ticket => {
                   const isSelected = selectedTicket?.id === ticket.id
-                  const mappedUser = usersMap[ticket.user.username.toLowerCase()]
-                  const displayAvatar = mappedUser?.avatar || ticket.user.avatar
+                  const usernameKey = ticket.user?.username ? ticket.user.username.toLowerCase() : ''
+                  const mappedUser = usernameKey ? usersMap[usernameKey] : undefined
+                  const displayAvatar = mappedUser?.avatar || ticket.user?.avatar || ''
+                  const userName = ticket.user?.name || 'Anonymous User'
+                  const displayUsername = ticket.user?.username || 'anonymous'
                   return (
                     <TableRow
                       key={ticket.id}
@@ -1174,21 +1189,21 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
                           <div className="h-7 w-7 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center text-xs font-bold text-primary font-sans shrink-0 overflow-hidden">
                             {displayAvatar ? (
                               displayAvatar.startsWith('http') || displayAvatar.startsWith('/') ? (
-                                <img src={displayAvatar} alt={ticket.user.name} className="h-full w-full object-cover" />
+                                <img src={displayAvatar} alt={userName} className="h-full w-full object-cover" />
                               ) : (
                                 <span>{displayAvatar}</span>
                               )
                             ) : (
                               <span>
-                                {ticket.user.name
-                                  ? ticket.user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                                {userName
+                                  ? userName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
                                   : 'U'}
                               </span>
                             )}
                           </div>
                           <div>
-                            <span className="text-xs font-bold text-foreground block font-sans leading-none">{ticket.user.name}</span>
-                            <span className="text-[10px] text-muted font-mono block mt-0.5">@{ticket.user.username}</span>
+                            <span className="text-xs font-bold text-foreground block font-sans leading-none">{userName}</span>
+                            <span className="text-[10px] text-muted font-mono block mt-0.5">@{displayUsername}</span>
                           </div>
                         </div>
                       </TableCell>

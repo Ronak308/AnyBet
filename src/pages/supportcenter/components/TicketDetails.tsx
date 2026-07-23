@@ -172,8 +172,8 @@ export const TicketDetails: React.FC<TicketDetailsProps> = ({
               )}
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-foreground">{ticket.user.name}</span>
-              <span className="text-[10px] text-muted font-mono">@{ticket.user.username}</span>
+              <span className="font-bold text-foreground">{ticket.user?.name || 'Anonymous User'}</span>
+              <span className="text-[10px] text-muted font-mono">@{ticket.user?.username || 'anonymous'}</span>
             </div>
           </div>
 
@@ -182,13 +182,13 @@ export const TicketDetails: React.FC<TicketDetailsProps> = ({
               <span className="text-muted flex items-center gap-1.5 font-mono text-[10px]">
                 <CreditCard className="h-3.5 w-3.5 text-muted/70" /> WALLET
               </span>
-              <span className="text-foreground font-mono text-[11px] font-bold">{ticket.user.walletBalance.toLocaleString()} Coins</span>
+              <span className="text-foreground font-mono text-[11px] font-bold">{(ticket.user?.walletBalance ?? 0).toLocaleString()} Coins</span>
             </div>
             <div className="flex justify-between items-center border-l border-border/40 pl-4">
               <span className="text-muted flex items-center gap-1.5 font-mono text-[10px]">
                 <Layers className="h-3.5 w-3.5 text-muted/70" /> ACTIVE BETS
               </span>
-              <span className="text-foreground font-mono text-[11px] font-bold">{ticket.user.activeBets}</span>
+              <span className="text-foreground font-mono text-[11px] font-bold">{ticket.user?.activeBets ?? 0}</span>
             </div>
           </div>
         </div>
