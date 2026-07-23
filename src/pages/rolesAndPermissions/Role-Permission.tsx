@@ -1,4 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { db } from '../../firebase/firebase'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -23,10 +25,34 @@ import {
   Layers,
   SlidersHorizontal,
   Save,
-  RotateCcw
+  RotateCcw,
+  Minus
 } from 'lucide-react'
 
 type AccessLevel = 'no_access' | 'view_only' | 'create_update' | 'approve_review' | 'full_access'
+type ActionPermission = 'view' | 'create' | 'edit' | 'delete' | 'approve'
+
+const ACCESS_LEVEL_TO_ACTIONS: Record<AccessLevel, ActionPermission[]> = {
+  full_access: ['view', 'create', 'edit', 'delete', 'approve'],
+  create_update: ['view', 'create', 'edit'],
+  approve_review: ['view', 'approve'],
+  view_only: ['view'],
+  no_access: []
+}
+
+function actionsToAccessLevel(actions: ActionPermission[]): AccessLevel {
+  if (!actions || !Array.isArray(actions) || actions.length === 0) return 'no_access'
+  const hasApprove = actions.includes('approve')
+  const hasDelete = actions.includes('delete')
+  const hasCreateOrEdit = actions.includes('create') || actions.includes('edit')
+  const hasView = actions.includes('view')
+
+  if (hasApprove && hasDelete && hasCreateOrEdit && hasView) return 'full_access'
+  if (hasApprove) return 'approve_review'
+  if (hasCreateOrEdit) return 'create_update'
+  if (hasView) return 'view_only'
+  return 'no_access'
+}
 
 interface AccessLevelConfig {
   key: AccessLevel
@@ -41,7 +67,7 @@ const ACCESS_LEVELS: Record<AccessLevel, AccessLevelConfig> = {
     key: 'no_access',
     label: 'No Access',
     code: '-',
-    badgeClass: 'bg-slate-500/15 text-slate-700 dark:text-slate-300 border-slate-500/30',
+    badgeClass: 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30',
     buttonBg: 'bg-card dark:bg-surface/80 border-border/80 text-foreground hover:bg-surface/60'
   },
   view_only: {
@@ -165,7 +191,11 @@ const AccessDropdown: React.FC<{
         >
           <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
             <span className={`w-4 h-4 flex items-center justify-center rounded text-[10px] font-mono font-bold border shrink-0 ${currentConfig.badgeClass}`}>
-              {currentConfig.code}
+              {currentConfig.code === '-' ? (
+                <Minus className="h-3 w-3 stroke-[3]" />
+              ) : (
+                currentConfig.code
+              )}
             </span>
             <span className="truncate font-bold text-[12.5px] text-foreground">{currentConfig.label}</span>
           </div>
@@ -188,7 +218,11 @@ const AccessDropdown: React.FC<{
             >
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className={`w-4 h-4 flex items-center justify-center rounded text-[10px] font-mono font-bold border shrink-0 ${lvl.badgeClass}`}>
-                  {lvl.code}
+                  {lvl.code === '-' ? (
+                    <Minus className="h-3 w-3 stroke-[3]" />
+                  ) : (
+                    lvl.code
+                  )}
                 </span>
                 <span className="font-bold text-[12.5px] text-foreground truncate">{lvl.label}</span>
               </div>
@@ -335,9 +369,57 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
 
   const [selectedRoleId, setSelectedRoleId] = useState<string>('admin')
 
-  // Module & Sub-tab access level matrix state initialized from DEFAULT_PERMISSIONS
-  const [roleModuleAccess, setRoleModuleAccess] = useState<Record<string, Record<string, AccessLevel>>>(DEFAULT_PERMISSIONS)
-  const [savedPermissions, setSavedPermissions] = useState<Record<string, Record<string, AccessLevel>>>(DEFAULT_PERMISSIONS)
+  // Helper to load cached permissions from localStorage if available to prevent UI flashing
+  const getInitialPermissions = (): Record<string, Record<string, AccessLevel>> => {
+    try {
+      const cached = localStorage.getItem('anybet_role_permissions')
+      if (cached) return JSON.parse(cached)
+    } catch (e) {
+      console.warn('Failed to parse cached permissions:', e)
+    }
+    return DEFAULT_PERMISSIONS
+  }
+
+  // Module & Sub-tab access level matrix state initialized from cache or DEFAULT_PERMISSIONS
+  const [roleModuleAccess, setRoleModuleAccess] = useState<Record<string, Record<string, AccessLevel>>>(getInitialPermissions)
+  const [savedPermissions, setSavedPermissions] = useState<Record<string, Record<string, AccessLevel>>>(getInitialPermissions)
+
+  // Sync permissions from collection rolesAndPermissions on mount in parallel
+  useEffect(() => {
+    const initPermissions = async () => {
+      try {
+        const roleSnaps = await Promise.all(
+          roles.map(role => getDoc(doc(db, 'rolesAndPermissions', role.id)))
+        )
+
+        const loadedAccess: Record<string, Record<string, AccessLevel>> = {}
+
+        roleSnaps.forEach((snap, idx) => {
+          const roleId = roles[idx].id
+          if (snap.exists()) {
+            const data = snap.data()
+            loadedAccess[roleId] = {}
+            for (const [modKey, actions] of Object.entries(data)) {
+              if (Array.isArray(actions)) {
+                loadedAccess[roleId][modKey] = actionsToAccessLevel(actions as ActionPermission[])
+              }
+            }
+          }
+        })
+
+        if (Object.keys(loadedAccess).length > 0) {
+          const finalPerms = { ...DEFAULT_PERMISSIONS, ...loadedAccess }
+          setRoleModuleAccess(finalPerms)
+          setSavedPermissions(finalPerms)
+          localStorage.setItem('anybet_role_permissions', JSON.stringify(finalPerms))
+        }
+      } catch (e) {
+        console.warn('Firestore read failed for rolesAndPermissions:', e)
+      }
+    }
+
+    initPermissions()
+  }, [])
 
   // Track if any role permission has been modified compared to saved state
   const hasChanges = React.useMemo(() => {
@@ -373,35 +455,60 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
 
   const handleResetPermissions = () => {
     const currentRoleName = roles.find(r => r.id === selectedRoleId)?.name || 'Selected Role'
-    setRoleModuleAccess(prev => ({
-      ...prev,
-      [selectedRoleId]: { ...DEFAULT_PERMISSIONS[selectedRoleId] }
-    }))
+    setRoleModuleAccess(savedPermissions)
     window.dispatchEvent(
       new CustomEvent('show-toast', {
         detail: {
-          message: `Permissions reset to default matrix for ${currentRoleName}!`,
+          message: `Changes reset for ${currentRoleName}!`,
           type: 'info'
         }
       })
     )
   }
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     setSaving(true)
-    setTimeout(() => {
-      setSaving(false)
+    let saveSuccess = true
+
+    try {
+      for (const [roleId, modulesMap] of Object.entries(roleModuleAccess)) {
+        const docData: Record<string, any> = {}
+        for (const [moduleId, level] of Object.entries(modulesMap)) {
+          docData[moduleId] = ACCESS_LEVEL_TO_ACTIONS[level] || []
+        }
+        docData.updatedAt = new Date().toISOString()
+        const docRef = doc(db, 'rolesAndPermissions', roleId)
+        await setDoc(docRef, docData, { merge: true })
+      }
+      localStorage.setItem('anybet_role_permissions', JSON.stringify(roleModuleAccess))
+    } catch (e) {
+      console.error('Error saving role permissions to Firestore:', e)
+      saveSuccess = false
+    }
+
+    setSaving(false)
+
+    if (saveSuccess) {
       setSavedPermissions(roleModuleAccess)
       const currentRoleName = roles.find(r => r.id === selectedRoleId)?.name || 'Selected Role'
       window.dispatchEvent(
         new CustomEvent('show-toast', {
           detail: {
-            message: `Permissions updated successfully for ${currentRoleName}!`,
+            message: `Permissions for ${currentRoleName} saved successfully to collection rolesAndPermissions!`,
             type: 'success'
           }
         })
       )
-    }, 500)
+    } else {
+      window.dispatchEvent(
+        new CustomEvent('show-toast', {
+          detail: {
+            message: `Failed to save changes to database. Please try again.`,
+            type: 'error'
+          }
+        })
+      )
+    }
   }
 
   return (
@@ -447,7 +554,11 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
             <Button
               variant="outline"
               onClick={handleResetPermissions}
-              className="h-9 px-3.5 gap-1.5 text-xs font-mono uppercase tracking-wider border border-border text-muted hover:text-foreground hover:bg-surface/60 cursor-pointer transition-all"
+              disabled={!hasChanges || saving}
+              className={`h-9 px-3.5 gap-1.5 text-xs font-mono uppercase tracking-wider border border-border text-muted transition-all ${!hasChanges || saving
+                ? 'opacity-50 cursor-not-allowed border-border/40 text-muted/50'
+                : 'hover:text-foreground hover:bg-surface/60 cursor-pointer'
+                }`}
             >
               <RotateCcw className="h-3.5 w-3.5" /> Reset
             </Button>
@@ -477,8 +588,8 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
             {SINGLE_MODULES.map(module => {
               const ModuleIcon = module.icon
               const currentLevel = roleModuleAccess[selectedRoleId]?.[module.id] || 'no_access'
-              const defaultLevel = DEFAULT_PERMISSIONS[selectedRoleId]?.[module.id] || 'no_access'
-              const isModified = currentLevel !== defaultLevel
+              const savedLevel = savedPermissions[selectedRoleId]?.[module.id] || 'no_access'
+              const isModified = currentLevel !== savedLevel
 
               return (
                 <div
@@ -545,8 +656,8 @@ export const RolesPermissionsPage: React.FC<{ navigate?: (tab: string) => void }
                   <div className="space-y-2">
                     {module.subItems!.map(sub => {
                       const subLevel = roleModuleAccess[selectedRoleId]?.[sub.id] || 'no_access'
-                      const subDefaultLevel = DEFAULT_PERMISSIONS[selectedRoleId]?.[sub.id] || 'no_access'
-                      const isSubModified = subLevel !== subDefaultLevel
+                      const subSavedLevel = savedPermissions[selectedRoleId]?.[sub.id] || 'no_access'
+                      const isSubModified = subLevel !== subSavedLevel
 
                       return (
                         <div
