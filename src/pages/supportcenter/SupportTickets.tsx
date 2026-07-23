@@ -23,7 +23,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
-import { collection, getDocs, doc, query, where, updateDoc, setDoc, deleteDoc } from 'firebase/firestore'
+import { collection, getDocs, getDoc, doc, query, where, updateDoc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore'
 import { db } from '@/firebase/firebase'
 import { DisputeResolution } from './DisputeResulation'
 import type { Dispute as BetDispute } from './DisputeResulation'
@@ -43,7 +43,7 @@ export interface Message {
 
 export interface Ticket {
   id: string
-  user: {
+  user?: {
     name: string
     username: string
     avatar: string
@@ -52,6 +52,8 @@ export interface Ticket {
     browser: string
     ip: string
   }
+  userId?: string
+  userEmail?: string
   subject: string
   description: string
   category: 'Payment' | 'Account' | 'Bet Dispute' | 'System Bug'
@@ -181,25 +183,28 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
   const [tickets, setTickets] = useState<Ticket[]>(initialTickets)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [usersMap, setUsersMap] = useState<Record<string, { name: string; avatar?: string }>>({})
+  const [usersMap, setUsersMap] = useState<Record<string, { name: string; username?: string; avatar?: string }>>({})
   const [isLoadingCategories, setIsLoadingCategories] = useState(true)
   const [isLoadingFaqs, setIsLoadingFaqs] = useState(true)
 
-  // Fetch users to construct avatar mappings
+  // Fetch users to construct avatar mappings (mapped by username and document ID/userId)
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const usersCol = collection(db, 'users')
         const snapshot = await getDocs(usersCol)
-        const mapping: Record<string, { name: string; avatar?: string }> = {}
-        snapshot.forEach(doc => {
-          const data = doc.data()
-          if (data.username) {
-            mapping[data.username.toLowerCase()] = {
-              name: data.name || '',
-              avatar: data.avatar || ''
-            }
+        const mapping: Record<string, { name: string; username?: string; avatar?: string }> = {}
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data()
+          const userInfo = {
+            name: data.name || data.username || 'User',
+            username: data.username || 'unknown',
+            avatar: data.avatar || ''
           }
+          if (data.username) {
+            mapping[data.username.toLowerCase()] = userInfo
+          }
+          mapping[docSnap.id] = userInfo
         })
         setUsersMap(mapping)
       } catch (err) {
@@ -209,61 +214,62 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
     fetchUsers()
   }, [])
 
-  // Fetch support tickets from Firestore on load
+  // Subscribe to support tickets from Firestore in real-time
   useEffect(() => {
-    const fetchTickets = async () => {
-      setIsLoading(true)
-      try {
-        const supportCol = collection(db, 'support_tickets')
-        const snapshot = await getDocs(supportCol)
-        const dbTickets: Ticket[] = []
-        snapshot.forEach(doc => {
-          const data = doc.data()
-          const rawUser = data.user || {}
-          const userObj = {
-            name: rawUser.name || data.userName || data.user_name || 'Anonymous User',
-            username: rawUser.username || data.username || data.user_username || 'anonymous',
-            avatar: rawUser.avatar || data.avatar || '',
-            walletBalance: typeof rawUser.walletBalance === 'number' ? rawUser.walletBalance : (data.walletBalance || 0),
-            activeBets: typeof rawUser.activeBets === 'number' ? rawUser.activeBets : (data.activeBets || 0),
-            browser: rawUser.browser || data.browser || 'Unknown',
-            ip: rawUser.ip || data.ip || '0.0.0.0'
-          }
-          dbTickets.push({
-            id: data.id || doc.id,
-            user: userObj,
-            subject: data.subject || '',
-            description: data.description || '',
-            category: data.category || 'Payment',
-            priority: data.priority || 'Low',
-            status: data.status || 'Open',
-            date: data.date || new Date().toISOString(),
-            messages: data.messages || []
-          } as Ticket)
-        })
-
-        if (dbTickets.length > 0) {
-          setTickets(prev => {
-            const merged = [...prev]
-            dbTickets.forEach(dt => {
-              const idx = merged.findIndex(t => t.id === dt.id)
-              if (idx > -1) {
-                merged[idx] = dt
-              } else {
-                merged.unshift(dt)
-              }
-            })
-            return merged
-          })
+    setIsLoading(true)
+    const supportCol = collection(db, 'support_tickets')
+    
+    const unsubscribe = onSnapshot(supportCol, (snapshot) => {
+      const dbTickets: Ticket[] = []
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data()
+        const rawUser = data.user || {}
+        const userObj = {
+          name: rawUser.name || data.userName || data.user_name || 'Anonymous User',
+          username: rawUser.username || data.username || data.user_username || 'anonymous',
+          avatar: rawUser.avatar || data.avatar || '',
+          walletBalance: typeof rawUser.walletBalance === 'number' ? rawUser.walletBalance : (data.walletBalance || 0),
+          activeBets: typeof rawUser.activeBets === 'number' ? rawUser.activeBets : (data.activeBets || 0),
+          browser: rawUser.browser || data.browser || 'Unknown',
+          ip: rawUser.ip || data.ip || '0.0.0.0'
         }
-      } catch (err) {
-        console.error("Error fetching support tickets from firestore:", err)
-      } finally {
-        setIsLoading(false)
-      }
-    }
+        dbTickets.push({
+          id: data.id || docSnap.id,
+          user: userObj,
+          userId: data.userId || '',
+          userEmail: data.userEmail || '',
+          subject: data.subject || '',
+          description: data.description || '',
+          category: data.category || 'System Bug',
+          priority: data.priority || 'Low',
+          status: data.status || 'Open',
+          date: data.date || (data.createdAt ? new Date(data.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Just Now'),
+          messages: data.messages || []
+        } as Ticket)
+      })
 
-    fetchTickets()
+      if (dbTickets.length > 0) {
+        setTickets(prev => {
+          const merged = [...prev]
+          dbTickets.forEach(dt => {
+            const idx = merged.findIndex(t => t.id === dt.id)
+            if (idx > -1) {
+              merged[idx] = dt
+            } else {
+              merged.unshift(dt)
+            }
+          })
+          // Sort so newest is first
+          return merged
+        })
+      }
+      setIsLoading(false)
+    }, (err) => {
+      console.error("Error subscribing to support tickets from firestore:", err)
+      setIsLoading(false)
+    })
+
+    return () => unsubscribe()
   }, [])
 
   // Fetch/Seed support categories from Firestore
@@ -614,11 +620,14 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
 
   // Filtered Tickets list
   const filteredTickets = tickets.filter(ticket => {
-    const userName = ticket.user?.name || ''
     const username = ticket.user?.username || ''
+    const mappedUser = (ticket.userId && usersMap[ticket.userId]) || (username ? usersMap[username.toLowerCase()] : null)
+    const name = mappedUser?.name || ticket.user?.name || 'Anonymous User'
+    const uname = mappedUser?.username || ticket.user?.username || 'anonymous'
+
     const matchesSearch = (ticket.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      uname.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (ticket.subject || '').toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesStatus = statusFilter === 'All' || ticket.status === statusFilter
@@ -661,19 +670,40 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
     // Persist to Firestore if it exists
     const persistReply = async () => {
       try {
+        const docRef = doc(db, 'support_tickets', selectedTicket.id)
+        
+        try {
+          const docSnap = await getDoc(docRef)
+          if (docSnap.exists()) {
+            const currentMsgs = docSnap.data().messages || []
+            const nextStatus = selectedTicket.status === 'Open'
+              ? 'In Progress'
+              : selectedTicket.status === 'In Progress'
+                ? 'Resolved'
+                : selectedTicket.status
+            await updateDoc(docRef, {
+              messages: [...currentMsgs, newMsg],
+              status: nextStatus
+            })
+            return
+          }
+        } catch (e) {
+          // Direct ID update failed, fallback to searching by 'id' field
+        }
+
         const supportCol = collection(db, 'support_tickets')
         const q = query(supportCol, where('id', '==', selectedTicket.id))
         const snapshot = await getDocs(q)
         if (!snapshot.empty) {
           const docId = snapshot.docs[0].id
-          const docRef = doc(db, 'support_tickets', docId)
+          const dbDocRef = doc(db, 'support_tickets', docId)
           const currentMsgs = snapshot.docs[0].data().messages || []
           const nextStatus = selectedTicket.status === 'Open'
             ? 'In Progress'
             : selectedTicket.status === 'In Progress'
               ? 'Resolved'
               : selectedTicket.status
-          await updateDoc(docRef, {
+          await updateDoc(dbDocRef, {
             messages: [...currentMsgs, newMsg],
             status: nextStatus
           })
@@ -725,6 +755,42 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
         detail: { message: 'Reply sent successfully.', type: 'success' }
       }))
     }, 450)
+  }
+
+  const handleStatusChange = async (ticketId: string, newStatus: Ticket['status']) => {
+    try {
+      const supportCol = collection(db, 'support_tickets')
+      const docRef = doc(db, 'support_tickets', ticketId)
+      
+      try {
+        await updateDoc(docRef, { status: newStatus })
+      } catch (err) {
+        const q = query(supportCol, where('id', '==', ticketId))
+        const snapshot = await getDocs(q)
+        if (!snapshot.empty) {
+          const dbDocId = snapshot.docs[0].id
+          await updateDoc(doc(db, 'support_tickets', dbDocId), { status: newStatus })
+        }
+      }
+
+      setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: newStatus } : t))
+      setSelectedTicket(prev => prev && prev.id === ticketId ? { ...prev, status: newStatus } : prev)
+
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: {
+          message: `Ticket status set to ${newStatus}.`,
+          type: 'success'
+        }
+      }))
+    } catch (err) {
+      console.error("Failed to update ticket status in Firestore:", err)
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: {
+          message: 'Failed to update ticket status.',
+          type: 'error'
+        }
+      }))
+    }
   }
 
 
@@ -1166,11 +1232,11 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
               ) : (
                 paginatedTickets.map(ticket => {
                   const isSelected = selectedTicket?.id === ticket.id
-                  const usernameKey = ticket.user?.username ? ticket.user.username.toLowerCase() : ''
-                  const mappedUser = usernameKey ? usersMap[usernameKey] : undefined
+                  const username = ticket.user?.username || ''
+                  const mappedUser = (ticket.userId && usersMap[ticket.userId]) || (username ? usersMap[username.toLowerCase()] : null)
                   const displayAvatar = mappedUser?.avatar || ticket.user?.avatar || ''
-                  const userName = ticket.user?.name || 'Anonymous User'
-                  const displayUsername = ticket.user?.username || 'anonymous'
+                  const displayName = mappedUser?.name || ticket.user?.name || 'Anonymous User'
+                  const displayUsername = mappedUser?.username || ticket.user?.username || 'anonymous'
                   return (
                     <TableRow
                       key={ticket.id}
@@ -1189,20 +1255,20 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
                           <div className="h-7 w-7 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center text-xs font-bold text-primary font-sans shrink-0 overflow-hidden">
                             {displayAvatar ? (
                               displayAvatar.startsWith('http') || displayAvatar.startsWith('/') ? (
-                                <img src={displayAvatar} alt={userName} className="h-full w-full object-cover" />
+                                <img src={displayAvatar} alt={displayName} className="h-full w-full object-cover" />
                               ) : (
                                 <span>{displayAvatar}</span>
                               )
                             ) : (
                               <span>
-                                {userName
-                                  ? userName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                                {displayName
+                                  ? displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
                                   : 'U'}
                               </span>
                             )}
                           </div>
                           <div>
-                            <span className="text-xs font-bold text-foreground block font-sans leading-none">{userName}</span>
+                            <span className="text-xs font-bold text-foreground block font-sans leading-none">{displayName}</span>
                             <span className="text-[10px] text-muted font-mono block mt-0.5">@{displayUsername}</span>
                           </div>
                         </div>
@@ -1331,6 +1397,7 @@ export const SupportCenterPage: React.FC<{ activeTab?: string; navigate?: (tab: 
               handleSendReply={handleSendReply}
               handleSelectCanned={handleSelectCanned}
               onClose={() => setSelectedTicket(null)}
+              onStatusChange={(status) => handleStatusChange(selectedTicket.id, status)}
             />
           )}
         </SheetContent>

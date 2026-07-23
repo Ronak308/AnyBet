@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { X, Send, CreditCard, UserCheck, ShieldAlert, Bug, Layers, User } from 'lucide-react'
 import { db } from '@/firebase/firebase'
-import { collection, query, where, getDocs } from 'firebase/firestore'
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'
 
 interface TicketDetailsProps {
   ticket: Ticket
@@ -17,6 +17,15 @@ interface TicketDetailsProps {
   handleSendReply: (e: React.FormEvent) => void
   handleSelectCanned: (val: string) => void
   onClose: () => void
+  onStatusChange: (status: Ticket['status']) => void
+}
+
+interface ResolvedUser {
+  name: string
+  username: string
+  avatar: string
+  walletBalance: number
+  activeBets: number
 }
 
 export const TicketDetails: React.FC<TicketDetailsProps> = ({
@@ -28,35 +37,56 @@ export const TicketDetails: React.FC<TicketDetailsProps> = ({
   cannedResponses,
   handleSendReply,
   handleSelectCanned,
-  onClose
+  onClose,
+  onStatusChange
 }) => {
   const [userAvatar, setUserAvatar] = useState<string | null>(null)
+  const [resolvedUser, setResolvedUser] = useState<ResolvedUser | null>(null)
 
   useEffect(() => {
-    const fetchUserAvatar = async () => {
-      if (!ticket?.user?.username) return
+    const fetchUserDetails = async () => {
       try {
-        const usersCol = collection(db, 'users')
-        const q = query(usersCol, where('username', '==', ticket.user.username))
-        const snapshot = await getDocs(q)
-        if (!snapshot.empty) {
-          const userData = snapshot.docs[0].data()
-          if (userData.avatar) {
-            setUserAvatar(userData.avatar)
-          } else {
-            setUserAvatar(null)
+        let userData: any = null
+
+        // 1. Try resolving via ticket.userId if present
+        if (ticket.userId) {
+          const userSnap = await getDoc(doc(db, 'users', ticket.userId))
+          if (userSnap.exists()) {
+            userData = userSnap.data()
           }
+        }
+
+        // 2. Fallback: try resolving via ticket.user?.username
+        if (!userData && ticket.user?.username) {
+          const q = query(collection(db, 'users'), where('username', '==', ticket.user.username))
+          const snapshot = await getDocs(q)
+          if (!snapshot.empty) {
+            userData = snapshot.docs[0].data()
+          }
+        }
+
+        if (userData) {
+          setResolvedUser({
+            name: userData.name || userData.username || 'User',
+            username: userData.username || 'unknown',
+            avatar: userData.avatar || '',
+            walletBalance: userData.walletBalance !== undefined ? userData.walletBalance : (userData.coins || 0),
+            activeBets: userData.activeBets || 0
+          })
+          setUserAvatar(userData.avatar || null)
         } else {
+          setResolvedUser(null)
           setUserAvatar(null)
         }
       } catch (err) {
-        console.error("Error fetching user avatar from firestore:", err)
+        console.error("Error fetching user details from firestore:", err)
+        setResolvedUser(null)
         setUserAvatar(null)
       }
     }
 
-    fetchUserAvatar()
-  }, [ticket?.user?.username])
+    fetchUserDetails()
+  }, [ticket.userId, ticket.user?.username])
 
   const getCategoryIcon = (category: Ticket['category']) => {
     switch (category) {
@@ -149,9 +179,15 @@ export const TicketDetails: React.FC<TicketDetailsProps> = ({
             </div>
             <div className="flex flex-col gap-1 items-end">
               <span className="text-[9px] font-mono text-muted uppercase tracking-wider">Status</span>
-              <span className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded border ${getStatusColor(ticket.status)}`}>
-                {ticket.status}
-              </span>
+              <select
+                value={ticket.status}
+                onChange={(e) => onStatusChange(e.target.value as Ticket['status'])}
+                className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded border bg-surface/80 hover:bg-surface outline-none cursor-pointer uppercase ${getStatusColor(ticket.status)}`}
+              >
+                <option value="Open" className="bg-background text-orange-400">OPEN</option>
+                <option value="In Progress" className="bg-background text-blue-400">IN PROGRESS</option>
+                <option value="Resolved" className="bg-background text-emerald-400">RESOLVED</option>
+              </select>
             </div>
           </div>
         </div>
@@ -163,7 +199,7 @@ export const TicketDetails: React.FC<TicketDetailsProps> = ({
             <div className="h-8 w-8 rounded-full border border-primary/20 bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden text-primary font-bold text-[10px]">
               {userAvatar ? (
                 userAvatar.startsWith('http') || userAvatar.startsWith('/') ? (
-                  <img src={userAvatar} alt={ticket.user.name} className="h-full w-full object-cover" />
+                  <img src={userAvatar} alt={resolvedUser?.name || ticket.user?.name || 'User'} className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-xs">{userAvatar}</span>
                 )
@@ -172,8 +208,8 @@ export const TicketDetails: React.FC<TicketDetailsProps> = ({
               )}
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-foreground">{ticket.user?.name || 'Anonymous User'}</span>
-              <span className="text-[10px] text-muted font-mono">@{ticket.user?.username || 'anonymous'}</span>
+              <span className="font-bold text-foreground">{resolvedUser?.name || ticket.user?.name || 'Anonymous User'}</span>
+              <span className="text-[10px] text-muted font-mono">@{resolvedUser?.username || ticket.user?.username || 'anonymous'}</span>
             </div>
           </div>
 
@@ -182,13 +218,21 @@ export const TicketDetails: React.FC<TicketDetailsProps> = ({
               <span className="text-muted flex items-center gap-1.5 font-mono text-[10px]">
                 <CreditCard className="h-3.5 w-3.5 text-muted/70" /> WALLET
               </span>
-              <span className="text-foreground font-mono text-[11px] font-bold">{(ticket.user?.walletBalance ?? 0).toLocaleString()} Coins</span>
+              <span className="text-foreground font-mono text-[11px] font-bold">
+                {resolvedUser?.walletBalance !== undefined 
+                  ? resolvedUser.walletBalance.toLocaleString() 
+                  : (ticket.user?.walletBalance !== undefined ? ticket.user.walletBalance.toLocaleString() : '0')} Coins
+              </span>
             </div>
             <div className="flex justify-between items-center border-l border-border/40 pl-4">
               <span className="text-muted flex items-center gap-1.5 font-mono text-[10px]">
                 <Layers className="h-3.5 w-3.5 text-muted/70" /> ACTIVE BETS
               </span>
-              <span className="text-foreground font-mono text-[11px] font-bold">{ticket.user?.activeBets ?? 0}</span>
+              <span className="text-foreground font-mono text-[11px] font-bold">
+                {resolvedUser?.activeBets !== undefined 
+                  ? resolvedUser.activeBets 
+                  : (ticket.user?.activeBets !== undefined ? ticket.user.activeBets : '0')}
+              </span>
             </div>
           </div>
         </div>
