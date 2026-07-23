@@ -18,7 +18,7 @@ import { Button } from '../../components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
 import { Sheet, SheetContent } from '../../components/ui/sheet'
 import { useChallenges } from '../../context/ChallengesContext'
-import type { ChallengeItem, ChallengeStatus, TournamentMatch } from '../../context/ChallengesContext'
+import type { ChallengeItem, ChallengeStatus } from '../../context/ChallengesContext'
 
 interface ChallengeDetailsSheetProps {
   challenge: ChallengeItem | null

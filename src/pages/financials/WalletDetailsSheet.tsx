@@ -157,7 +157,7 @@ export const WalletDetailsSheet: React.FC<WalletDetailsSheetProps> = ({ wallet, 
                           <Badge 
                             variant="outline" 
                             className={`text-[9px] ${
-                              tx.status === 'Completed' 
+                              tx.status === 'Settled' || (tx.status as string) === 'Completed'
                                 ? 'border-emerald-500/40 text-emerald-400' 
                                 : 'border-amber-500/40 text-amber-400'
                             }`}

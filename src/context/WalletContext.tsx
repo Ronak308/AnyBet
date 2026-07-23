@@ -8,8 +8,7 @@ import {
   createWalletInFirestore,
   addTransactionToFirestore,
   saveCoinPackageInFirestore,
-  deleteCoinPackageFromFirestore,
-  seedInitialFinancialsData
+  deleteCoinPackageFromFirestore
 } from '../services/financialsService'
 
 // ─── Interfaces & Types ───────────────────────────────────────────────────────
@@ -274,7 +273,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   })
 
-  const [dailyRewardConfig, setDailyRewardConfig] = useState(() => {
+  const [dailyRewardConfig, setDailyRewardConfig] = useState<{ dailyCoins: number; cooldownHours: number; streakMultipliers: number[] }>(() => {
     try {
       const saved = localStorage.getItem('anybet_daily_reward_config')
       return saved ? JSON.parse(saved) : {
