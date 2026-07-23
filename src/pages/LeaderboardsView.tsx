@@ -20,8 +20,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreVertical,
-  Copy,
-  FileText
+  Copy
 } from 'lucide-react'
 import { Card, CardContent } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
@@ -32,8 +31,7 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator
+  DropdownMenuItem
 } from '../components/ui/dropdown-menu'
 import { useChallenges } from '../context/ChallengesContext'
 import type { ChallengeItem } from '../context/ChallengesContext'
